@@ -92,9 +92,7 @@
     app.appendChild(portrait);
     rollPortrait(portrait);
 
-    var navLinks = PAGES.map(function (p) {
-      return h('a', { href: '#' + p, 'data-page': p, text: TITLES[p] });
-    });
+    var navLinks = PAGES.map(function (p) { return navLink(p); });
 
     var rail = h('div', { class: 'cb-rail' }, [
       h('div', { class: 'cb-rail-top' }, [
@@ -114,9 +112,7 @@
 
     var topbar = h('div', { class: 'cb-topbar' }, [
       h('div', { class: 'cb-name', text: C.name }),
-      h('nav', {}, PAGES.map(function (p) {
-        return h('a', { href: '#' + p, 'data-page': p, text: TITLES[p] });
-      }))
+      h('nav', {}, PAGES.map(function (p) { return navLink(p); }))
     ]);
 
     main = h('div', { class: 'cb-main' });
@@ -151,6 +147,16 @@
           .map(function (f) { return dir + '/' + f.name; });
       })
       .catch(function () { return []; });
+  }
+
+  function navLink(p) {
+    var a = h('a', { href: '#cb-' + p, 'data-page': p, text: TITLES[p] });
+    a.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      go(p);
+    });
+    return a;
   }
 
   function rollPortrait(holder) {
@@ -249,28 +255,22 @@
 
   function pageTalks() {
     var page = h('div', { class: 'cb-page' }, [masthead('Talks')]);
-    (C.talks || []).forEach(function (t, i) {
-      if (i === 0) {
-        page.appendChild(h('h2', { class: 'cb-title', text: t.title }));
-        page.appendChild(h('p', { class: 'cb-standfirst', text: t.venue + ' · ' + t.date }));
-      } else {
-        page.appendChild(h('div', { class: 'cb-chapter' }, [
-          h('h3', { text: t.venue }),
-          h('div', { class: 'cb-fill' }),
-          h('span', { text: t.date })
-        ]));
-      }
-      page.appendChild(h('div', {
-        class: 'cb-body' + (i === 0 ? '' : ' is-single'),
-        html: paras(t.paragraphs)
-      }));
-      if (t.url) {
-        page.appendChild(h('a', {
-          class: 'cb-link', href: t.url, target: '_blank', rel: 'noopener',
-          text: (t.linkLabel || 'Read more') + ' →'
-        }));
-      }
+    var list = h('div', { class: 'cb-list' });
+    (C.talks || []).forEach(function (t) {
+      list.appendChild(h('div', { class: 'cb-row cb-row-talk' }, [
+        h('div', { class: 'cb-meta', text: t.date || '' }),
+        h('div', {}, [
+          h('h4', { text: t.venue || t.title }),
+          t.venue && t.title ? h('div', { class: 'cb-subtitle', text: t.title }) : null,
+          h('div', { class: 'cb-desc', html: paras(t.paragraphs) }),
+          t.url ? h('a', {
+            class: 'cb-link is-small', href: t.url, target: '_blank', rel: 'noopener',
+            text: (t.linkLabel || 'Read more') + ' →'
+          }) : null
+        ])
+      ]));
     });
+    page.appendChild(list);
     return page;
   }
 
@@ -414,9 +414,23 @@
     press: pagePress, backstory: pageBackstory, inspirations: pageInspirations
   };
 
-  function route() {
-    var page = (location.hash || '').replace('#', '');
+  var current = null;
+
+  function pageFromHash() {
+    var m = /#cb-([a-z]+)/.exec(location.hash || '');
+    return m && PAGES.indexOf(m[1]) !== -1 ? m[1] : null;
+  }
+
+  function go(page) {
     if (PAGES.indexOf(page) === -1) page = C.homePage || 'work';
+    try { history.replaceState(null, '', '#cb-' + page); } catch (e) {}
+    render(page);
+  }
+
+  function route() { render(pageFromHash() || C.homePage || 'work'); }
+
+  function render(page) {
+    current = page;
     main.innerHTML = '';
     main.scrollTop = 0;
     var built = BUILDERS[page]();
@@ -427,15 +441,34 @@
   }
 
   /* ---------- go ------------------------------------------------ */
-  fetch(BASE + 'content.json?v=' + Date.now())
-    .then(function (r) { return r.json(); })
-    .then(function (json) {
-      C = json;
-      build();
-      route();
-      window.addEventListener('hashchange', route);
-    })
-    .catch(function (e) {
-      console.error('[cb] could not load content.json', e);
-    });
+  function boot(json) {
+    C = json;
+    var old = document.getElementById('cb-app');
+    if (old) old.remove();
+    build();
+    route();
+  }
+
+  window.addEventListener('hashchange', function () {
+    var p = pageFromHash();
+    if (C && p && p !== current) render(p);
+  });
+
+  // Live preview: editor.html injects content instead of a fetch, and pushes updates.
+  window.addEventListener('message', function (ev) {
+    if (ev.data && ev.data.type === 'cb-content' && ev.data.content) {
+      var keep = current;
+      boot(ev.data.content);
+      if (keep) render(keep);
+    }
+  });
+
+  if (window.CB_CONTENT) {
+    boot(window.CB_CONTENT);
+  } else {
+    fetch(BASE + 'content.json?v=' + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(boot)
+      .catch(function (e) { console.error('[cb] could not load content.json', e); });
+  }
 })();
