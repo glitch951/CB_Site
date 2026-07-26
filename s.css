@@ -37,19 +37,20 @@
   pointer-events: none;
   z-index: 0;
 }
-/* two halves, so the portraits can be huge and still never overlap */
-.cb-half { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; }
-.cb-half.is-left { left: 0; }
-.cb-half.is-right { right: 0; }
+/* both portraits sit on the same plane, whole, one to each side.
+   max-width 48% guarantees they can never meet in the middle. */
 .cb-portrait img {
   position: absolute;
+  bottom: 0;
   width: auto;
-  max-width: none;
+  height: auto;
+  max-width: 48%;
+  object-fit: contain;
   opacity: 0;
   transition: opacity 1.6s ease;
 }
-.cb-half.is-left img { left: 0; }
-.cb-half.is-right img { right: 0; transform: scaleX(-1); }
+.cb-portrait img.is-left { left: 0; }
+.cb-portrait img.is-right { right: 0; transform: scaleX(-1); }
 .cb-portrait img.is-in { opacity: var(--portrait-opacity, .1); }
 
 .cb-extras { display: flex; flex-direction: column; gap: 8px; }
@@ -275,7 +276,7 @@
 .cb-row:hover { background: rgba(2, 14, 22, .035); }
 .cb-row-work { grid-template-columns: 78px 1fr; }
 .cb-row-press { grid-template-columns: 100px minmax(0,1fr) 90px; padding: 14px 0; align-items: center; }
-.cb-row-press.no-thumb { grid-template-columns: minmax(0,1fr) 90px; }
+.cb-thumb.is-empty { border: none; background: none; }
 .cb-thumb.is-small { aspect-ratio: 16 / 9; border: 1px solid rgba(2,14,22,.14); border-radius: 5px; overflow: hidden; }
 .cb-thumb.is-small img, .cb-thumb.is-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
@@ -284,7 +285,7 @@
   align-items: start; margin-top: 34px; text-decoration: none;
   padding-bottom: 34px; border-bottom: 1px solid var(--rule);
 }
-.cb-hero.no-thumb { grid-template-columns: minmax(0, 1fr); }
+
 .cb-hero:hover .cb-hero-title { color: var(--orange); }
 .cb-thumb.is-hero {
   aspect-ratio: 16 / 9; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden;
@@ -395,7 +396,6 @@
   .cb-body.is-post { columns: 1; }
   .cb-lede .cb-title.is-post { font-size: 32px; }
   .cb-row-press { grid-template-columns: 76px minmax(0,1fr); }
-  .cb-row-press.no-thumb { grid-template-columns: minmax(0,1fr); }
   .cb-hero { grid-template-columns: minmax(0,1fr); gap: 18px; }
   .cb-hero-title { font-size: 26px; }
   .cb-row-press .cb-right { display: none; }

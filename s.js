@@ -84,10 +84,12 @@
           return '\n\n<a class="cb-out is-bare" href="' + href +
             '" target="_blank" rel="noopener">' + shortUrl(href) + '</a>\n\n';
         })
-        .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>')
-        .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>')
-        .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>')
-        .replace(/\[strike\]([\s\S]*?)\[\/strike\]/gi, '<s>$1</s>')
+        // a line break inside an inline tag must survive the paragraph split,
+        // otherwise the tag is torn in half and the sign-off runs on
+        .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, function (m, x) { return '<strong>' + keepBreaks(x) + '</strong>'; })
+        .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, function (m, x) { return '<em>' + keepBreaks(x) + '</em>'; })
+        .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, function (m, x) { return '<u>' + keepBreaks(x) + '</u>'; })
+        .replace(/\[strike\]([\s\S]*?)\[\/strike\]/gi, function (m, x) { return '<s>' + keepBreaks(x) + '</s>'; })
         .replace(/\[\/?[a-z][^\]]*\]/gi, '');
 
     // bare URLs the author typed without tags get a line of their own
@@ -107,8 +109,10 @@
         return '<p class="cb-linkline">' + block + '</p>';
       }
       return '<p>' + block + '</p>';
-    }).filter(Boolean).join('');
+    }).filter(Boolean).join('').replace(/\u0001/g, '<br>');
   }
+
+  function keepBreaks(s) { return String(s).replace(/\n/g, '\u0001'); }
 
   /* Steam posts routinely lose the space between sentences once formatting tags
      are stripped ("stuff.Speaking", "here:<b>Bandcamp</b>", "</a>That's"). Repair
@@ -279,18 +283,15 @@
       var picks = pool.slice(0, Math.min(2, pool.length));
       var sides = ['is-left', 'is-right'];
       picks.forEach(function (src, n) {
-        var half = h('div', { class: 'cb-half ' + sides[n] });
-        var img = h('img', { alt: '' });
+        var img = h('img', { alt: '', class: sides[n] });
         img.style.setProperty('--portrait-opacity',
           C.portraitOpacity != null ? C.portraitOpacity : .1);
-        img.style.height = (150 + Math.random() * 50) + '%';
-        img.style.top = (-15 + Math.random() * 20) + '%';
+        img.style.maxHeight = (88 + Math.random() * 20) + '%';
         img.onload = function () { img.classList.add('is-in'); };
-        img.onerror = function () { half.remove(); };
+        img.onerror = function () { img.remove(); };
         img.decoding = 'async';
         img.src = src;
-        half.appendChild(img);
-        holder.appendChild(half);
+        holder.appendChild(img);
       });
     });
   }
@@ -525,10 +526,11 @@
 
       var top = all[0];
       var hero = h('a', {
-        class: 'cb-hero' + (top.image ? '' : ' no-thumb'),
-        href: top.url, target: '_blank', rel: 'noopener'
+        class: 'cb-hero', href: top.url, target: '_blank', rel: 'noopener'
       }, [
-        top.image ? thumb(top.image, '', 'is-hero') : null,
+        top.image
+          ? thumb(top.image, '', 'is-hero')
+          : h('div', { class: 'cb-thumb is-hero is-empty' }),
         h('div', { class: 'cb-hero-txt' }, [
           h('div', { class: 'cb-postmeta' }, [
             h('span', { class: 'is-orange', text: top.outlet || '' }),
@@ -555,9 +557,11 @@
         function addRows() {
           var next = all.slice(shown, shown + STEP);
           next.forEach(function (p) {
-            var th = p.image ? thumb(p.image, '', 'is-small') : null;
+            var th = p.image
+              ? thumb(p.image, '', 'is-small')
+              : h('div', { class: 'cb-thumb is-small is-empty' });
             list.appendChild(h('a', {
-              class: 'cb-row cb-row-press' + (th ? '' : ' no-thumb'),
+              class: 'cb-row cb-row-press',
               href: p.url, target: '_blank', rel: 'noopener'
             }, [
               th,

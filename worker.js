@@ -20,18 +20,33 @@ const DEVLOG_TITLE_BLOCKLIST = [];
 // Press searches. Every one runs; results are merged and de-duplicated.
 // Both spellings of the surname matter: most outlets drop the å.
 const PRESS_QUERIES = [
+  'Christoffer Bodegard',
   '"Christoffer Bodegård"',
-  '"Christoffer Bodegard"',
   '"Esoteric Ebb" interview',
-  '"Esoteric Ebb" podcast'
+  '"Esoteric Ebb" review',
+  '"Esoteric Ebb" podcast',
+  '"Esoteric Ebb" developer'
 ];
 
 // Domains you never want on the press page.
 const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/shorts'];
 
+// URL patterns that are index pages rather than articles.
+const PRESS_URL_JUNK = ['/tag/', '/tags/', '/topic/', '/topics/', '/category/',
+  '/categories/', '/author/', '/people/', '/search', '/games/'];
+
+// A "headline" that is really just a name or a label is a listing page.
+function looksLikeIndexPage(it) {
+  const t = (it.title || '').trim();
+  if (t.length < 22) return true;
+  if (/^(christoffer\s+bodeg[åa]rd|esoteric\s+ebb)$/i.test(t)) return true;
+  const u = (it.url || '').toLowerCase();
+  return PRESS_URL_JUNK.some(p => u.includes(p));
+}
+
 // Try to pull a thumbnail from the article page. Costs one fetch per article.
 const PRESS_THUMBS = true;
-const PRESS_THUMB_COUNT = 30;
+const PRESS_THUMB_COUNT = 40;
 
 const CORS = {
   'content-type': 'application/json; charset=utf-8',
@@ -46,7 +61,7 @@ export default {
     const debug = url.searchParams.get('debug');
     try {
       if (feed === 'press') return json(await press(debug));
-      return json(await steam());
+      return json(await steam(debug));
     } catch (err) {
       return new Response(JSON.stringify({ error: String(err && err.stack || err) }),
         { status: 500, headers: CORS });
@@ -66,7 +81,7 @@ async function capsules(appid) {
   try {
     const url = 'https://store.steampowered.com/events/ajaxgetpartnereventspageable/' +
       '?clan_accountid=0&appid=' + appid + '&offset=0&count=100&l=english' +
-      '&origin=https://store.steampowered.com';
+      '&origin=' + encodeURIComponent('https://store.steampowered.com');
     const res = await fetch(url, { cf: { cacheTtl: 3600 } });
     if (!res.ok) return map;
     const data = await res.json();
@@ -91,10 +106,12 @@ function gidFromUrl(u) {
   return m ? m[1] : '';
 }
 
-async function steam() {
+async function steam(debug) {
   const all = [];
+  const notes = [];
   for (const app of APPS) {
     const caps = await capsules(app.id);
+    notes.push({ appid: app.id, capsulesFound: Object.keys(caps).length });
     const url = 'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/'
       + '?maxlength=0&count=40&appid=' + app.id;
     const res = await fetch(url, { cf: { cacheTtl: 3600 } });
@@ -112,11 +129,26 @@ async function steam() {
         feedname: it.feedname,
         gameName: app.name,
         appid: app.id,
+        gid: it.gid || gidFromUrl(it.url),
         image: caps[it.gid] || caps[gidFromUrl(it.url)] || ''
       });
     }
   }
   all.sort((a, b) => b.date - a.date);
+
+  // Anything still without a capsule: read og:image off the announcement page itself.
+  const missing = all.filter(p => !p.image).slice(0, 24);
+  await Promise.all(missing.map(async p => {
+    const gid = p.gid || gidFromUrl(p.url);
+    if (!gid) return;
+    const page = 'https://steamcommunity.com/games/' + p.appid + '/announcements/detail/' + gid;
+    p.image = await ogImage(page);
+  }));
+
+  if (debug) {
+    return { count: all.length, withImage: all.filter(p => p.image).length, notes,
+      sample: all.slice(0, 5).map(p => ({ title: p.title, gid: p.gid, image: p.image })) };
+  }
   return all;
 }
 
@@ -131,12 +163,12 @@ async function press(debug) {
     items = items.concat(bing);
   }
 
-  if (!items.length) {
-    for (const q of PRESS_QUERIES) {
-      const goog = await googleNews(q);
-      log.push({ source: 'google', query: q, found: goog.length });
-      items = items.concat(goog);
-    }
+  // Google News is run as well, not just as a fallback: it surfaces a lot that
+  // Bing misses, and it gives real publisher links so thumbnails can be read.
+  for (const q of PRESS_QUERIES) {
+    const goog = await googleNews(q);
+    log.push({ source: 'google', query: q, found: goog.length });
+    items = items.concat(goog);
   }
 
   // de-duplicate on normalised title
@@ -144,6 +176,7 @@ async function press(debug) {
   items = items.filter(it => {
     if (!it.title || !it.url) return false;
     if (PRESS_BLOCKLIST.some(b => it.url.includes(b))) return false;
+    if (looksLikeIndexPage(it)) return false;
     const key = it.title.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 60);
     if (seen.has(key)) return false;
     seen.add(key);
