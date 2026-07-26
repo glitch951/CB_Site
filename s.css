@@ -42,10 +42,11 @@
 .cb-portrait img {
   position: absolute;
   bottom: 0;
+  height: 100%;
   width: auto;
-  height: auto;
-  max-width: 48%;
+  max-width: 49%;
   object-fit: contain;
+  object-position: bottom;
   opacity: 0;
   transition: opacity 1.6s ease;
 }

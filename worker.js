@@ -29,7 +29,8 @@ const PRESS_QUERIES = [
 ];
 
 // Domains you never want on the press page.
-const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/shorts'];
+const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/shorts',
+  'msn.com', 'news.yahoo.com', 'flipboard.com', 'newsbreak.com'];
 
 // URL patterns that are index pages rather than articles.
 const PRESS_URL_JUNK = ['/tag/', '/tags/', '/topic/', '/topics/', '/category/',
@@ -46,7 +47,7 @@ function looksLikeIndexPage(it) {
 
 // Try to pull a thumbnail from the article page. Costs one fetch per article.
 const PRESS_THUMBS = true;
-const PRESS_THUMB_COUNT = 40;
+const PRESS_THUMB_COUNT = 14;
 
 const CORS = {
   'content-type': 'application/json; charset=utf-8',
@@ -75,29 +76,83 @@ function json(data) {
 
 /* ---------- Steam ------------------------------------------------ */
 /* Steam's news API doesn't carry the capsule image an announcement shows on the
-   store page, so pull the events list too and match them up by gid. */
-async function capsules(appid) {
-  const map = {};
+   store page. Try the events endpoints, then fall back to scraping the store's
+   own news page. Whichever works first wins. */
+function clanImage(file) {
+  if (!file) return '';
+  if (/^https?:/.test(file)) return file;
+  return 'https://clan.cloudflare.steamstatic.com/images/' + String(file).replace(/^\/+/, '');
+}
+
+function isJunkImage(u) {
+  return !u || /steam_share_image|steamcommunity\/public\/images|apps\/\d+\/header/.test(u);
+}
+
+async function eventsJson(url) {
   try {
-    const url = 'https://store.steampowered.com/events/ajaxgetpartnereventspageable/' +
-      '?clan_accountid=0&appid=' + appid + '&offset=0&count=100&l=english' +
-      '&origin=' + encodeURIComponent('https://store.steampowered.com');
-    const res = await fetch(url, { cf: { cacheTtl: 3600 } });
-    if (!res.ok) return map;
-    const data = await res.json();
-    for (const ev of (data.events || [])) {
-      const gid = String((ev.announcement_body && ev.announcement_body.gid) || ev.gid || '');
-      let jd = ev.jsondata;
-      if (typeof jd === 'string') { try { jd = JSON.parse(jd); } catch (e) { jd = null; } }
-      const caps = (jd && (jd.localized_capsule_image || jd.localized_title_image)) || [];
-      const file = Array.isArray(caps) ? caps.find(Boolean) : caps;
-      if (gid && file) {
-        map[gid] = /^https?:/.test(file)
-          ? file
-          : 'https://clan.cloudflare.steamstatic.com/images/' + file.replace(/^\/+/, '');
+    const res = await fetch(url, {
+      cf: { cacheTtl: 3600 },
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+          '(KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'accept': 'application/json, text/plain, */*'
       }
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+function harvestEvents(data, map) {
+  for (const ev of ((data && data.events) || [])) {
+    const gid = String((ev.announcement_body && ev.announcement_body.gid) || ev.gid || '');
+    let jd = ev.jsondata;
+    if (typeof jd === 'string') { try { jd = JSON.parse(jd); } catch (e) { jd = null; } }
+    const caps = (jd && (jd.localized_capsule_image || jd.localized_title_image)) || [];
+    const file = Array.isArray(caps) ? caps.find(Boolean) : caps;
+    const url = clanImage(file);
+    if (gid && url && !isJunkImage(url)) map[gid] = url;
+  }
+}
+
+async function capsules(appid, notes) {
+  const map = {};
+  const base = 'https://store.steampowered.com/events/ajaxgetpartnereventspageable/';
+
+  const tries = [
+    base + '?clan_accountid=0&appid=' + appid + '&offset=0&count=100&l=english&origin=' +
+      encodeURIComponent('https://store.steampowered.com'),
+    base + '?clan_accountid=0&appid=' + appid + '&offset=0&count=100&l=english',
+    base + '?appid=' + appid + '&offset=0&count=100&l=english'
+  ];
+
+  for (const url of tries) {
+    const data = await eventsJson(url);
+    harvestEvents(data, map);
+    if (notes) notes.push({ source: 'events', got: Object.keys(map).length });
+    if (Object.keys(map).length) return map;
+  }
+
+  // last resort: the store news page embeds the same data as escaped JSON
+  try {
+    const res = await fetch('https://store.steampowered.com/news/app/' + appid, {
+      cf: { cacheTtl: 3600 },
+      headers: { 'user-agent': 'Mozilla/5.0 (compatible; cb-feeds/1.0)' }
+    });
+    if (res.ok) {
+      const html = await res.text();
+      const re = /"gid"\s*:\s*\\?"(\d{6,})\\?"[\s\S]{0,6000}?localized_capsule_image\\?"\s*:\s*\[\s*\\?"([^"\\]+)/g;
+      let m;
+      while ((m = re.exec(html))) {
+        const url = clanImage(m[2]);
+        if (!map[m[1]] && !isJunkImage(url)) map[m[1]] = url;
+      }
+      if (notes) notes.push({ source: 'newspage', got: Object.keys(map).length });
     }
   } catch (e) {}
+
   return map;
 }
 
@@ -110,7 +165,7 @@ async function steam(debug) {
   const all = [];
   const notes = [];
   for (const app of APPS) {
-    const caps = await capsules(app.id);
+    const caps = await capsules(app.id, notes);
     notes.push({ appid: app.id, capsulesFound: Object.keys(caps).length });
     const url = 'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/'
       + '?maxlength=0&count=40&appid=' + app.id;
@@ -135,15 +190,6 @@ async function steam(debug) {
     }
   }
   all.sort((a, b) => b.date - a.date);
-
-  // Anything still without a capsule: read og:image off the announcement page itself.
-  const missing = all.filter(p => !p.image).slice(0, 24);
-  await Promise.all(missing.map(async p => {
-    const gid = p.gid || gidFromUrl(p.url);
-    if (!gid) return;
-    const page = 'https://steamcommunity.com/games/' + p.appid + '/announcements/detail/' + gid;
-    p.image = await ogImage(page);
-  }));
 
   if (debug) {
     return { count: all.length, withImage: all.filter(p => p.image).length, notes,
@@ -187,7 +233,7 @@ async function press(debug) {
 
   if (PRESS_THUMBS) {
     const head = items.slice(0, PRESS_THUMB_COUNT);
-    await Promise.all(head.map(async it => {
+    await Promise.allSettled(head.map(async it => {
       it.image = await ogImage(it.url);
     }));
   }

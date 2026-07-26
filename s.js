@@ -286,7 +286,6 @@
         var img = h('img', { alt: '', class: sides[n] });
         img.style.setProperty('--portrait-opacity',
           C.portraitOpacity != null ? C.portraitOpacity : .1);
-        img.style.maxHeight = (88 + Math.random() * 20) + '%';
         img.onload = function () { img.classList.add('is-in'); };
         img.onerror = function () { img.remove(); };
         img.decoding = 'async';
