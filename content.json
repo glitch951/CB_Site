@@ -1,13 +1,12 @@
 {
   "name": "Christoffer Bodegård",
-  "bio": "Game developer, writer, and fan of interactive storytelling. Creator of <a href=\"https://esotericebb.com/\">Esoteric Ebb</a>.",
-  "copyright": "©2026 Sudden Snail AB. Esoteric Ebb and its respective logo are trademarks of Sudden Snail AB.",
+  "bio": "Christoffer Bodegård is a game developer, writer, and fan of interactive storytelling. Creator of <a href=\"https://esotericebb.com/\">Esoteric Ebb</a>. Focused on developing the art of interactive writing for use in role-playing games.",
+  "copyright": "©2026 Sudden Snail AB. Esoteric Ebb and its respective logo are trademarks of Sudden Snail AB. All rights reserved.",
   "homePage": "work",
 
   "feedsUrl": "https://cb-feeds.christofferbodegard.workers.dev",
 
   "portraitOpacity": 0.5,
-
   "//portraits": "Portraits are read automatically from the portraits/ folder of whichever repo this site is served from. Just upload files there - nothing to configure, nothing to list.",
   "portraitsDir": "portraits",
   "portraits": [],
@@ -19,40 +18,52 @@
     { "label": "Email", "url": "mailto:you@example.com" }
   ],
 
+  "railExtras": [
+    { "label": "Collaborators", "url": "https://esotericebb.com/#collaborators" }
+  ],
+
   "work": [
+    {
+      "year": "20XX",
+      "title": "The Next Project?",
+      "url": "",
+      "paragraphs": [
+        "We'll see what I'll be working on in the future. Very exciting."
+      ]
+    },
     {
       "year": "2026",
       "title": "Esoteric Ebb",
-      "role": "Solo dev",
       "url": "https://store.steampowered.com/app/2057760",
-      "note": "An isometric CRPG I've been working on as a side project since 2018. Inspired by games like Planescape: Torment and Disco Elysium, EBB is all about social exploration, magical encounters, and personal revelations."
+      "paragraphs": [
+        "ESOTERIC EBB is an isometric CRPG I've been working on as a side project since 2018. Inspired by games like Planescape Torment and Disco Elysium, EBB is all about social exploration, magical encounters, and personal revelations. It started as an excuse for me to do what I enjoy most in game development: writing interactive and dynamic dialogs."
+      ]
     },
     {
       "year": "2024",
       "title": "Gori: Cuddly Carnage",
-      "role": "Collaborator",
       "url": "https://store.steampowered.com/app/1299690/Gori_Cuddly_Carnage/",
-      "note": "I collaborated with Angry Demon Studio on Gori during the start of the project, and was a fierce supporter for the rest of development."
+      "paragraphs": [
+        "I collaborated with Angry Demon Studio on Gori during the start of the project, and was a fierce supporter for the rest of development. It launched in 2024, and I'm very impressed with the direction they took. Funny, irreverent, and with a very distinct style in both gameplay and writing, I'm very happy to have been a small part of it."
+      ]
     },
     {
       "year": "2022",
       "title": "Raft",
-      "role": "Narrative",
       "url": "https://store.steampowered.com/app/648800/Raft/",
-      "note": "Hired by Redbeet Interactive to restructure, write, and conclude the narrative. This included creating over 600 lines of voice recorded dialog."
+      "paragraphs": [
+        "Between 2021-2022 I was hired by <a href=\"https://redbeetinteractive.com/\">Redbeet Interactive</a> to take on the task of restructuring, writing, and concluding the narrative of their game Raft.",
+        "This included creating over 600 lines of voice recorded dialog. Around half of these were for collectable story 'notes', and the other half for NPC encountered towards the end of the game. The people at Redbeet were wonderful to work with, and it was amazing to get a glimpse into their development process during my time with them."
+      ]
     },
     {
       "year": "2019",
       "title": "Apsulov: End of Gods",
-      "role": "Co-writer",
       "url": "https://store.steampowered.com/app/960980/Apsulov_End_of_Gods/",
-      "note": "The tagline 'future viking horror' was used to pitch the project to me, and it immediately set the tone for my writing. Co-written with John Kalderon."
-    },
-    {
-      "year": "20XX",
-      "title": "The Next Project?",
-      "role": "TBD",
-      "note": "We'll see what I'll be working on in the future. Very exciting."
+      "paragraphs": [
+        "I worked on Apsulov: End of Gods from June 2018 until release in August 2019. The tagline 'future viking horror' was used to pitch the project to me, and it immediately set the tone for my writing. The game is all about bleak science fiction with apocalyptic consequences, mixed with dark themes of Norse myth.",
+        "Apsulov: End of Gods was co-written with John Kalderon, and developed by the amazing people at <a href=\"https://angrydemonstudio.com/\">Angry Demon Studio</a>."
+      ]
     }
   ],
 
@@ -60,55 +71,58 @@
     {
       "date": "OCT 2024",
       "venue": "Sweden Game Conference",
-      "title": "Please (don't) make more games with interactive writing",
+      "title": "",
       "url": "https://docs.google.com/presentation/d/1SZB2_i6p2hvoR0Qq1Zge_hh7IN_JbKrM7Suhk0aAZuY/edit?usp=sharing",
-      "linkLabel": "Read the slides",
+      "linkLabel": "PLEASE (DON'T) MAKE MORE GAMES WITH INTERACTIVE WRITING",
       "paragraphs": [
-        "I've been desperately trying to understand interactive storytelling for years. As I dove into the topic, I stumbled upon a problem: there was no common term for the thing I wanted to do. The thing that Planescape: Torment and Disco Elysium did so well.",
-        "So I called it 'INTERACTIVE WRITING', which technically already means something entirely different, and this talk goes over my initial exploration of why I needed this term, along with a list of general rules of agency I follow in my personal design philosophy.",
-        "None of my talks have been recorded yet, which is probably for the best. But since it was pretty well-received at the conference, some people asked me to make the slides public."
+        "I've been desperately trying to understand interactive storytelling for years. As I dove into the topic, I stumbled upon a problem: there was no common term for the thing I wanted to do. The thing that Planescape: Torment and Disco Elysium did so well. So I called it 'INTERACTIVE WRITING', which technically already means something entirely different, and this talk goes over my initial exploration of why I needed this term, along with a list of general rules of agency I follow in my personal design philosophy.",
+        "None of my talks have been recorded yet, which is probably for the best. But since it was pretty well-received at the conference, some people asked me to make the slides public. Here's the link:"
       ]
     },
     {
       "date": "MAY 2026",
       "venue": "Nordic Game Conference",
-      "title": "Interactive Writing Masterclass",
+      "title": "",
+      "url": "",
+      "linkLabel": "",
       "paragraphs": [
-        "I was invited to host a workshop at Nordic. A so-called MASTERCLASS, in which I went over a more freestyled version of my interactive writing talk, along with almost three hours of QnA! A ton of great questions and always fun to rant — especially since this was right after the release of Ebb!"
+        "I was invited to host a workshop at Nordic. A so-called MASTERCLASS, in which I went over a more freestyled version of my interactive writing talk, along with almost three hours of QnA! A ton of great questions and always fun to rant - especially since this was right after the release of Ebb!"
       ]
     }
   ],
 
   "backstory": {
-    "title": "I've always been lazy.",
-    "standfirst": "How a game writing student with no job prospects ended up spending eight years alone on a half-million-word CRPG.",
+    "title": "Lorem ipsum dolor sit amet",
+    "standfirst": "Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     "chapters": [
       {
         "title": "University of Skövde",
-        "years": "2015 — 2018",
+        "media": "",
+        "mediaCaption": "",
         "paragraphs": [
-          "The one time in my life I decided to actually put in some effort was when I landed on the last spot of the Game Writing class of 2015. I was told (as I should have been) that 'Game Writers' have a very difficult time landing jobs — so I made sure I learned programming and graphical design over those years, teaching myself the basics of game development.",
+          "I've always been lazy. The one time in my life I decided to actually put in some effort was when I landed on the last spot of the Game Writing class of 2015. I was told (as I should have been) that 'Game Writers' have a very difficult time landing jobs- so I made sure I learned programming and graphical design over those years, teaching myself the basics of game development.",
           "As I did, I ended up falling deep into the rabbit hole of interactive storytelling. I wrote both my bachelor's and my master's on the topic of agency and UI design in CRPGs, attempting to answer one simple question: <em>How do you write good choices?</em>"
         ],
         "pullquote": "How do you write good choices?"
       },
       {
         "title": "Freelancing",
-        "years": "2018 — 2022",
+        "media": "",
+        "mediaCaption": "",
         "paragraphs": [
-          "As I finished my studies, I did not get a job. As a result, I did what many a gamedev student do: I became an entrepreneur. Grabbing some of my fellow aspiring devs, we joined the local incubator program at <a href=\"https://scienceparkskovde.se/en/\">Science Park Skövde</a>. For about a year we tried making a few different games — but it didn't work out. I learned a hell of a lot from the experience though.",
-          "I also ended up with some contacts, which led me to becoming a freelance writer and developer. Over these years, I had the opportunity to work on a handful of titles (some of which even released) and managed to create a somewhat stable existence.",
-          "However, for all the cool writing gigs I got, my obsession with interactive storytelling led me to spend all my spare time on my own project, called EBBRPG. Started in 2018 as my naive attempt at a spiritual successor to Planescape: Torment, it slowly took over my life."
-        ]
+          "As I finished my studies, I did not get a job. As a result, I did what many a gamedev student do: I became an entrepreneur. Grabbing some of my fellow aspiring devs, we joined the local incubator program at <a href=\"https://scienceparkskovde.se/en/\">Science Park Skövde</a>. For about a year we tried making a few different games- but it didn't work out. I learned a hell of a lot from the experience though. I also ended up with some contacts, which led me to becoming a freelance writer and developer.",
+          "Over these years, I had the opportunity to work on a handful of titles (some of which even released) and managed to create a somewhat stable existence. However, for all the cool writing gigs I got, my obsession with interactive storytelling led me to spend all my spare time on my own project, called EBBRPG. Started in 2018 as my naive attempt at a spiritual successor to Planescape: Torment, it slowly took over my life. By 2022, when my gigs dried up, I started going full-time at my new company."
+        ],
+        "pullquote": ""
       },
       {
         "title": "Sudden Snail",
-        "years": "2022 — 20XX",
+        "media": "",
+        "mediaCaption": "",
         "paragraphs": [
-          "I technically never <em>chose</em> to go full-time on Ebb. I actively looked for other jobs until mid-2023, simply because I did not see a production like this going anywhere. Solo developer, refusing any help. Massive scale CRPG. Half a million words of dialogs.",
-          "But at the start of 2022, I managed to clear the biggest hurdle: I found an art style. Then I nailed a story I really, really believed in. After that, every time I showed the game to someone, the response was increasingly positive.",
-          "At the end of 2022, I once again entered the incubator program, rejoining the wonderful local <a href=\"https://swedengamearena.com/en/\">Sweden Game Arena</a> community. Taking that step outside woke me up to the possibilities I had: I could actually turn Ebb into a job.",
-          "I pitched to publishers all throughout 2023, as the game (and I) got progressively better. At the start of 2024, my first demo blew up thanks to a PC Gamer article, and within a month I'd gotten five contracts to choose from. I picked Raw Fury. Since then, thanks to having an actual budget, I've been collaborating with a ton of amazing artists."
+          "I technically never <em>chose</em> to go full-time on Ebb. I actively looked for other jobs until mid-2023, simply because I did not see a production like this going anywhere. Solo developer, refusing any help. Massive scale CRPG. Half a million words of dialogs. It sounds delusional. But at the start of 2022, I managed to clear the biggest hurdle: I found an art style. Then I nailed a story I really, really believed in. After that, every time I showed the game to someone, the response was increasingly positive.",
+          "At the end of 2022, I once again entered the incubator program, rejoining the wonderful local <a href=\"https://swedengamearena.com/en/\">Sweden Game Arena</a> community. I'd been working from home for years at this point, cooped up in my dark shack, alone. Taking that step outside woke me up to the possibilities I had: I could actually turn Ebb into a job.",
+          "I pitched to publishers all throughout 2023, as the game (and I) got progressively better. At the start of 2024, my first demo blew up thanks to a <a href=\"https://www.pcgamer.com/i-was-already-intrigued-by-this-disco-elysium-inspired-dandd-based-rpg-where-you-play-as-the-worlds-worst-cleric-but-its-demo-blew-my-expectations-out-of-the-water/\">PC Gamer article</a>, and within a month I'd gotten five contracts to choose from. I picked Raw Fury. Since then, thanks to having an actual budget, I've been <a href=\"https://esotericebb.com/#collaborators\">collaborating</a> with a ton of amazing artists. If things go my way, I'm looking to make a long career by making games with a ton of interactive writing, interesting political themes, and characters that matter. Maybe some jokes too, if I'm feeling frisky."
         ],
         "pullquote": "It sounds delusional."
       }
@@ -116,19 +130,19 @@
   },
 
   "inspirations": {
-    "title": "The games I keep arguing with",
-    "standfirst": "Ranked, with a line each on what they took from me.",
+    "title": "Here's a list of his top 10 video games:",
+    "standfirst": "",
     "items": [
-      { "title": "Heroes of Might and Magic 3", "genre": "Turn-Based Strategy", "year": "1999", "why": "" },
-      { "title": "Planescape: Torment", "genre": "CRPG", "year": "1999", "why": "" },
-      { "title": "Disco Elysium", "genre": "CRPG", "year": "2019", "why": "" },
-      { "title": "Super Mario Galaxy", "genre": "Platformer", "year": "2007", "why": "" },
-      { "title": "Deus Ex", "genre": "Immersive Sim", "year": "2000", "why": "" },
-      { "title": "Baldur's Gate 2: Shadow of Amn", "genre": "CRPG", "year": "2000", "why": "" },
-      { "title": "The Secret of Monkey Island", "genre": "Point-and-Click", "year": "1990", "why": "" },
-      { "title": "The Legend of Zelda: Ocarina of Time", "genre": "Action-Adventure", "year": "1998", "why": "" },
-      { "title": "999: Nine Hours, Nine Persons, Nine Doors", "genre": "Visual Novel", "year": "2009", "why": "" },
-      { "title": "Crusader Kings 3", "genre": "Grand Strategy", "year": "2020", "why": "" }
+      { "title": "Heroes of Might and Magic 3", "genre": "Turn-Based Strategy", "year": "1999", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "Planescape: Torment", "genre": "CRPG", "year": "1999", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "Disco Elysium", "genre": "CRPG", "year": "2019", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "Super Mario Galaxy", "genre": "Platformer", "year": "2007", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "Deus Ex", "genre": "Immersive Sim", "year": "2000", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "Baldur's Gate 2: Shadow of Amn", "genre": "CRPG", "year": "2000", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "The Secret of Monkey Island", "genre": "Point-and-Click", "year": "1990", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "The Legend of Zelda: Ocarina of Time", "genre": "Action-Adventure", "year": "1998", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "999: Nine Hours, Nine Persons, Nine Doors", "genre": "Visual Novel", "year": "2009", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
+      { "title": "Crusader Kings 3", "genre": "Grand Strategy", "year": "2020", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] }
     ]
   },
 
@@ -136,7 +150,7 @@
     {
       "outlet": "PC Gamer",
       "date": "FEB 2024",
-      "title": "I was already intrigued by this Disco Elysium-inspired D&D-based RPG where you play as the world's worst cleric — but its demo blew my expectations out of the water",
+      "title": "I was already intrigued by this Disco Elysium-inspired D&D-based RPG where you play as the world's worst cleric, but its demo blew my expectations out of the water",
       "url": "https://www.pcgamer.com/i-was-already-intrigued-by-this-disco-elysium-inspired-dandd-based-rpg-where-you-play-as-the-worlds-worst-cleric-but-its-demo-blew-my-expectations-out-of-the-water/"
     }
   ]

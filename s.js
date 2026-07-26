@@ -19,14 +19,15 @@
     press: 'Press', backstory: 'Backstory', inspirations: 'Inspirations'
   };
 
-  var C = null;      // content.json
+  var C = null;
   var app, main;
-  var cache = {};    // fetched feeds
+  var cache = {};
 
   /* ---------- tiny helpers ------------------------------------- */
   function h(tag, attrs, kids) {
     var el = document.createElement(tag);
     for (var k in attrs || {}) {
+      if (attrs[k] == null) continue;
       if (k === 'html') el.innerHTML = attrs[k];
       else if (k === 'text') el.textContent = attrs[k];
       else el.setAttribute(k, attrs[k]);
@@ -34,12 +35,12 @@
     (kids || []).forEach(function (kid) { if (kid) el.appendChild(kid); });
     return el;
   }
-  function esc(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  function asArray(v) {
+    if (!v) return [];
+    return Array.isArray(v) ? v : [v];
   }
   function paras(arr, dropcap) {
-    return (arr || []).map(function (p, i) {
+    return asArray(arr).map(function (p, i) {
       return '<p' + (dropcap && i === 0 ? ' class="cb-dropcap"' : '') + '>' + p + '</p>';
     }).join('');
   }
@@ -47,34 +48,90 @@
     return new Date(unix * 1000).toLocaleDateString('en-GB',
       { day: '2-digit', month: 'short', year: 'numeric' });
   }
+  function abs(p) { return /^(https?:|data:)/.test(p) ? p : BASE + p; }
 
   /* ---------- Steam BBCode -> HTML ------------------------------ */
   var CLAN = 'https://clan.cloudflare.steamstatic.com/images/';
+
+  function shortUrl(u) {
+    var s = u.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+    return s.length > 42 ? s.slice(0, 40) + '…' : s;
+  }
+
   function bb(src) {
-    var s = String(src || '');
+    var s = String(src || '').replace(/\r\n?/g, '\n');
     s = s.replace(/\{STEAM_CLAN_IMAGE\}/g, CLAN)
          .replace(/\{STEAM_CLAN_LOC_IMAGE\}/g, CLAN);
-    s = s.replace(/\[img\](.*?)\[\/img\]/gi, '<img src="$1" alt="">')
-         .replace(/\[url=(.*?)\](.*?)\[\/url\]/gi, '<a href="$1" target="_blank" rel="noopener">$2</a>')
-         .replace(/\[url\](.*?)\[\/url\]/gi, '<a href="$1" target="_blank" rel="noopener">$1</a>')
-         .replace(/\[b\](.*?)\[\/b\]/gis, '<strong>$1</strong>')
-         .replace(/\[i\](.*?)\[\/i\]/gis, '<em>$1</em>')
-         .replace(/\[u\](.*?)\[\/u\]/gis, '<u>$1</u>')
-         .replace(/\[h(\d)\](.*?)\[\/h\1\]/gis, '<h3>$2</h3>')
-         .replace(/\[quote.*?\](.*?)\[\/quote\]/gis, '<blockquote>$1</blockquote>')
-         .replace(/\[list\]/gi, '<ul>').replace(/\[\/list\]/gi, '</ul>')
-         .replace(/\[\*\]/g, '<li>')
-         .replace(/\[previewyoutube=([\w-]+).*?\]\[\/previewyoutube\]/gi,
-           '<a href="https://youtu.be/$1" target="_blank" rel="noopener">Watch on YouTube</a>')
-         .replace(/\[\/?[a-z][^\]]*\]/gi, '');           // drop anything left over
-    // paragraphs from blank lines
-    return s.split(/\n{2,}/).map(function (block) {
+
+    // block-level tags become their own paragraphs so nothing ever glues together
+    s = s.replace(/\[h(\d)\]([\s\S]*?)\[\/h\1\]/gi, '\n\n<h3>$2</h3>\n\n')
+         .replace(/\[quote[^\]]*\]([\s\S]*?)\[\/quote\]/gi, '\n\n<blockquote>$1</blockquote>\n\n')
+         .replace(/\[list\]/gi, '\n\n<ul>').replace(/\[\/list\]/gi, '</ul>\n\n')
+         .replace(/\[olist\]/gi, '\n\n<ol>').replace(/\[\/olist\]/gi, '</ol>\n\n')
+         .replace(/\[\*\]\s*/g, '<li>')
+         .replace(/\[img\]\s*([^\[\]\s]+)\s*\[\/img\]/gi, '\n\n<img src="$1" alt="">\n\n')
+         .replace(/\[previewyoutube=([\w-]+)[^\]]*\]\s*\[\/previewyoutube\]/gi,
+           '\n\n<a class="cb-out" href="https://youtu.be/$1" target="_blank" rel="noopener">Watch on YouTube</a>\n\n')
+         .replace(/\[hr\]\[\/hr\]|\[hr\]/gi, '\n\n');
+
+    // inline tags
+    s = s.replace(/\[url=["']?(.*?)["']?\]([\s\S]*?)\[\/url\]/gi, function (m, href, label) {
+          label = label.trim();
+          if (!label || /^https?:\/\//i.test(label)) label = shortUrl(href);
+          return '<a class="cb-out" href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
+        })
+        .replace(/\[url\]\s*(.*?)\s*\[\/url\]/gi, function (m, href) {
+          return '<a class="cb-out" href="' + href + '" target="_blank" rel="noopener">' + shortUrl(href) + '</a>';
+        })
+        .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>')
+        .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>')
+        .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>')
+        .replace(/\[strike\]([\s\S]*?)\[\/strike\]/gi, '<s>$1</s>')
+        .replace(/\[\/?[a-z][^\]]*\]/gi, '');   // anything left over
+
+    // bare URLs the author typed without tags
+    s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)\]]+)/g, function (m, pre, url) {
+      return pre + '<a class="cb-out" href="' + url + '" target="_blank" rel="noopener">' +
+        shortUrl(url) + '</a>';
+    });
+
+    s = s.replace(/&nbsp;/g, ' ').replace(/\t/g, ' ').replace(/[ ]{2,}/g, ' ');
+    s = fixGluedText(s);
+
+    // Steam authors use single newlines as paragraph breaks. Treat every break as one.
+    return s.split(/\n+/).map(function (block) {
       block = block.trim();
       if (!block) return '';
-      if (/^<(h3|ul|blockquote|img|figure)/i.test(block)) return block;
-      return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
-    }).join('');
+      if (/^<(h3|ul|ol|blockquote|img|figure|a class="cb-out")/i.test(block) &&
+          /^<(h3|ul|ol|blockquote|img|figure)/i.test(block)) return block;
+      return '<p>' + block + '</p>';
+    }).filter(Boolean).join('');
   }
+
+  /* Steam posts often lose the space between sentences once formatting tags are
+     stripped ("...stuff.Speaking of which", "is this:<b>Oscar</b>"). Repair it in visible
+     text only — never inside a tag, an href or a URL. */
+  function fixGluedText(html) {
+    var parts = html.split(/(<[^>]*>)/);
+    for (var i = 0; i < parts.length; i += 2) {
+      parts[i] = parts[i].replace(/([a-zà-ÿ0-9)"'\]][.!?:;])([A-ZÀ-Þ0-9"'(])/g, '$1 $2');
+    }
+    // same repair across tag boundaries
+    for (var j = 0; j < parts.length; j += 2) {
+      if (!/[.!?:;]$/.test(parts[j])) continue;
+      for (var k = j + 1; k < parts.length; k++) {
+        if (k % 2) {                                   // a tag: keep looking
+          if (/^<\/?(p|h\d|ul|ol|li|br|div|blockquote|figure|img)\b/i.test(parts[k])) break;
+          continue;
+        }
+        if (!parts[k].length) continue;
+        if (/^[A-ZÀ-Þ0-9"'(]/.test(parts[k])) parts[j] += ' ';
+        break;
+      }
+    }
+    return parts.join('');
+  }
+
   function firstImage(html) {
     var m = /<img src="([^"]+)"/.exec(html);
     return m ? m[1] : null;
@@ -83,24 +140,44 @@
     var t = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     return t.length > n ? t.slice(0, n).replace(/\s+\S*$/, '') + '…' : t;
   }
+  function steamHeader(appid) {
+    return appid ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + appid + '/header.jpg' : null;
+  }
 
   /* ---------- shell -------------------------------------------- */
+  function navLink(p) {
+    var a = h('a', { href: '#cb-' + p, 'data-page': p, text: TITLES[p] });
+    a.addEventListener('click', function (ev) {
+      ev.preventDefault(); ev.stopPropagation(); go(p);
+    });
+    return a;
+  }
+
+  function railExtras() {
+    var items = C.railExtras || [];
+    if (!items.length) return null;
+    return h('div', { class: 'cb-extras' }, items.map(function (x) {
+      if (x.url) {
+        return h('a', { href: x.url, target: '_blank', rel: 'noopener', text: x.label });
+      }
+      return h('div', { class: 'cb-extra-text', html: x.label });
+    }));
+  }
+
   function build() {
     app = h('div', { id: 'cb-app' });
-
     var portrait = h('div', { class: 'cb-portrait' });
     app.appendChild(portrait);
     rollPortrait(portrait);
 
-    var navLinks = PAGES.map(function (p) { return navLink(p); });
-
     var rail = h('div', { class: 'cb-rail' }, [
       h('div', { class: 'cb-rail-top' }, [
-        h('div', { class: 'cb-name', html: esc(C.name).replace(' ', '<br>') }),
+        h('div', { class: 'cb-name', html: String(C.name || '').replace(' ', '<br>') }),
         h('div', { class: 'cb-hr' }),
-        h('nav', { class: 'cb-nav' }, navLinks),
+        h('nav', { class: 'cb-nav' }, PAGES.map(navLink)),
         h('div', { class: 'cb-hr' }),
-        h('p', { class: 'cb-bio', html: C.bio })
+        h('p', { class: 'cb-bio', html: C.bio || '' }),
+        railExtras()
       ]),
       h('div', { class: 'cb-rail-bottom' }, [
         h('div', { class: 'cb-social' }, (C.social || []).map(function (s) {
@@ -111,17 +188,15 @@
     ]);
 
     var topbar = h('div', { class: 'cb-topbar' }, [
-      h('div', { class: 'cb-name', text: C.name }),
-      h('nav', {}, PAGES.map(function (p) { return navLink(p); }))
+      h('div', { class: 'cb-name', text: C.name || '' }),
+      h('nav', {}, PAGES.map(navLink))
     ]);
 
     main = h('div', { class: 'cb-main' });
-
     app.appendChild(rail);
     app.appendChild(topbar);
     app.appendChild(main);
 
-    // hide whatever Carrd rendered, then mount
     Array.prototype.forEach.call(document.body.children, function (el) {
       if (el.tagName !== 'SCRIPT' && el.tagName !== 'LINK') el.style.display = 'none';
     });
@@ -129,9 +204,6 @@
     document.body.appendChild(app);
   }
 
-  /* Picks one portrait at random. You never list them by hand: the folder is read
-     from jsDelivr's file index, so uploading a file to portraits/ is all it takes.
-     An explicit "portraits" array in content.json overrides this if you ever want it. */
   function portraitList() {
     if ((C.portraits || []).length) return Promise.resolve(C.portraits);
     var pkg = C.portraitsFrom || SELF_PKG;
@@ -140,7 +212,9 @@
     return fetch('https://data.jsdelivr.com/v1/packages/' + pkg)
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        var node = (j.files || []).filter(function (f) { return f.type === 'directory' && f.name === dir; })[0];
+        var node = (j.files || []).filter(function (f) {
+          return f.type === 'directory' && f.name === dir;
+        })[0];
         if (!node) return [];
         return (node.files || [])
           .filter(function (f) { return /\.(png|jpe?g|webp|gif|avif)$/i.test(f.name); })
@@ -149,37 +223,19 @@
       .catch(function () { return []; });
   }
 
-  function navLink(p) {
-    var a = h('a', { href: '#cb-' + p, 'data-page': p, text: TITLES[p] });
-    a.addEventListener('click', function (ev) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      go(p);
-    });
-    return a;
-  }
-
   function rollPortrait(holder) {
-    portraitList().then(function (list) { mountPortrait(holder, list); });
-  }
-
-  function mountPortrait(holder, list) {
-    if (!list.length) return;
-    var src = list[Math.floor(Math.random() * list.length)];
-    var img = h('img', { alt: '' });
-    img.style.setProperty('--portrait-opacity', C.portraitOpacity || .5);
-    img.style.left = (-13 + Math.random() * 12) + '%';
-    img.style.top = (-13 + Math.random() * 12) + '%';
-    if (Math.random() > .5) img.style.transform = 'scaleX(-1)';
-    img.onload = function () { img.classList.add('is-in'); };
-    img.onerror = function () { img.remove(); };
-    img.src = /^https?:/.test(src) ? src : BASE + src;
-    holder.appendChild(img);
-  }
-
-  function guardImages(root) {
-    root.querySelectorAll('.cb-body img').forEach(function (im) {
-      im.onerror = function () { im.remove(); };
+    portraitList().then(function (list) {
+      if (!list.length) return;
+      var src = list[Math.floor(Math.random() * list.length)];
+      var img = h('img', { alt: '' });
+      img.style.setProperty('--portrait-opacity', C.portraitOpacity || .5);
+      img.style.left = (-13 + Math.random() * 12) + '%';
+      img.style.top = (-13 + Math.random() * 12) + '%';
+      if (Math.random() > .5) img.style.transform = 'scaleX(-1)';
+      img.onload = function () { img.classList.add('is-in'); };
+      img.onerror = function () { img.remove(); };
+      img.src = abs(src);
+      holder.appendChild(img);
     });
   }
 
@@ -190,43 +246,46 @@
   }
 
   /* ---------- pages -------------------------------------------- */
-  function masthead(label, note) {
-    return h('div', { class: 'cb-masthead' }, [
-      h('span', { class: 'cb-kicker', text: label }),
-      note ? h('div', { class: 'cb-fill' }) : null,
-      note ? h('span', { class: 'cb-note', text: note }) : null
+  function masthead(label) {
+    return h('div', { class: 'cb-masthead' }, [h('span', { class: 'cb-kicker', text: label })]);
+  }
+
+  function mediaBlock(src, caption) {
+    if (!src) return null;
+    var node;
+    if (/\.(mp4|webm|mov)$/i.test(src)) {
+      node = h('video', { src: abs(src), autoplay: '', loop: '', muted: '', playsinline: '' });
+      node.muted = true;
+    } else {
+      node = h('img', { src: abs(src), alt: '' });
+    }
+    var fig = h('figure', { class: 'cb-side-media' }, [
+      node, caption ? h('figcaption', { text: caption }) : null
     ]);
+    node.onerror = function () { fig.remove(); };
+    return fig;
   }
 
   function pageBackstory() {
     var b = C.backstory || {};
-    var page = h('div', { class: 'cb-page' }, [
-      masthead('Backstory'),
-      h('h2', { class: 'cb-title', text: b.title || '' }),
-      h('p', { class: 'cb-standfirst', text: b.standfirst || '' })
-    ]);
+    var page = h('div', { class: 'cb-page' }, [masthead('Backstory')]);
+    if (b.title) page.appendChild(h('h2', { class: 'cb-title', text: b.title }));
+    if (b.standfirst) page.appendChild(h('p', { class: 'cb-standfirst', text: b.standfirst }));
+
     (b.chapters || []).forEach(function (ch, i) {
-      if (i > 0) {
-        page.appendChild(h('div', { class: 'cb-chapter' }, [
-          h('h3', { text: ch.title }),
-          h('div', { class: 'cb-fill' }),
-          h('span', { text: ch.years || '' })
-        ]));
-      }
-      page.appendChild(h('div', {
-        class: 'cb-body', html: paras(ch.paragraphs, i === 0)
-      }));
+      var col = h('div', { class: 'cb-chapter-col' });
+      if (ch.title) col.appendChild(h('h3', { class: 'cb-chapter-h', text: ch.title }));
+      var list = asArray(ch.paragraphs);
+      col.appendChild(h('div', { class: 'cb-body', html: paras(list.slice(0, 1), i === 0) }));
       if (ch.pullquote) {
-        page.appendChild(h('div', { class: 'cb-pull' }, [h('div', { text: ch.pullquote })]));
+        col.appendChild(h('div', { class: 'cb-aside' }, [h('div', { text: ch.pullquote })]));
       }
-      if (ch.image) {
-        var fig = h('figure', { class: 'cb-figure' }, [
-          h('img', { src: /^https?:/.test(ch.image) ? ch.image : BASE + ch.image, alt: '' }),
-          ch.caption ? h('figcaption', { text: ch.caption }) : null
-        ]);
-        fig.querySelector('img').onerror = function () { fig.remove(); };
-        page.appendChild(fig);
+      if (list.length > 1) {
+        col.appendChild(h('div', { class: 'cb-body', html: paras(list.slice(1)) }));
       }
+      var media = mediaBlock(ch.media, ch.mediaCaption);
+      page.appendChild(h('div', { class: 'cb-chapter-grid' + (media ? '' : ' is-wide') },
+        [col, media]));
     });
     return page;
   }
@@ -235,17 +294,14 @@
     var page = h('div', { class: 'cb-page' }, [masthead('Work')]);
     var list = h('div', { class: 'cb-list' });
     (C.work || []).forEach(function (w) {
-      list.appendChild(h('a', {
-        class: 'cb-row cb-row-work', href: w.url || '#work',
-        target: w.url ? '_blank' : null, rel: 'noopener'
-      }, [
-        h('div', { class: 'cb-meta', text: w.year }),
+      list.appendChild(h('div', { class: 'cb-row cb-row-work' }, [
+        h('div', { class: 'cb-meta', text: w.year || '' }),
         h('div', {}, [
-          h('div', { style: 'display:flex;align-items:baseline;gap:12px;flex-wrap:wrap' }, [
-            h('h4', { text: w.title }),
-            w.role ? h('span', { class: 'cb-tag', text: w.role }) : null
-          ]),
-          h('div', { class: 'cb-desc', text: w.note || '' })
+          w.url
+            ? h('a', { class: 'cb-h4link', href: w.url, target: '_blank', rel: 'noopener' },
+                [h('h4', { text: w.title })])
+            : h('h4', { text: w.title }),
+          h('div', { class: 'cb-desc', html: paras(w.paragraphs && w.paragraphs.length ? w.paragraphs : w.note) })
         ])
       ]));
     });
@@ -275,25 +331,36 @@
   }
 
   function pageInspirations() {
-    var page = h('div', { class: 'cb-page' }, [
-      masthead('Inspirations', 'A growing list'),
-      h('h2', { class: 'cb-title', text: (C.inspirations || {}).title || '' }),
-      h('p', { class: 'cb-standfirst', text: (C.inspirations || {}).standfirst || '' })
-    ]);
+    var ins = C.inspirations || {};
+    var page = h('div', { class: 'cb-page' }, [masthead('Inspirations')]);
+    if (ins.title) page.appendChild(h('h2', { class: 'cb-title is-mid', text: ins.title }));
+    if (ins.standfirst) page.appendChild(h('p', { class: 'cb-standfirst', text: ins.standfirst }));
+
     var list = h('div', { class: 'cb-list' });
-    ((C.inspirations || {}).items || []).forEach(function (g, i) {
-      list.appendChild(h('a', {
-        class: 'cb-row cb-row-insp', href: g.url || '#inspirations',
-        target: g.url ? '_blank' : null, rel: 'noopener'
-      }, [
+    (ins.items || []).forEach(function (g, i) {
+      var panel = h('div', { class: 'cb-drawer' }, [
+        h('div', { class: 'cb-drawer-in' }, [
+          h('div', { class: 'cb-desc', html: paras(g.why) }),
+          g.url ? h('a', {
+            class: 'cb-link is-small', href: g.url, target: '_blank', rel: 'noopener',
+            text: 'More →'
+          }) : null
+        ])
+      ]);
+      var row = h('div', { class: 'cb-row cb-row-insp' }, [
         h('div', { class: 'cb-meta', text: String(i + 1).padStart(2, '0') }),
-        h('div', {}, [
-          h('h4', { text: g.title, style: 'font-size:20px' }),
-          g.why ? h('div', { class: 'cb-desc', text: g.why }) : null
-        ]),
-        h('div', { class: 'cb-meta', text: g.genre || '' }),
-        h('div', { class: 'cb-meta', text: g.year || '' })
-      ]));
+        h('div', { class: 'cb-insp-title', text: g.title }),
+        h('div', { class: 'cb-meta cb-insp-genre', text: g.genre || '' }),
+        h('div', { class: 'cb-meta cb-insp-year', text: g.year || '' }),
+        h('div', { class: 'cb-chev', text: '+' })
+      ]);
+      var wrap = h('div', { class: 'cb-acc' }, [row, panel]);
+      row.addEventListener('click', function () {
+        var open = wrap.classList.toggle('is-open');
+        panel.style.maxHeight = open ? panel.scrollHeight + 'px' : '';
+        wrap.querySelector('.cb-chev').textContent = open ? '–' : '+';
+      });
+      list.appendChild(wrap);
     });
     page.appendChild(list);
     return page;
@@ -302,21 +369,33 @@
   /* ---------- feeds -------------------------------------------- */
   function feed(kind) {
     if (cache[kind]) return Promise.resolve(cache[kind]);
+    if (!C.feedsUrl) return Promise.reject(new Error('no feedsUrl'));
     var url = C.feedsUrl.replace(/\/$/, '') + '/?feed=' + kind;
     return fetch(url).then(function (r) { return r.json(); }).then(function (j) {
-      cache[kind] = j;
-      return j;
+      cache[kind] = j; return j;
     });
+  }
+
+  function thumb(src, fallback) {
+    var box = h('div', { class: 'cb-thumb' });
+    var url = src || fallback;
+    if (!url) return box;
+    var img = h('img', { src: url, alt: '' });
+    img.onerror = function () {
+      if (fallback && img.getAttribute('src') !== fallback) { img.src = fallback; return; }
+      img.remove();
+    };
+    box.appendChild(img);
+    return box;
   }
 
   function pageDevlogs() {
     var page = h('div', { class: 'cb-page' }, [
-      masthead('Devlogs', 'Mirrored from Steam'),
-      h('div', { class: 'cb-loading', text: 'Loading posts…' })
+      masthead('Devlogs'), h('div', { class: 'cb-loading', text: 'Loading posts…' })
     ]);
     feed('steam').then(function (items) {
       page.innerHTML = '';
-      page.appendChild(masthead('Devlogs', 'Mirrored from Steam · ' + items.length + ' posts'));
+      page.appendChild(masthead('Devlogs'));
       if (!items.length) {
         page.appendChild(h('div', { class: 'cb-loading', text: 'No posts found.' }));
         return;
@@ -324,21 +403,18 @@
       var top = items[0];
       var body = bb(top.contents);
       var hero = firstImage(body);
-      page.appendChild(h('div', {
-        style: 'display:flex;gap:14px;margin-top:34px;font-family:JetBrains Mono,monospace;' +
-               'font-size:12px;letter-spacing:.16em;text-transform:uppercase'
-      }, [
-        h('span', { text: fmtDate(top.date), style: 'color:#DB5B2C' }),
-        h('span', { text: top.gameName || '', style: 'opacity:.5' })
+      page.appendChild(h('div', { class: 'cb-postmeta' }, [
+        h('span', { class: 'is-orange', text: fmtDate(top.date) }),
+        h('span', { text: top.gameName || '' })
       ]));
-      page.appendChild(h('h2', { class: 'cb-title', text: top.title, style: 'font-size:72px;max-width:20ch' }));
+      page.appendChild(h('h2', { class: 'cb-title is-post', text: top.title }));
       if (hero) {
-        var heroFig = h('figure', { class: 'cb-figure' }, [h('img', { src: hero, alt: '' })]);
-        heroFig.querySelector('img').onerror = function () { heroFig.remove(); };
-        page.appendChild(heroFig);
+        var fig = h('figure', { class: 'cb-figure' }, [h('img', { src: hero, alt: '' })]);
+        fig.querySelector('img').onerror = function () { fig.remove(); };
+        page.appendChild(fig);
         body = body.replace(/<img src="[^"]+"[^>]*>/, '');
       }
-      page.appendChild(h('div', { class: 'cb-body', html: body }));
+      page.appendChild(h('div', { class: 'cb-body is-post', html: body }));
       page.appendChild(h('a', {
         class: 'cb-link', href: top.url, target: '_blank', rel: 'noopener',
         text: 'Read the whole post on Steam →'
@@ -351,21 +427,17 @@
         var cards = h('div', { class: 'cb-cards' });
         items.slice(1, 25).forEach(function (it) {
           var b2 = bb(it.contents);
-          var img = firstImage(b2);
-          var thumbImg = img ? h('img', { src: img, alt: '' }) : null;
-          if (thumbImg) thumbImg.onerror = function () { thumbImg.remove(); };
           cards.appendChild(h('a', {
             class: 'cb-card', href: it.url, target: '_blank', rel: 'noopener'
           }, [
-            h('div', { class: 'cb-thumb' }, [thumbImg]),
-            h('div', { style: 'display:flex;flex-direction:column;gap:8px' }, [
+            thumb(firstImage(b2), steamHeader(it.appid)),
+            h('div', { class: 'cb-card-txt' }, [
               h('div', { class: 'cb-card-meta' }, [
                 h('span', { text: fmtDate(it.date) }),
-                h('span', { text: '·' }),
                 h('span', { text: it.gameName || '' })
               ]),
               h('h4', { text: it.title }),
-              h('div', { class: 'cb-desc', text: excerpt(b2, 130) })
+              h('div', { class: 'cb-desc', text: excerpt(b2, 120) })
             ])
           ]));
         });
@@ -381,14 +453,12 @@
 
   function pagePress() {
     var page = h('div', { class: 'cb-page' }, [
-      masthead('Press', 'Updates itself'),
-      h('div', { class: 'cb-loading', text: 'Loading coverage…' })
+      masthead('Press'), h('div', { class: 'cb-loading', text: 'Loading…' })
     ]);
     feed('press').then(function (items) {
-      var pinned = C.pressPinned || [];
-      var all = pinned.concat(items);
+      var all = (C.pressPinned || []).concat(items);
       page.innerHTML = '';
-      page.appendChild(masthead('Press', 'Auto — updated hourly'));
+      page.appendChild(masthead('Press'));
       var list = h('div', { class: 'cb-list' });
       all.forEach(function (p) {
         list.appendChild(h('a', {
@@ -396,7 +466,7 @@
         }, [
           h('div', { class: 'cb-meta is-orange', text: p.outlet || '' }),
           h('div', { class: 'cb-headline', text: p.title }),
-          h('div', { class: 'cb-meta', text: p.date || '', style: 'text-align:right' })
+          h('div', { class: 'cb-meta cb-right', text: p.date || '' })
         ]));
       });
       page.appendChild(list);
@@ -413,20 +483,17 @@
     work: pageWork, devlogs: pageDevlogs, talks: pageTalks,
     press: pagePress, backstory: pageBackstory, inspirations: pageInspirations
   };
-
   var current = null;
 
   function pageFromHash() {
     var m = /#cb-([a-z]+)/.exec(location.hash || '');
     return m && PAGES.indexOf(m[1]) !== -1 ? m[1] : null;
   }
-
   function go(page) {
     if (PAGES.indexOf(page) === -1) page = C.homePage || 'work';
     try { history.replaceState(null, '', '#cb-' + page); } catch (e) {}
     render(page);
   }
-
   function route() { render(pageFromHash() || C.homePage || 'work'); }
 
   function render(page) {
@@ -435,7 +502,9 @@
     main.scrollTop = 0;
     var built = BUILDERS[page]();
     main.appendChild(built);
-    guardImages(built);
+    built.querySelectorAll('.cb-body img').forEach(function (im) {
+      im.onerror = function () { im.remove(); };
+    });
     setActive(page);
     document.title = TITLES[page] + ' — ' + C.name;
   }
@@ -454,7 +523,6 @@
     if (C && p && p !== current) render(p);
   });
 
-  // Live preview: editor.html injects content instead of a fetch, and pushes updates.
   window.addEventListener('message', function (ev) {
     if (ev.data && ev.data.type === 'cb-content' && ev.data.content) {
       var keep = current;
