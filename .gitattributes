@@ -1,3 +1,6 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Deployed via the Cloudflare dashboard, not the repo - and contains the
+# Discord bot token, which must never be pushed anywhere public.
+worker.js
+
+# Local editing tool only; keep it off the published site.
 editor.html
