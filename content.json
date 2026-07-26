@@ -4,9 +4,12 @@
   "copyright": "©2026 Sudden Snail AB. Esoteric Ebb and its respective logo are trademarks of Sudden Snail AB.",
   "homePage": "work",
 
-  "feedsUrl": "https://cb-feeds.YOURNAME.workers.dev",
+  "feedsUrl": "https://cb-feeds.christofferbodegard.workers.dev",
 
   "portraitOpacity": 0.5,
+
+  "//portraits": "Portraits are read automatically from the portraits/ folder of whichever repo this site is served from. Just upload files there - nothing to configure, nothing to list.",
+  "portraitsDir": "portraits",
   "portraits": [],
 
   "social": [

@@ -6,6 +6,13 @@
   var SCRIPT = document.currentScript;
   var BASE = SCRIPT.src.replace(/\/[^/]*$/, '/');
 
+  /* Works out "gh/user/repo@branch" from this script's own URL, so nothing has to be
+     configured by hand. Only used when content.json doesn't set portraitsFrom. */
+  var SELF_PKG = (function () {
+    var m = /cdn\.jsdelivr\.net\/(gh\/[^/]+\/[^/@]+(?:@[^/]+)?)\//.exec(SCRIPT.src);
+    return m ? m[1] : null;
+  })();
+
   var PAGES = ['work', 'devlogs', 'talks', 'press', 'backstory', 'inspirations'];
   var TITLES = {
     work: 'Work', devlogs: 'Devlogs', talks: 'Talks',
@@ -126,8 +133,31 @@
     document.body.appendChild(app);
   }
 
+  /* Picks one portrait at random. You never list them by hand: the folder is read
+     from jsDelivr's file index, so uploading a file to portraits/ is all it takes.
+     An explicit "portraits" array in content.json overrides this if you ever want it. */
+  function portraitList() {
+    if ((C.portraits || []).length) return Promise.resolve(C.portraits);
+    var pkg = C.portraitsFrom || SELF_PKG;
+    if (!pkg) return Promise.resolve([]);
+    var dir = (C.portraitsDir || 'portraits').replace(/^\/|\/$/g, '');
+    return fetch('https://data.jsdelivr.com/v1/packages/' + pkg)
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var node = (j.files || []).filter(function (f) { return f.type === 'directory' && f.name === dir; })[0];
+        if (!node) return [];
+        return (node.files || [])
+          .filter(function (f) { return /\.(png|jpe?g|webp|gif|avif)$/i.test(f.name); })
+          .map(function (f) { return dir + '/' + f.name; });
+      })
+      .catch(function () { return []; });
+  }
+
   function rollPortrait(holder) {
-    var list = C.portraits || [];
+    portraitList().then(function (list) { mountPortrait(holder, list); });
+  }
+
+  function mountPortrait(holder, list) {
     if (!list.length) return;
     var src = list[Math.floor(Math.random() * list.length)];
     var img = h('img', { alt: '' });
