@@ -37,6 +37,7 @@
       "url": "https://esotericebb.com/#collaborators"
     }
   ],
+  "//work-visual": "Work rows show each game's vertical (2:3) Steam library capsule in a rail beside the list on wide screens; clicking a row swaps the art, top row shown by default. The art is derived automatically from the Steam store link - add a 'visual' URL to override it, or for non-Steam work. Rows with neither show a hatched placeholder frame.",
   "work": [
     {
       "year": "20XX",
@@ -52,7 +53,8 @@
       "url": "https://store.steampowered.com/app/2057760",
       "paragraphs": [
         "ESOTERIC EBB is an isometric CRPG I've been working on as a side project since 2018. Inspired by games like Planescape Torment and Disco Elysium, EBB is all about social exploration, magical encounters, and personal revelations. It started as an excuse for me to do what I enjoy most in game development: writing interactive and dynamic dialogs."
-      ]
+      ],
+      "visual": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/2057760/94a88a5659c9eb593d15bee7078e91a160ac11f6/library_capsule.jpg"
     },
     {
       "year": "2024",

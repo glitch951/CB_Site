@@ -54,7 +54,7 @@ function looksLikeIndexPage(it) {
 // article's own og:image - the exact picture Google News shows in its results.
 const PRESS_MAX = 80;               // most articles ever returned
 const PRESS_GOOGLE_DECODE_COUNT = 20; // newest google-news links decoded per run
-const PRESS_SCRAPE_COUNT = 22;      // article pages opened for a thumbnail per run
+const PRESS_SCRAPE_COUNT = 20;      // article pages opened for a thumbnail per run
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -286,38 +286,30 @@ async function steam(debug) {
    blocker per source (http status, consent wall, captcha...). */
 async function press(debug) {
   const log = [];
-  const lists = await Promise.all(
-    PRESS_QUERIES.map(q => googleNews(q, log))
-      .concat(PRESS_QUERIES.map(q => gdelt(q, log)))
-  );
+  const t0 = Date.now();
 
-  // de-duplicate on normalised title, merging the best fields of each copy
-  const byKey = new Map();
-  for (const list of lists) for (const it of list) {
-    if (!it.title || !it.url) continue;
-    const key = normTitle(it.title);
-    const prev = byKey.get(key);
-    if (!prev) { byKey.set(key, it); continue; }
-    if (/news\.google\.com/.test(prev.url) && !/news\.google\.com/.test(it.url)) prev.url = it.url;
-    if (!prev.image && it.image) prev.image = it.image;
-    if (!prev.outlet && it.outlet) prev.outlet = it.outlet;
-    if (!prev.ts && it.ts) { prev.ts = it.ts; prev.date = it.date; }
-  }
-  let items = [...byKey.values()].filter(it => {
+  /* Both sources start immediately. Google answers in a second or two, so
+     its link-decoding runs WHILE GDELT is still scanning - the two slowest
+     stages overlap instead of stacking. */
+  const gdeltP = Promise.all(PRESS_QUERIES.map(q => gdelt(q, log)));
+  const googleP = Promise.all(PRESS_QUERIES.map(q => googleNews(q, log)));
+
+  let gItems = mergeLists(await googleP);
+  gItems.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  gItems = gItems.slice(0, PRESS_MAX);
+  await resolveGoogleUrls(gItems, log);
+
+  let items = mergeLists([gItems].concat(await gdeltP));
+  items = items.filter(it => {
     if (PRESS_BLOCKLIST.some(b => it.url.includes(b))) return false;
     if (looksLikeIndexPage(it)) return false;
+    if (PRESS_URL_JUNK.some(p => it.url.toLowerCase().includes(p))) return false;
     return true;
   });
 
   // newest first, always - the site shows them in this order
   items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   items = items.slice(0, PRESS_MAX);
-
-  await resolveGoogleUrls(items, log);
-
-  // drop blocklisted/junk hosts that only became visible after resolution
-  items = items.filter(it => !PRESS_BLOCKLIST.some(b => it.url.includes(b))
-    && !PRESS_URL_JUNK.some(p => it.url.toLowerCase().includes(p)));
   for (const it of items) {
     if (!it.outlet) it.outlet = prettyOutlet(hostOf(it.url));
   }
@@ -339,32 +331,55 @@ async function press(debug) {
     summary: it.summary, date: it.date, ts: it.ts, image: it.image || ''
   }));
 
+  log.push({ stage: 'timing', ms: Date.now() - t0 });
   if (debug) return { count: items.length, withImage: items.filter(i => i.image).length, log, items };
   return items;
 }
 
-/* GDELT DOC API: full-text news search, JSON out, socialimage included. */
+/* De-duplicate on normalised title, merging the best fields of each copy. */
+function mergeLists(lists) {
+  const byKey = new Map();
+  for (const list of lists) for (const it of list) {
+    if (!it.title || !it.url) continue;
+    const key = normTitle(it.title);
+    const prev = byKey.get(key);
+    if (!prev) { byKey.set(key, it); continue; }
+    if (/news\.google\.com/.test(prev.url) && !/news\.google\.com/.test(it.url)) prev.url = it.url;
+    if (!prev.image && it.image) prev.image = it.image;
+    if (!prev.outlet && it.outlet) prev.outlet = it.outlet;
+    if (!prev.summary && it.summary) prev.summary = it.summary;
+    if (!prev.ts && it.ts) { prev.ts = it.ts; prev.date = it.date; }
+  }
+  return [...byKey.values()];
+}
+
+/* GDELT DOC API: full-text news search, JSON out, socialimage included.
+   The full-archive query (back to 2024) is slow - GDELT scans a lot - so it
+   gets a 20s deadline of its own; sources run in parallel so it doesn't
+   stack with the others. If it times out or comes back thin, a quick
+   default-window (last 3 months) query papers over the gap. */
 function fmtDateShort(ts) {
   return ts ? new Date(ts).toLocaleDateString('en-GB',
     { month: 'short', year: 'numeric' }).toUpperCase() : '';
 }
 
-async function gdelt(q, log) {
+async function gdeltFetch(q, fullArchive, ms) {
   const url = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' +
     encodeURIComponent('"' + q + '" sourcelang:eng') +
-    '&mode=artlist&format=json&maxrecords=100&sort=datedesc&startdatetime=20240101000000';
+    '&mode=artlist&format=json&maxrecords=100&sort=datedesc' +
+    (fullArchive ? '&startdatetime=20240101000000' : '');
   let status = 0, arts = [];
   try {
     const res = await tfetch(url, {
       cf: { cacheTtl: 3600 },
       headers: { 'user-agent': UA, 'accept': 'application/json' }
-    });
+    }, ms);
     status = res.status;
     if (res.ok) {
       const data = await res.json();
       arts = (data && data.articles) || [];
     }
-  } catch (e) {}
+  } catch (e) { status = 'timeout'; }
   const items = arts.map(a => {
     const m = /^(\d{4})(\d{2})(\d{2})T?(\d{2})(\d{2})(\d{2})/.exec(a.seendate || '');
     const ts = m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : 0;
@@ -380,7 +395,22 @@ async function gdelt(q, log) {
       date: fmtDateShort(ts)
     };
   }).filter(it => it.title && it.url);
-  if (log) log.push({ source: 'gdelt', query: q, status, found: items.length });
+  return { status, items };
+}
+
+async function gdelt(q, log) {
+  const deep = await gdeltFetch(q, true, 15000);
+  let items = deep.items;
+  let statuses = String(deep.status);
+  if (items.length < 5) {
+    const quick = await gdeltFetch(q, false, 8000);
+    statuses += '/' + quick.status;
+    const seen = new Set(items.map(it => normTitle(it.title)));
+    for (const it of quick.items) {
+      if (!seen.has(normTitle(it.title))) { seen.add(normTitle(it.title)); items.push(it); }
+    }
+  }
+  if (log) log.push({ source: 'gdelt', query: q, status: statuses, found: items.length });
   return items;
 }
 
@@ -431,7 +461,7 @@ async function googleNews(q, log) {
         'cookie': 'CONSENT=YES+cb.20220419-08-p0.en+FX+700; ' +
           'SOCS=CAISHwgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg'
       }
-    });
+    }, 10000);
     status = res.status;
     if (res.ok) xml = await res.text();
   } catch (e) {}

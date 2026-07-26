@@ -344,13 +344,15 @@
     return fig;
   }
 
-  /* Vertical 9:16 visual for the Backstory and Talks rails. Two moods:
+  /* Vertical visual for the Backstory, Talks and Work rails. Two moods:
      ambient (silent, looping, no controls - scenery, not a player) and
      player (controls shown, nothing moves until the visitor presses play).
+     Steam library capsules are 2:3, everything else is framed 9:16.
      The rail it sits in is hidden by CSS on anything narrower than 1250px. */
   function vertMedia(src, opts) {
     if (!src) return null;
     opts = opts || {};
+    var capsule = /library_capsule|library_600x900/i.test(src);
     var node;
     if (/\.(mp4|webm|mov)([?#]|$)/i.test(src)) {
       if (opts.ambient) {
@@ -362,11 +364,61 @@
     } else {
       node = h('img', { src: abs(src), alt: '', loading: 'lazy' });
     }
-    var fig = h('figure', { class: 'cb-vert' }, [
+    var fig = h('figure', { class: 'cb-vert' + (capsule ? ' is-capsule' : '') }, [
       node, opts.caption ? h('figcaption', { text: opts.caption }) : null
     ]);
-    node.onerror = function () { fig.remove(); };
+    node.onerror = function () {
+      if (opts.fallback && node.getAttribute('src') !== opts.fallback) {
+        node.src = opts.fallback;
+        return;
+      }
+      fig.replaceWith(h('div', {
+        class: 'cb-vert cb-vert-empty' + (capsule ? ' is-capsule' : '')
+      }));
+    };
     return fig;
+  }
+
+  /* Shared by Talks and Work: a sticky vertical rail whose visual follows the
+     selected row. The top row is selected by default; clicking another row
+     swaps the visual (pausing any playing video); the little orange marker
+     shows which row owns what the rail is showing. entries[i] carries
+     { visual, fallback, caption } for rows[i]; a row without a visual shows
+     the hatched placeholder frame. */
+  function attachVisualRail(page, list, rows, entries, opts) {
+    var rail = h('aside', { class: 'cb-vert-rail' });
+    var selected = -1;
+    function select(i) {
+      if (i === selected || !entries[i]) return;
+      selected = i;
+      rows.forEach(function (r, n) { r.classList.toggle('is-selected', n === i); });
+      rail.querySelectorAll('video').forEach(function (v) { v.pause(); });
+      rail.innerHTML = '';
+      var e = entries[i];
+      rail.appendChild(
+        (e.visual && vertMedia(e.visual, { caption: e.caption, fallback: e.fallback })) ||
+        h('div', {
+          class: 'cb-vert cb-vert-empty' + (opts && opts.capsule ? ' is-capsule' : '')
+        })
+      );
+    }
+    rows.forEach(function (row, i) {
+      row.classList.add('is-selectable');
+      row.addEventListener('click', function (ev) {
+        if (ev.target.closest && ev.target.closest('a')) return;
+        select(i);
+      });
+    });
+    page.appendChild(h('div', { class: 'cb-withside' }, [list, rail]));
+    select(0);
+  }
+
+  /* Steam's stable vertical library art, derived from any store URL. */
+  function steamLibraryArt(url) {
+    var m = /store\.steampowered\.com\/app\/(\d+)/.exec(url || '');
+    if (!m) return null;
+    var base = 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + m[1] + '/library_600x900';
+    return { src: base + '_2x.jpg', fallback: base + '.jpg' };
   }
 
   function pageBackstory() {
@@ -401,9 +453,25 @@
 
   function pageWork() {
     var page = h('div', { class: 'cb-page' }, [masthead('Work')]);
+    var works = C.work || [];
     var list = h('div', { class: 'cb-list' });
-    (C.work || []).forEach(function (w) {
-      list.appendChild(h('div', { class: 'cb-row cb-row-work' }, [
+    var rows = [];
+
+    /* Each row's vertical art: an explicit `visual` in content.json wins;
+       otherwise it is derived from the Steam store link automatically, so
+       every game with a store page gets its library capsule for free. */
+    var entries = works.map(function (w) {
+      if (w.visual) return { visual: w.visual, fallback: '', caption: w.visualCaption || '' };
+      var art = steamLibraryArt(w.url);
+      return {
+        visual: art ? art.src : '',
+        fallback: art ? art.fallback : '',
+        caption: w.visualCaption || ''
+      };
+    });
+
+    works.forEach(function (w) {
+      var row = h('div', { class: 'cb-row cb-row-work' }, [
         h('div', { class: 'cb-meta', text: w.year || '' }),
         h('div', {}, [
           w.url
@@ -415,9 +483,16 @@
             html: paras(w.paragraphs && w.paragraphs.length ? w.paragraphs : w.note)
           })
         ])
-      ]));
+      ]);
+      rows.push(row);
+      list.appendChild(row);
     });
-    page.appendChild(list);
+
+    if (entries.some(function (e) { return e.visual; })) {
+      attachVisualRail(page, list, rows, entries, { capsule: true });
+    } else {
+      page.appendChild(list);
+    }
     return page;
   }
 
@@ -425,25 +500,12 @@
     var page = h('div', { class: 'cb-page' }, [masthead('Talks')]);
     var talks = C.talks || [];
     var list = h('div', { class: 'cb-list' });
-    var hasVisuals = talks.some(function (t) { return t.visual; });
-    var rail = null;
     var rows = [];
-    var selected = -1;
+    var entries = talks.map(function (t) {
+      return { visual: t.visual || '', fallback: '', caption: t.visualCaption || '' };
+    });
 
-    /* Clicking a talk swaps the visual in the rail. Videos here get controls
-       and wait for the visitor to press play; whatever was playing before is
-       paused when it leaves. */
-    function select(i) {
-      if (!rail || i === selected || !talks[i]) return;
-      selected = i;
-      rows.forEach(function (r, n) { r.classList.toggle('is-selected', n === i); });
-      rail.querySelectorAll('video').forEach(function (v) { v.pause(); });
-      rail.innerHTML = '';
-      var med = vertMedia(talks[i].visual, { caption: talks[i].visualCaption });
-      if (med) rail.appendChild(med);
-    }
-
-    talks.forEach(function (t, i) {
+    talks.forEach(function (t) {
       var row = h('div', { class: 'cb-row cb-row-talk' }, [
         h('div', { class: 'cb-meta', text: t.date || '' }),
         h('div', {}, [
@@ -456,21 +518,12 @@
           }) : null
         ])
       ]);
-      if (hasVisuals) {
-        row.classList.add('is-selectable');
-        row.addEventListener('click', function (ev) {
-          if (ev.target.closest && ev.target.closest('a')) return;
-          select(i);
-        });
-      }
       rows.push(row);
       list.appendChild(row);
     });
 
-    if (hasVisuals) {
-      rail = h('aside', { class: 'cb-vert-rail' });
-      page.appendChild(h('div', { class: 'cb-withside' }, [list, rail]));
-      select(0);
+    if (entries.some(function (e) { return e.visual; })) {
+      attachVisualRail(page, list, rows, entries);
     } else {
       page.appendChild(list);
     }
@@ -514,14 +567,25 @@
   }
 
   /* ---------- feeds -------------------------------------------- */
+  /* Feeds are cached three deep: in memory for this page, in sessionStorage
+     for the visit (so reloads are instant), and per 10-minute bucket so
+     nothing goes stale for long. Empty results are never stored. */
   function feed(kind) {
     if (cache[kind]) return Promise.resolve(cache[kind]);
     if (!C.feedsUrl) return Promise.reject(new Error('no feedsUrl'));
-    // bucket the cache-buster per 10 minutes: fresh enough, still CDN-friendly
     var bucket = Math.floor(Date.now() / 600000);
+    var key = 'cb-feed-' + kind + '-' + bucket;
+    try {
+      var stored = JSON.parse(sessionStorage.getItem(key) || 'null');
+      if (stored && stored.length) { cache[kind] = stored; return Promise.resolve(stored); }
+    } catch (e) {}
     var url = C.feedsUrl.replace(/\/$/, '') + '/?feed=' + kind + '&t=' + bucket;
     return fetch(url).then(function (r) { return r.json(); }).then(function (j) {
-      cache[kind] = j; return j;
+      cache[kind] = j;
+      try {
+        if (j && j.length) sessionStorage.setItem(key, JSON.stringify(j));
+      } catch (e) {}
+      return j;
     });
   }
 
