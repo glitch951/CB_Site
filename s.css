@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,300..700&display=swap');
 
 /* ---------------------------------------------------------------
-   christofferbodegard.com — Broadsheet
+   christofferbodegard.com / Broadsheet
    Ebb Paper #fbf8e5 / Esoteric Black #020E16 / Ebb Orange #DB5B2C
    --------------------------------------------------------------- */
 
@@ -102,7 +102,7 @@
 .cb-page { position: relative; z-index: 1; padding: 56px 96px 110px; max-width: 1180px; animation: cbIn .45s ease both; }
 @keyframes cbIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-.cb-masthead { display: flex; align-items: center; gap: 18px; padding-bottom: 16px; border-bottom: 2px solid var(--ink); }
+.cb-masthead { display: flex; align-items: center; gap: 18px; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
 .cb-kicker { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
 .cb-masthead .cb-fill { flex: 1; height: 1px; background: rgba(2, 14, 22, .2); }
 .cb-note { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .55; }
@@ -132,11 +132,24 @@
   margin-top: 46px;
 }
 .cb-body.is-single { columns: 1; max-width: 70ch; }
-/* Mirrored Steam posts: one column, ragged right. Arbitrary text justifies badly. */
-.cb-body.is-post { columns: 1; max-width: 74ch; text-align: left; hyphens: none; font-size: 17.5px; }
-.cb-body.is-post h3 { font-size: 27px; margin: 30px 0 12px; }
-.cb-body.is-post p { margin: 0 0 16px; }
+/* Mirrored Steam posts */
+.cb-body.is-post { columns: 2; column-gap: 56px; max-width: none; margin-top: 26px; font-size: 17px; }
+.cb-body.is-post h3 { font-size: 25px; margin: 30px 0 12px; break-inside: avoid; }
+.cb-body.is-post > h3:first-child { margin-top: 0; }
+.cb-body.is-post p { margin: 0 0 15px; }
 .cb-body.is-post img { border-radius: 6px; }
+.cb-linkline {
+  text-align: left; hyphens: none; word-break: break-word;
+  margin: 4px 0 16px; padding: 8px 0 8px 12px; border-left: 2px solid rgba(219,91,44,.5);
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.5;
+  break-inside: avoid;
+}
+.cb-linkline a { border-bottom: none; }
+.cb-lede { margin-top: 30px; }
+.cb-lede .cb-postmeta { margin-top: 0; }
+.cb-lede .cb-title.is-post { margin-top: 12px; font-size: 60px; }
+.cb-lede + .cb-figure { margin-top: 26px; }
+.cb-lede + .cb-body { margin-top: 26px; }
 .cb-body + .cb-body { margin-top: 0; }
 .cb-body .cb-out, .cb-body a { overflow-wrap: anywhere; }
 .cb-out { text-decoration: none; border-bottom: 1px solid var(--orange); overflow-wrap: anywhere; }
@@ -155,6 +168,11 @@
 .cb-side-media { position: sticky; top: 0; margin: 0; }
 .cb-side-media img, .cb-side-media video {
   width: 100%; display: block; border: 1px solid var(--rule); border-radius: 6px;
+}
+.cb-side-quote { position: sticky; top: 0; padding-left: 20px; border-left: 3px solid var(--orange); }
+.cb-side-quote div {
+  font-family: 'Source Serif 4', Georgia, serif; font-style: italic;
+  font-size: 26px; line-height: 1.32; letter-spacing: -.015em;
 }
 .cb-side-media figcaption {
   margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px;
@@ -228,14 +246,18 @@
 .cb-figure figcaption { margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .55; }
 
 /* lists (work / press / inspirations) --------------------------- */
-.cb-list { margin-top: 26px; }
+.cb-list { margin-top: 30px; }
+.cb-list > *:first-child, .cb-list > .cb-acc:first-child { border-top: none; }
+.cb-list > .cb-row:first-child { padding-top: 4px; }
 .cb-row { display: grid; gap: 24px; padding: 22px 0; border-top: 1px solid rgba(2, 14, 22, .14); text-decoration: none; align-items: baseline; }
 .cb-row:hover { background: rgba(2, 14, 22, .035); }
 .cb-row-work { grid-template-columns: 78px 1fr; }
-.cb-row-press { grid-template-columns: 160px 1fr 100px; padding: 16px 0; }
+.cb-row-press { grid-template-columns: 100px minmax(0,1fr) 90px; padding: 14px 0; align-items: center; }
+.cb-thumb.is-small { aspect-ratio: 16 / 9; border: 1px solid rgba(2,14,22,.14); border-radius: 5px; overflow: hidden; }
+.cb-thumb.is-small img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cb-row-insp { grid-template-columns: 30px 1fr 160px 60px; padding: 14px 0; }
 .cb-row-talk { grid-template-columns: 110px 1fr; padding: 30px 0; }
-.cb-row-talk:hover { background: none; }
+
 .cb-row-talk h4 { font-size: 34px; letter-spacing: -.03em; }
 .cb-subtitle {
   margin-top: 6px; font-family: 'JetBrains Mono', monospace; font-size: 12px;
@@ -279,6 +301,7 @@
 @media (max-width: 1250px) {
   .cb-chapter-grid { grid-template-columns: minmax(0,1fr); }
   .cb-side-media { display: none; }
+  .cb-side-quote { position: static; margin-top: 8px; }
 }
 
 @media (max-width: 1150px) {
@@ -317,6 +340,12 @@
   .cb-chapter { margin-top: 30px; gap: 14px; }
   .cb-chapter h3 { font-size: 28px; }
   .cb-cards { grid-template-columns: 1fr; }
+  .cb-body.is-post { columns: 1; }
+  .cb-lede .cb-title.is-post { font-size: 32px; }
+  .cb-row-press { grid-template-columns: 76px minmax(0,1fr); }
+  .cb-row-press .cb-right { display: none; }
+  .cb-side-quote { position: static; margin: 22px 0 0; padding-left: 16px; }
+  .cb-side-quote div { font-size: 21px; }
   .cb-chapter-grid { grid-template-columns: minmax(0,1fr); gap: 0; margin-top: 30px; }
   .cb-side-media { display: none; }
   .cb-chapter-h { font-size: 28px; margin-bottom: 16px; }

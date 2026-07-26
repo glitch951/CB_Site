@@ -1,4 +1,4 @@
-/* christofferbodegard.com — Broadsheet
+/* christofferbodegard.com - Broadsheet
    Loaded by a single Carrd embed. Everything you edit lives in content.json.
    No dependencies. */
 
@@ -6,11 +6,14 @@
   var SCRIPT = document.currentScript;
   var BASE = SCRIPT.src.replace(/\/[^/]*$/, '/');
 
-  /* Works out "gh/user/repo@branch" from this script's own URL, so nothing has to be
-     configured by hand. Only used when content.json doesn't set portraitsFrom. */
-  var SELF_PKG = (function () {
-    var m = /cdn\.jsdelivr\.net\/(gh\/[^/]+\/[^/@]+(?:@[^/]+)?)\//.exec(SCRIPT.src);
-    return m ? m[1] : null;
+  /* Where am I served from? Works for jsDelivr and GitHub Pages alike, so the
+     portrait folder can be read without anything being configured by hand. */
+  var REPO = (function () {
+    var m = /cdn\.jsdelivr\.net\/gh\/([^/]+)\/([^/@]+)(?:@([^/]+))?\//.exec(SCRIPT.src);
+    if (m) return { owner: m[1], repo: m[2], ref: m[3] || 'HEAD' };
+    m = /^https?:\/\/([^.]+)\.github\.io\/([^/]+)\//.exec(SCRIPT.src);
+    if (m) return { owner: m[1], repo: m[2], ref: 'HEAD' };
+    return null;
   })();
 
   var PAGES = ['work', 'devlogs', 'talks', 'press', 'backstory', 'inspirations'];
@@ -35,14 +38,9 @@
     (kids || []).forEach(function (kid) { if (kid) el.appendChild(kid); });
     return el;
   }
-  function asArray(v) {
-    if (!v) return [];
-    return Array.isArray(v) ? v : [v];
-  }
-  function paras(arr, dropcap) {
-    return asArray(arr).map(function (p, i) {
-      return '<p' + (dropcap && i === 0 ? ' class="cb-dropcap"' : '') + '>' + p + '</p>';
-    }).join('');
+  function asArray(v) { return !v ? [] : (Array.isArray(v) ? v : [v]); }
+  function paras(arr) {
+    return asArray(arr).map(function (p) { return '<p>' + p + '</p>'; }).join('');
   }
   function fmtDate(unix) {
     return new Date(unix * 1000).toLocaleDateString('en-GB',
@@ -53,9 +51,10 @@
   /* ---------- Steam BBCode -> HTML ------------------------------ */
   var CLAN = 'https://clan.cloudflare.steamstatic.com/images/';
 
-  function shortUrl(u) {
+  function shortUrl(u, max) {
     var s = u.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
-    return s.length > 42 ? s.slice(0, 40) + '…' : s;
+    max = max || 60;
+    return s.length > max ? s.slice(0, max - 1) + '…' : s;
   }
 
   function bb(src) {
@@ -63,7 +62,6 @@
     s = s.replace(/\{STEAM_CLAN_IMAGE\}/g, CLAN)
          .replace(/\{STEAM_CLAN_LOC_IMAGE\}/g, CLAN);
 
-    // block-level tags become their own paragraphs so nothing ever glues together
     s = s.replace(/\[h(\d)\]([\s\S]*?)\[\/h\1\]/gi, '\n\n<h3>$2</h3>\n\n')
          .replace(/\[quote[^\]]*\]([\s\S]*?)\[\/quote\]/gi, '\n\n<blockquote>$1</blockquote>\n\n')
          .replace(/\[list\]/gi, '\n\n<ul>').replace(/\[\/list\]/gi, '</ul>\n\n')
@@ -74,58 +72,68 @@
            '\n\n<a class="cb-out" href="https://youtu.be/$1" target="_blank" rel="noopener">Watch on YouTube</a>\n\n')
          .replace(/\[hr\]\[\/hr\]|\[hr\]/gi, '\n\n');
 
-    // inline tags
     s = s.replace(/\[url=["']?(.*?)["']?\]([\s\S]*?)\[\/url\]/gi, function (m, href, label) {
           label = label.trim();
-          if (!label || /^https?:\/\//i.test(label)) label = shortUrl(href);
+          if (!label || /^https?:\/\//i.test(label)) {
+            return '\n\n<a class="cb-out is-bare" href="' + href +
+              '" target="_blank" rel="noopener">' + shortUrl(href) + '</a>\n\n';
+          }
           return '<a class="cb-out" href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
         })
         .replace(/\[url\]\s*(.*?)\s*\[\/url\]/gi, function (m, href) {
-          return '<a class="cb-out" href="' + href + '" target="_blank" rel="noopener">' + shortUrl(href) + '</a>';
+          return '\n\n<a class="cb-out is-bare" href="' + href +
+            '" target="_blank" rel="noopener">' + shortUrl(href) + '</a>\n\n';
         })
         .replace(/\[b\]([\s\S]*?)\[\/b\]/gi, '<strong>$1</strong>')
         .replace(/\[i\]([\s\S]*?)\[\/i\]/gi, '<em>$1</em>')
         .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, '<u>$1</u>')
         .replace(/\[strike\]([\s\S]*?)\[\/strike\]/gi, '<s>$1</s>')
-        .replace(/\[\/?[a-z][^\]]*\]/gi, '');   // anything left over
+        .replace(/\[\/?[a-z][^\]]*\]/gi, '');
 
-    // bare URLs the author typed without tags
+    // bare URLs the author typed without tags get a line of their own
     s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)\]]+)/g, function (m, pre, url) {
-      return pre + '<a class="cb-out" href="' + url + '" target="_blank" rel="noopener">' +
-        shortUrl(url) + '</a>';
+      return pre.replace(/\s+$/, '') + '\n\n<a class="cb-out is-bare" href="' + url +
+        '" target="_blank" rel="noopener">' + shortUrl(url) + '</a>\n\n';
     });
 
     s = s.replace(/&nbsp;/g, ' ').replace(/\t/g, ' ').replace(/[ ]{2,}/g, ' ');
     s = fixGluedText(s);
 
-    // Steam authors use single newlines as paragraph breaks. Treat every break as one.
     return s.split(/\n+/).map(function (block) {
       block = block.trim();
       if (!block) return '';
-      if (/^<(h3|ul|ol|blockquote|img|figure|a class="cb-out")/i.test(block) &&
-          /^<(h3|ul|ol|blockquote|img|figure)/i.test(block)) return block;
+      if (/^<(h3|ul|ol|blockquote|img|figure)/i.test(block)) return block;
+      if (/^<a class="cb-out is-bare"/.test(block) && /<\/a>$/.test(block)) {
+        return '<p class="cb-linkline">' + block + '</p>';
+      }
       return '<p>' + block + '</p>';
     }).filter(Boolean).join('');
   }
 
-  /* Steam posts often lose the space between sentences once formatting tags are
-     stripped ("...stuff.Speaking of which", "is this:<b>Oscar</b>"). Repair it in visible
-     text only — never inside a tag, an href or a URL. */
+  /* Steam posts routinely lose the space between sentences once formatting tags
+     are stripped ("stuff.Speaking", "here:<b>Bandcamp</b>", "</a>That's"). Repair
+     it in visible text only, never inside a tag, an href or a URL. */
   function fixGluedText(html) {
     var parts = html.split(/(<[^>]*>)/);
-    for (var i = 0; i < parts.length; i += 2) {
-      parts[i] = parts[i].replace(/([a-zà-ÿ0-9)"'\]][.!?:;])([A-ZÀ-Þ0-9"'(])/g, '$1 $2');
+    var i, j, k;
+    for (i = 0; i < parts.length; i += 2) {
+      parts[i] = parts[i].replace(/([a-zà-ÿ0-9)"'\]!?][.!?:;])([A-ZÀ-Þ0-9"'(])/g, '$1 $2');
     }
-    // same repair across tag boundaries
-    for (var j = 0; j < parts.length; j += 2) {
-      if (!/[.!?:;]$/.test(parts[j])) continue;
-      for (var k = j + 1; k < parts.length; k++) {
-        if (k % 2) {                                   // a tag: keep looking
+    for (j = 0; j < parts.length; j += 2) {
+      if (!/[a-zà-ÿ0-9.!?:;,)"'\]]$/.test(parts[j])) continue;
+      var endsSentence = /[.!?:;,)]$/.test(parts[j]);
+      for (k = j + 1; k < parts.length; k++) {
+        if (k % 2) {
           if (/^<\/?(p|h\d|ul|ol|li|br|div|blockquote|figure|img)\b/i.test(parts[k])) break;
           continue;
         }
         if (!parts[k].length) continue;
-        if (/^[A-ZÀ-Þ0-9"'(]/.test(parts[k])) parts[j] += ' ';
+        var startsHard = /^[A-ZÀ-Þ0-9"'(]/.test(parts[k]);
+        var afterLink = /<\/a>/.test(parts.slice(j + 1, k).join(''));
+        var beforeLink = /<a\b/.test(parts.slice(j + 1, k).join(''));
+        if ((endsSentence && (startsHard || beforeLink)) || (afterLink && startsHard)) {
+          parts[j] += ' ';
+        }
         break;
       }
     }
@@ -137,11 +145,11 @@
     return m ? m[1] : null;
   }
   function excerpt(html, n) {
-    var t = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    var t = String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
     return t.length > n ? t.slice(0, n).replace(/\s+\S*$/, '') + '…' : t;
   }
   function steamHeader(appid) {
-    return appid ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + appid + '/header.jpg' : null;
+    return appid ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + appid + '/header.jpg' : '';
   }
 
   /* ---------- shell -------------------------------------------- */
@@ -157,9 +165,7 @@
     var items = C.railExtras || [];
     if (!items.length) return null;
     return h('div', { class: 'cb-extras' }, items.map(function (x) {
-      if (x.url) {
-        return h('a', { href: x.url, target: '_blank', rel: 'noopener', text: x.label });
-      }
+      if (x.url) return h('a', { href: x.url, target: '_blank', rel: 'noopener', text: x.label });
       return h('div', { class: 'cb-extra-text', html: x.label });
     }));
   }
@@ -204,21 +210,30 @@
     document.body.appendChild(app);
   }
 
+  /* Portraits: read the folder listing once, remember it for the session, then
+     load exactly ONE image per page load so nothing heavy is downloaded twice. */
   function portraitList() {
-    if ((C.portraits || []).length) return Promise.resolve(C.portraits);
-    var pkg = C.portraitsFrom || SELF_PKG;
-    if (!pkg) return Promise.resolve([]);
+    if ((C.portraits || []).length) return Promise.resolve(C.portraits.map(abs));
     var dir = (C.portraitsDir || 'portraits').replace(/^\/|\/$/g, '');
-    return fetch('https://data.jsdelivr.com/v1/packages/' + pkg)
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        var node = (j.files || []).filter(function (f) {
-          return f.type === 'directory' && f.name === dir;
-        })[0];
-        if (!node) return [];
-        return (node.files || [])
-          .filter(function (f) { return /\.(png|jpe?g|webp|gif|avif)$/i.test(f.name); })
-          .map(function (f) { return dir + '/' + f.name; });
+    var key = 'cb-portraits-' + dir;
+    try {
+      var cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+      if (cached && cached.length) return Promise.resolve(cached);
+    } catch (e) {}
+    if (!REPO) return Promise.resolve([]);
+
+    var api = 'https://api.github.com/repos/' + REPO.owner + '/' + REPO.repo +
+      '/contents/' + dir + (REPO.ref && REPO.ref !== 'HEAD' ? '?ref=' + REPO.ref : '');
+    return fetch(api)
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (files) {
+        var list = (files || [])
+          .filter(function (f) {
+            return f.type === 'file' && /\.(png|jpe?g|webp|gif|avif)$/i.test(f.name);
+          })
+          .map(function (f) { return f.download_url; });
+        try { sessionStorage.setItem(key, JSON.stringify(list)); } catch (e) {}
+        return list;
       })
       .catch(function () { return []; });
   }
@@ -226,7 +241,6 @@
   function rollPortrait(holder) {
     portraitList().then(function (list) {
       if (!list.length) return;
-      var src = list[Math.floor(Math.random() * list.length)];
       var img = h('img', { alt: '' });
       img.style.setProperty('--portrait-opacity', C.portraitOpacity || .5);
       img.style.left = (-13 + Math.random() * 12) + '%';
@@ -234,7 +248,9 @@
       if (Math.random() > .5) img.style.transform = 'scaleX(-1)';
       img.onload = function () { img.classList.add('is-in'); };
       img.onerror = function () { img.remove(); };
-      img.src = abs(src);
+      img.decoding = 'async';
+      img.loading = 'eager';
+      img.src = list[Math.floor(Math.random() * list.length)];
       holder.appendChild(img);
     });
   }
@@ -254,7 +270,7 @@
     if (!src) return null;
     var node;
     if (/\.(mp4|webm|mov)$/i.test(src)) {
-      node = h('video', { src: abs(src), autoplay: '', loop: '', muted: '', playsinline: '' });
+      node = h('video', { src: abs(src), autoplay: '', loop: '', playsinline: '' });
       node.muted = true;
     } else {
       node = h('img', { src: abs(src), alt: '' });
@@ -271,21 +287,19 @@
     var page = h('div', { class: 'cb-page' }, [masthead('Backstory')]);
     if (b.title) page.appendChild(h('h2', { class: 'cb-title', text: b.title }));
     if (b.standfirst) page.appendChild(h('p', { class: 'cb-standfirst', text: b.standfirst }));
+    page.classList.add(b.title || b.standfirst ? 'has-head' : 'no-head');
 
-    (b.chapters || []).forEach(function (ch, i) {
+    (b.chapters || []).forEach(function (ch) {
       var col = h('div', { class: 'cb-chapter-col' });
       if (ch.title) col.appendChild(h('h3', { class: 'cb-chapter-h', text: ch.title }));
-      var list = asArray(ch.paragraphs);
-      col.appendChild(h('div', { class: 'cb-body', html: paras(list.slice(0, 1), i === 0) }));
-      if (ch.pullquote) {
-        col.appendChild(h('div', { class: 'cb-aside' }, [h('div', { text: ch.pullquote })]));
+      col.appendChild(h('div', { class: 'cb-body', html: paras(ch.paragraphs) }));
+
+      var side = mediaBlock(ch.media, ch.mediaCaption);
+      if (!side && ch.pullquote) {
+        side = h('div', { class: 'cb-side-quote' }, [h('div', { text: ch.pullquote })]);
       }
-      if (list.length > 1) {
-        col.appendChild(h('div', { class: 'cb-body', html: paras(list.slice(1)) }));
-      }
-      var media = mediaBlock(ch.media, ch.mediaCaption);
-      page.appendChild(h('div', { class: 'cb-chapter-grid' + (media ? '' : ' is-wide') },
-        [col, media]));
+      page.appendChild(h('div', { class: 'cb-chapter-grid' + (side ? '' : ' is-wide') },
+        [col, side]));
     });
     return page;
   }
@@ -301,7 +315,10 @@
             ? h('a', { class: 'cb-h4link', href: w.url, target: '_blank', rel: 'noopener' },
                 [h('h4', { text: w.title })])
             : h('h4', { text: w.title }),
-          h('div', { class: 'cb-desc', html: paras(w.paragraphs && w.paragraphs.length ? w.paragraphs : w.note) })
+          h('div', {
+            class: 'cb-desc',
+            html: paras(w.paragraphs && w.paragraphs.length ? w.paragraphs : w.note)
+          })
         ])
       ]));
     });
@@ -376,11 +393,11 @@
     });
   }
 
-  function thumb(src, fallback) {
-    var box = h('div', { class: 'cb-thumb' });
+  function thumb(src, fallback, cls) {
+    var box = h('div', { class: 'cb-thumb' + (cls ? ' ' + cls : '') });
     var url = src || fallback;
     if (!url) return box;
-    var img = h('img', { src: url, alt: '' });
+    var img = h('img', { src: url, alt: '', loading: 'lazy' });
     img.onerror = function () {
       if (fallback && img.getAttribute('src') !== fallback) { img.src = fallback; return; }
       img.remove();
@@ -403,11 +420,13 @@
       var top = items[0];
       var body = bb(top.contents);
       var hero = firstImage(body);
-      page.appendChild(h('div', { class: 'cb-postmeta' }, [
-        h('span', { class: 'is-orange', text: fmtDate(top.date) }),
-        h('span', { text: top.gameName || '' })
+      page.appendChild(h('div', { class: 'cb-lede' }, [
+        h('div', { class: 'cb-postmeta' }, [
+          h('span', { class: 'is-orange', text: fmtDate(top.date) }),
+          h('span', { text: top.gameName || '' })
+        ]),
+        h('h2', { class: 'cb-title is-post', text: top.title })
       ]));
-      page.appendChild(h('h2', { class: 'cb-title is-post', text: top.title }));
       if (hero) {
         var fig = h('figure', { class: 'cb-figure' }, [h('img', { src: hero, alt: '' })]);
         fig.querySelector('img').onerror = function () { fig.remove(); };
@@ -456,20 +475,53 @@
       masthead('Press'), h('div', { class: 'cb-loading', text: 'Loading…' })
     ]);
     feed('press').then(function (items) {
-      var all = (C.pressPinned || []).concat(items);
+      var all = (C.pressPinned || []).concat(items || []);
       page.innerHTML = '';
       page.appendChild(masthead('Press'));
-      var list = h('div', { class: 'cb-list' });
-      all.forEach(function (p) {
-        list.appendChild(h('a', {
-          class: 'cb-row cb-row-press', href: p.url, target: '_blank', rel: 'noopener'
-        }, [
-          h('div', { class: 'cb-meta is-orange', text: p.outlet || '' }),
-          h('div', { class: 'cb-headline', text: p.title }),
-          h('div', { class: 'cb-meta cb-right', text: p.date || '' })
+      if (!all.length) {
+        page.appendChild(h('div', { class: 'cb-loading', text: 'Nothing found right now.' }));
+        return;
+      }
+      var top = all[0];
+      page.appendChild(h('div', { class: 'cb-lede' }, [
+        h('div', { class: 'cb-postmeta' }, [
+          h('span', { class: 'is-orange', text: top.outlet || '' }),
+          h('span', { text: top.date || '' })
+        ]),
+        h('h2', { class: 'cb-title is-post', text: top.title })
+      ]));
+      if (top.image) {
+        var fig = h('figure', { class: 'cb-figure' }, [h('img', { src: top.image, alt: '' })]);
+        fig.querySelector('img').onerror = function () { fig.remove(); };
+        page.appendChild(fig);
+      }
+      if (top.summary) {
+        page.appendChild(h('div', { class: 'cb-body is-post', html: '<p>' + top.summary + '</p>' }));
+      }
+      page.appendChild(h('a', {
+        class: 'cb-link', href: top.url, target: '_blank', rel: 'noopener',
+        text: 'Read it at ' + (top.outlet || 'the source') + ' →'
+      }));
+
+      if (all.length > 1) {
+        page.appendChild(h('div', { class: 'cb-sep' }, [
+          h('span', { text: 'Coverage' }), h('div', {})
         ]));
-      });
-      page.appendChild(list);
+        var list = h('div', { class: 'cb-list' });
+        all.slice(1).forEach(function (p) {
+          list.appendChild(h('a', {
+            class: 'cb-row cb-row-press', href: p.url, target: '_blank', rel: 'noopener'
+          }, [
+            thumb(p.image, '', 'is-small'),
+            h('div', {}, [
+              h('div', { class: 'cb-meta is-orange', text: p.outlet || '' }),
+              h('div', { class: 'cb-headline', text: p.title })
+            ]),
+            h('div', { class: 'cb-meta cb-right', text: p.date || '' })
+          ]));
+        });
+        page.appendChild(list);
+      }
     }).catch(function () {
       page.innerHTML = '';
       page.appendChild(masthead('Press'));
@@ -506,7 +558,7 @@
       im.onerror = function () { im.remove(); };
     });
     setActive(page);
-    document.title = TITLES[page] + ' — ' + C.name;
+    document.title = C.name + ' / ' + TITLES[page];
   }
 
   /* ---------- go ------------------------------------------------ */

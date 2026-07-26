@@ -3,25 +3,35 @@
   "bio": "Christoffer Bodegård is a game developer, writer, and fan of interactive storytelling. Creator of <a href=\"https://esotericebb.com/\">Esoteric Ebb</a>. Focused on developing the art of interactive writing for use in role-playing games.",
   "copyright": "©2026 Sudden Snail AB. Esoteric Ebb and its respective logo are trademarks of Sudden Snail AB. All rights reserved.",
   "homePage": "work",
-
   "feedsUrl": "https://cb-feeds.christofferbodegard.workers.dev",
-
   "portraitOpacity": 0.5,
   "//portraits": "Portraits are read automatically from the portraits/ folder of whichever repo this site is served from. Just upload files there - nothing to configure, nothing to list.",
   "portraitsDir": "portraits",
   "portraits": [],
-
   "social": [
-    { "label": "X", "url": "https://x.com/chrisbodegard" },
-    { "label": "Bluesky", "url": "https://bsky.app/profile/chrisbodegard.bsky.social" },
-    { "label": "Steam", "url": "https://store.steampowered.com/developer/ChristofferBodegard" },
-    { "label": "Email", "url": "mailto:you@example.com" }
+    {
+      "label": "X",
+      "url": "https://x.com/chrisbodegard"
+    },
+    {
+      "label": "Bluesky",
+      "url": "https://bsky.app/profile/chrisbodegard.bsky.social"
+    },
+    {
+      "label": "Steam",
+      "url": "https://store.steampowered.com/developer/ChristofferBodegard"
+    },
+    {
+      "label": "Email",
+      "url": "mailto:you@example.com"
+    }
   ],
-
   "railExtras": [
-    { "label": "Collaborators", "url": "https://esotericebb.com/#collaborators" }
+    {
+      "label": "Collaborators",
+      "url": "https://esotericebb.com/#collaborators"
+    }
   ],
-
   "work": [
     {
       "year": "20XX",
@@ -66,8 +76,17 @@
       ]
     }
   ],
-
   "talks": [
+    {
+      "date": "MAY 2026",
+      "venue": "Nordic Game Conference",
+      "title": "",
+      "url": "",
+      "linkLabel": "",
+      "paragraphs": [
+        "I was invited to host a workshop at Nordic. A so-called MASTERCLASS, in which I went over a more freestyled version of my interactive writing talk, along with almost three hours of QnA! A ton of great questions and always fun to rant - especially since this was right after the release of Ebb!"
+      ]
+    },
     {
       "date": "OCT 2024",
       "venue": "Sweden Game Conference",
@@ -78,22 +97,11 @@
         "I've been desperately trying to understand interactive storytelling for years. As I dove into the topic, I stumbled upon a problem: there was no common term for the thing I wanted to do. The thing that Planescape: Torment and Disco Elysium did so well. So I called it 'INTERACTIVE WRITING', which technically already means something entirely different, and this talk goes over my initial exploration of why I needed this term, along with a list of general rules of agency I follow in my personal design philosophy.",
         "None of my talks have been recorded yet, which is probably for the best. But since it was pretty well-received at the conference, some people asked me to make the slides public. Here's the link:"
       ]
-    },
-    {
-      "date": "MAY 2026",
-      "venue": "Nordic Game Conference",
-      "title": "",
-      "url": "",
-      "linkLabel": "",
-      "paragraphs": [
-        "I was invited to host a workshop at Nordic. A so-called MASTERCLASS, in which I went over a more freestyled version of my interactive writing talk, along with almost three hours of QnA! A ton of great questions and always fun to rant - especially since this was right after the release of Ebb!"
-      ]
     }
   ],
-
   "backstory": {
-    "title": "Lorem ipsum dolor sit amet",
-    "standfirst": "Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "title": "",
+    "standfirst": "",
     "chapters": [
       {
         "title": "University of Skövde",
@@ -128,24 +136,102 @@
       }
     ]
   },
-
   "inspirations": {
     "title": "Here's a list of his top 10 video games:",
     "standfirst": "",
     "items": [
-      { "title": "Heroes of Might and Magic 3", "genre": "Turn-Based Strategy", "year": "1999", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "Planescape: Torment", "genre": "CRPG", "year": "1999", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "Disco Elysium", "genre": "CRPG", "year": "2019", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "Super Mario Galaxy", "genre": "Platformer", "year": "2007", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "Deus Ex", "genre": "Immersive Sim", "year": "2000", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "Baldur's Gate 2: Shadow of Amn", "genre": "CRPG", "year": "2000", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "The Secret of Monkey Island", "genre": "Point-and-Click", "year": "1990", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "The Legend of Zelda: Ocarina of Time", "genre": "Action-Adventure", "year": "1998", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "999: Nine Hours, Nine Persons, Nine Doors", "genre": "Visual Novel", "year": "2009", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] },
-      { "title": "Crusader Kings 3", "genre": "Grand Strategy", "year": "2020", "url": "", "why": ["Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."] }
+      {
+        "title": "Heroes of Might and Magic 3",
+        "genre": "Turn-Based Strategy",
+        "year": "1999",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "Planescape: Torment",
+        "genre": "CRPG",
+        "year": "1999",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "Disco Elysium",
+        "genre": "CRPG",
+        "year": "2019",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "Super Mario Galaxy",
+        "genre": "Platformer",
+        "year": "2007",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "Deus Ex",
+        "genre": "Immersive Sim",
+        "year": "2000",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "Baldur's Gate 2: Shadow of Amn",
+        "genre": "CRPG",
+        "year": "2000",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "The Secret of Monkey Island",
+        "genre": "Point-and-Click",
+        "year": "1990",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "The Legend of Zelda: Ocarina of Time",
+        "genre": "Action-Adventure",
+        "year": "1998",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "999: Nine Hours, Nine Persons, Nine Doors",
+        "genre": "Visual Novel",
+        "year": "2009",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      },
+      {
+        "title": "Crusader Kings 3",
+        "genre": "Grand Strategy",
+        "year": "2020",
+        "url": "",
+        "why": [
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+        ]
+      }
     ]
   },
-
   "pressPinned": [
     {
       "outlet": "PC Gamer",
