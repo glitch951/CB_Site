@@ -170,6 +170,29 @@
     }));
   }
 
+  var THEME_KEY = 'cb-theme';
+  function isDark() {
+    try { return localStorage.getItem(THEME_KEY) === 'dark'; } catch (e) { return false; }
+  }
+  function applyTheme() {
+    if (!app) return;
+    var dark = isDark();
+    app.classList.toggle('is-dark', dark);
+    app.querySelectorAll('.cb-theme').forEach(function (b) {
+      b.textContent = dark ? 'Light' : 'Dark';
+      b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+    });
+  }
+  function themeButton() {
+    var b = h('button', { class: 'cb-theme', type: 'button', text: 'Dark' });
+    b.addEventListener('click', function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      try { localStorage.setItem(THEME_KEY, isDark() ? 'light' : 'dark'); } catch (e) {}
+      applyTheme();
+    });
+    return b;
+  }
+
   function build() {
     app = h('div', { id: 'cb-app' });
     var portrait = h('div', { class: 'cb-portrait' });
@@ -189,12 +212,18 @@
         h('div', { class: 'cb-social' }, (C.social || []).map(function (s) {
           return h('a', { href: s.url, target: '_blank', rel: 'noopener', text: s.label });
         })),
-        h('div', { class: 'cb-copy', text: C.copyright || '' })
+        h('div', { class: 'cb-footrow' }, [
+          h('div', { class: 'cb-copy', text: C.copyright || '' }),
+          themeButton()
+        ])
       ])
     ]);
 
     var topbar = h('div', { class: 'cb-topbar' }, [
-      h('div', { class: 'cb-name', text: C.name || '' }),
+      h('div', { class: 'cb-topbar-row' }, [
+        h('div', { class: 'cb-name', text: C.name || '' }),
+        themeButton()
+      ]),
       h('nav', {}, PAGES.map(navLink))
     ]);
 
@@ -208,6 +237,7 @@
     });
     document.body.style.margin = '0';
     document.body.appendChild(app);
+    applyTheme();
   }
 
   /* Portraits: read the folder listing once, remember it for the session, then
@@ -241,17 +271,24 @@
   function rollPortrait(holder) {
     portraitList().then(function (list) {
       if (!list.length) return;
-      var img = h('img', { alt: '' });
-      img.style.setProperty('--portrait-opacity', C.portraitOpacity || .5);
-      img.style.left = (-13 + Math.random() * 12) + '%';
-      img.style.top = (-13 + Math.random() * 12) + '%';
-      if (Math.random() > .5) img.style.transform = 'scaleX(-1)';
-      img.onload = function () { img.classList.add('is-in'); };
-      img.onerror = function () { img.remove(); };
-      img.decoding = 'async';
-      img.loading = 'eager';
-      img.src = list[Math.floor(Math.random() * list.length)];
-      holder.appendChild(img);
+      var pool = list.slice();
+      for (var i = pool.length - 1; i > 0; i--) {
+        var r = Math.floor(Math.random() * (i + 1));
+        var t = pool[i]; pool[i] = pool[r]; pool[r] = t;
+      }
+      var picks = pool.slice(0, Math.min(2, pool.length));
+      var sides = ['is-left', 'is-right'];
+      picks.forEach(function (src, n) {
+        var img = h('img', { alt: '', class: sides[n] });
+        img.style.setProperty('--portrait-opacity',
+          C.portraitOpacity != null ? C.portraitOpacity : .1);
+        img.style.top = (-6 + Math.random() * 12) + '%';
+        img.onload = function () { img.classList.add('is-in'); };
+        img.onerror = function () { img.remove(); };
+        img.decoding = 'async';
+        img.src = src;
+        holder.appendChild(img);
+      });
     });
   }
 
@@ -295,9 +332,6 @@
       col.appendChild(h('div', { class: 'cb-body', html: paras(ch.paragraphs) }));
 
       var side = mediaBlock(ch.media, ch.mediaCaption);
-      if (!side && ch.pullquote) {
-        side = h('div', { class: 'cb-side-quote' }, [h('div', { text: ch.pullquote })]);
-      }
       page.appendChild(h('div', { class: 'cb-chapter-grid' + (side ? '' : ' is-wide') },
         [col, side]));
     });
@@ -387,7 +421,9 @@
   function feed(kind) {
     if (cache[kind]) return Promise.resolve(cache[kind]);
     if (!C.feedsUrl) return Promise.reject(new Error('no feedsUrl'));
-    var url = C.feedsUrl.replace(/\/$/, '') + '/?feed=' + kind;
+    // bucket the cache-buster per 10 minutes: fresh enough, still CDN-friendly
+    var bucket = Math.floor(Date.now() / 600000);
+    var url = C.feedsUrl.replace(/\/$/, '') + '/?feed=' + kind + '&t=' + bucket;
     return fetch(url).then(function (r) { return r.json(); }).then(function (j) {
       cache[kind] = j; return j;
     });
