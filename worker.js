@@ -7,9 +7,7 @@
 
 // Games to mirror. The number is the appid from the Steam store URL.
 const APPS = [
-  { id: 2057760, name: 'Esoteric Ebb' },
-  { id: 1299690, name: 'Gori: Cuddly Carnage' },
-  { id: 648800,  name: 'Raft' }
+  { id: 2057760, name: 'Esoteric Ebb' }
 ];
 
 // Only your own announcements/devlogs. Set to null to let everything through
@@ -33,12 +31,12 @@ const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/sh
 
 // Try to pull a thumbnail from the article page. Costs one fetch per article.
 const PRESS_THUMBS = true;
-const PRESS_THUMB_COUNT = 9;
+const PRESS_THUMB_COUNT = 30;
 
 const CORS = {
   'content-type': 'application/json; charset=utf-8',
   'access-control-allow-origin': '*',
-  'cache-control': 'public, max-age=3600'
+  'cache-control': 'public, max-age=600'
 };
 
 export default {
@@ -61,9 +59,42 @@ function json(data) {
 }
 
 /* ---------- Steam ------------------------------------------------ */
+/* Steam's news API doesn't carry the capsule image an announcement shows on the
+   store page, so pull the events list too and match them up by gid. */
+async function capsules(appid) {
+  const map = {};
+  try {
+    const url = 'https://store.steampowered.com/events/ajaxgetpartnereventspageable/' +
+      '?clan_accountid=0&appid=' + appid + '&offset=0&count=100&l=english' +
+      '&origin=https://store.steampowered.com';
+    const res = await fetch(url, { cf: { cacheTtl: 3600 } });
+    if (!res.ok) return map;
+    const data = await res.json();
+    for (const ev of (data.events || [])) {
+      const gid = String((ev.announcement_body && ev.announcement_body.gid) || ev.gid || '');
+      let jd = ev.jsondata;
+      if (typeof jd === 'string') { try { jd = JSON.parse(jd); } catch (e) { jd = null; } }
+      const caps = (jd && (jd.localized_capsule_image || jd.localized_title_image)) || [];
+      const file = Array.isArray(caps) ? caps.find(Boolean) : caps;
+      if (gid && file) {
+        map[gid] = /^https?:/.test(file)
+          ? file
+          : 'https://clan.cloudflare.steamstatic.com/images/' + file.replace(/^\/+/, '');
+      }
+    }
+  } catch (e) {}
+  return map;
+}
+
+function gidFromUrl(u) {
+  const m = /\/(\d{6,})\/?(?:\?|$)/.exec(String(u || ''));
+  return m ? m[1] : '';
+}
+
 async function steam() {
   const all = [];
   for (const app of APPS) {
+    const caps = await capsules(app.id);
     const url = 'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/'
       + '?maxlength=0&count=40&appid=' + app.id;
     const res = await fetch(url, { cf: { cacheTtl: 3600 } });
@@ -80,7 +111,8 @@ async function steam() {
         contents: it.contents,
         feedname: it.feedname,
         gameName: app.name,
-        appid: app.id
+        appid: app.id,
+        image: caps[it.gid] || caps[gidFromUrl(it.url)] || ''
       });
     }
   }
@@ -127,14 +159,57 @@ async function press(debug) {
     }));
   }
 
+  items = items.map(it => ({
+    title: it.title, url: it.url, outlet: it.outlet,
+    summary: it.summary, date: it.date, ts: it.ts, image: it.image || ''
+  }));
+
   if (debug) return { count: items.length, log, items };
   return items;
 }
 
 async function bingNews(q) {
-  const url = 'https://www.bing.com/news/search?q=' + encodeURIComponent(q) + '&format=RSS&count=30';
+  const url = 'https://www.bing.com/news/search?q=' + encodeURIComponent(q) + '&format=RSS&count=50';
   const xml = await getText(url);
-  return parseRss(xml).map(it => Object.assign(it, { outlet: it.outlet || hostOf(it.url) }));
+  return parseRss(xml).map(it => {
+    it.url = unwrapBing(it.url);
+    it.outlet = prettyOutlet(hostOf(it.url));
+    return it;
+  });
+}
+
+// Bing wraps every link in a redirect. Pull the real publisher URL back out.
+function unwrapBing(u) {
+  try {
+    const parsed = new URL(u);
+    if (!/bing\.com$/.test(parsed.hostname.replace(/^www\./, ''))) return u;
+    const real = parsed.searchParams.get('url');
+    return real ? decodeURIComponent(real) : u;
+  } catch (e) {
+    return u;
+  }
+}
+
+const OUTLET_NAMES = {
+  'pcgamer.com': 'PC Gamer',
+  'polygon.com': 'Polygon',
+  'rockpapershotgun.com': 'Rock Paper Shotgun',
+  'eurogamer.net': 'Eurogamer',
+  'gamesradar.com': 'GamesRadar',
+  'kotaku.com': 'Kotaku',
+  'ign.com': 'IGN',
+  'gamedeveloper.com': 'Game Developer',
+  'destructoid.com': 'Destructoid',
+  'pcgamesn.com': 'PCGamesN',
+  'rpgsite.net': 'RPG Site',
+  'gamespot.com': 'GameSpot'
+};
+
+function prettyOutlet(host) {
+  if (!host) return '';
+  if (OUTLET_NAMES[host]) return OUTLET_NAMES[host];
+  const base = host.replace(/\.(com|net|org|se|co\.uk|io|gg|news)$/, '');
+  return base.split('.').pop().replace(/(^|[-_])(\w)/g, (m, a, b) => (a ? ' ' : '') + b.toUpperCase());
 }
 
 async function googleNews(q) {
@@ -146,7 +221,7 @@ async function googleNews(q) {
     const m = /href=["'](https?:\/\/(?!news\.google)[^"']+)["']/.exec(it.raw || '');
     if (m) it.url = m[1];
     it.title = it.title.replace(/\s+-\s+[^-]{2,40}$/, '');
-    it.outlet = it.outlet || hostOf(it.url);
+    it.outlet = prettyOutlet(hostOf(it.url));
     return it;
   });
 }
@@ -233,5 +308,7 @@ function clean(s) {
     .replace(/&amp;/g, '&').replace(/&quot;/g, '"')
     .replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n))
+    .replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCharCode(parseInt(n, 16)))
     .trim();
 }

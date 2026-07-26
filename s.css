@@ -37,17 +37,19 @@
   pointer-events: none;
   z-index: 0;
 }
+/* two halves, so the portraits can be huge and still never overlap */
+.cb-half { position: absolute; top: 0; bottom: 0; width: 50%; overflow: hidden; }
+.cb-half.is-left { left: 0; }
+.cb-half.is-right { right: 0; }
 .cb-portrait img {
   position: absolute;
-  height: 112%;
   width: auto;
-  max-width: 58%;
-  object-fit: cover;
+  max-width: none;
   opacity: 0;
   transition: opacity 1.6s ease;
 }
-.cb-portrait img.is-left { left: -6%; }
-.cb-portrait img.is-right { right: -6%; transform: scaleX(-1); }
+.cb-half.is-left img { left: 0; }
+.cb-half.is-right img { right: 0; transform: scaleX(-1); }
 .cb-portrait img.is-in { opacity: var(--portrait-opacity, .1); }
 
 .cb-extras { display: flex; flex-direction: column; gap: 8px; }
@@ -176,7 +178,11 @@
 }
 .cb-page.no-head .cb-chapter-grid:first-of-type { margin-top: 40px; }
 .cb-chapter-grid.is-wide { grid-template-columns: minmax(0, 1fr); }
-.cb-chapter-grid .cb-body { margin-top: 0; }
+.cb-chapter-grid .cb-body {
+  margin-top: 0; column-rule: none; column-gap: 64px; column-fill: balance;
+}
+.cb-chapter-grid .cb-body p { margin: 0 0 16px; }
+.cb-chapter-grid .cb-body p:last-child { margin-bottom: 0; }
 .cb-chapter-h {
   font-size: 42px; font-weight: 800; letter-spacing: -.035em;
   margin: 0 0 26px; padding-bottom: 14px; border-bottom: 1px solid var(--rule);
@@ -269,8 +275,38 @@
 .cb-row:hover { background: rgba(2, 14, 22, .035); }
 .cb-row-work { grid-template-columns: 78px 1fr; }
 .cb-row-press { grid-template-columns: 100px minmax(0,1fr) 90px; padding: 14px 0; align-items: center; }
+.cb-row-press.no-thumb { grid-template-columns: minmax(0,1fr) 90px; }
 .cb-thumb.is-small { aspect-ratio: 16 / 9; border: 1px solid rgba(2,14,22,.14); border-radius: 5px; overflow: hidden; }
-.cb-thumb.is-small img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cb-thumb.is-small img, .cb-thumb.is-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cb-hero {
+  display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 34px;
+  align-items: start; margin-top: 34px; text-decoration: none;
+  padding-bottom: 34px; border-bottom: 1px solid var(--rule);
+}
+.cb-hero.no-thumb { grid-template-columns: minmax(0, 1fr); }
+.cb-hero:hover .cb-hero-title { color: var(--orange); }
+.cb-thumb.is-hero {
+  aspect-ratio: 16 / 9; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden;
+}
+.cb-hero-txt { display: flex; flex-direction: column; gap: 12px; }
+.cb-hero-txt .cb-postmeta { margin-top: 0; }
+.cb-hero-title {
+  margin: 0; font-size: 34px; line-height: 1.1; font-weight: 800; letter-spacing: -.03em;
+  text-wrap: pretty; transition: color .2s ease;
+}
+.cb-hero-sum {
+  margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 16px;
+  line-height: 1.6; opacity: .78; max-width: 62ch;
+}
+.cb-hero .cb-link.is-small { margin-top: 2px; align-self: flex-start; }
+
+.cb-more {
+  margin-top: 26px; font: inherit; font-size: 14px; font-weight: 600; color: inherit;
+  background: transparent; border: 1px solid var(--rule); border-radius: 4px;
+  padding: 12px 22px; cursor: pointer;
+}
+.cb-more:hover { background: var(--soft); border-color: var(--orange); }
 .cb-row-insp { grid-template-columns: 30px 1fr 160px 60px; padding: 14px 0; }
 .cb-row-talk { grid-template-columns: 110px 1fr; padding: 30px 0; }
 
@@ -359,6 +395,9 @@
   .cb-body.is-post { columns: 1; }
   .cb-lede .cb-title.is-post { font-size: 32px; }
   .cb-row-press { grid-template-columns: 76px minmax(0,1fr); }
+  .cb-row-press.no-thumb { grid-template-columns: minmax(0,1fr); }
+  .cb-hero { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  .cb-hero-title { font-size: 26px; }
   .cb-row-press .cb-right { display: none; }
   .cb-side-quote { position: static; margin: 22px 0 0; padding-left: 16px; }
   .cb-side-quote div { font-size: 21px; }
@@ -383,6 +422,13 @@
 /* ---------------------------------------------------------------
    Dark mode
    --------------------------------------------------------------- */
+#cb-app, #cb-app .cb-rail, #cb-app .cb-topbar, #cb-app .cb-main,
+#cb-app .cb-row, #cb-app .cb-acc, #cb-app .cb-card, #cb-app .cb-hr,
+#cb-app .cb-masthead, #cb-app .cb-chapter-h, #cb-app .cb-thumb,
+#cb-app .cb-more, #cb-app .cb-theme, #cb-app .cb-hero, #cb-app .cb-sep div {
+  transition: background-color .4s ease, color .4s ease, border-color .4s ease;
+}
+
 #cb-app.is-dark {
   --paper: #020E16;
   --ink: #DAE5CF;
