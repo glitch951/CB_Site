@@ -21,12 +21,11 @@ const DEVLOG_TITLE_BLOCKLIST = [];
 // Both spellings of the surname matter: most outlets drop the å.
 const PRESS_QUERIES = [
   'Christoffer Bodegard',
-  '"Christoffer Bodegård"',
-  '"Esoteric Ebb" interview',
-  '"Esoteric Ebb" review',
-  '"Esoteric Ebb" podcast',
-  '"Esoteric Ebb" developer'
+  'Christoffer Bodegård'
 ];
+
+// Every result must actually be about him, not just about the game.
+const PRESS_MUST_MATCH = /bodeg[\u00e5a]rd/i;
 
 // Domains you never want on the press page.
 const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/shorts',
@@ -46,8 +45,6 @@ function looksLikeIndexPage(it) {
 }
 
 // Try to pull a thumbnail from the article page. Costs one fetch per article.
-const PRESS_THUMBS = true;
-const PRESS_THUMB_COUNT = 14;
 
 const CORS = {
   'content-type': 'application/json; charset=utf-8',
@@ -105,20 +102,33 @@ async function eventsJson(url) {
   }
 }
 
+function normTitle(t) {
+  return String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 60);
+}
+
+/* Steam uses a different gid for the event and for the announcement, and the news
+   API only gives one of them. Index on every id we can see plus the headline. */
 function harvestEvents(data, map) {
   for (const ev of ((data && data.events) || [])) {
-    const gid = String((ev.announcement_body && ev.announcement_body.gid) || ev.gid || '');
     let jd = ev.jsondata;
     if (typeof jd === 'string') { try { jd = JSON.parse(jd); } catch (e) { jd = null; } }
     const caps = (jd && (jd.localized_capsule_image || jd.localized_title_image)) || [];
     const file = Array.isArray(caps) ? caps.find(Boolean) : caps;
     const url = clanImage(file);
-    if (gid && url && !isJunkImage(url)) map[gid] = url;
+    if (!url || isJunkImage(url)) continue;
+
+    const body = ev.announcement_body || {};
+    [ev.gid, ev.announcement_gid, body.gid, body.clanid, ev.unique_id]
+      .filter(Boolean)
+      .forEach(id => { map.byGid[String(id)] = url; });
+
+    const title = body.headline || ev.event_name || ev.name || '';
+    if (title) map.byTitle[normTitle(title)] = url;
   }
 }
 
 async function capsules(appid, notes) {
-  const map = {};
+  const map = { byGid: {}, byTitle: {} };
   const base = 'https://store.steampowered.com/events/ajaxgetpartnereventspageable/';
 
   const tries = [
@@ -131,8 +141,9 @@ async function capsules(appid, notes) {
   for (const url of tries) {
     const data = await eventsJson(url);
     harvestEvents(data, map);
-    if (notes) notes.push({ source: 'events', got: Object.keys(map).length });
-    if (Object.keys(map).length) return map;
+    if (notes) notes.push({ source: 'events', gids: Object.keys(map.byGid).length,
+      titles: Object.keys(map.byTitle).length });
+    if (Object.keys(map.byTitle).length) return map;
   }
 
   // last resort: the store news page embeds the same data as escaped JSON
@@ -147,9 +158,9 @@ async function capsules(appid, notes) {
       let m;
       while ((m = re.exec(html))) {
         const url = clanImage(m[2]);
-        if (!map[m[1]] && !isJunkImage(url)) map[m[1]] = url;
+        if (!map.byGid[m[1]] && !isJunkImage(url)) map.byGid[m[1]] = url;
       }
-      if (notes) notes.push({ source: 'newspage', got: Object.keys(map).length });
+      if (notes) notes.push({ source: 'newspage', gids: Object.keys(map.byGid).length });
     }
   } catch (e) {}
 
@@ -185,7 +196,8 @@ async function steam(debug) {
         gameName: app.name,
         appid: app.id,
         gid: it.gid || gidFromUrl(it.url),
-        image: caps[it.gid] || caps[gidFromUrl(it.url)] || ''
+        image: caps.byGid[it.gid] || caps.byGid[gidFromUrl(it.url)] ||
+               caps.byTitle[normTitle(it.title)] || ''
       });
     }
   }
@@ -203,14 +215,6 @@ async function press(debug) {
   const log = [];
   let items = [];
 
-  for (const q of PRESS_QUERIES) {
-    const bing = await bingNews(q);
-    log.push({ source: 'bing', query: q, found: bing.length });
-    items = items.concat(bing);
-  }
-
-  // Google News is run as well, not just as a fallback: it surfaces a lot that
-  // Bing misses, and it gives real publisher links so thumbnails can be read.
   for (const q of PRESS_QUERIES) {
     const goog = await googleNews(q);
     log.push({ source: 'google', query: q, found: goog.length });
@@ -231,13 +235,22 @@ async function press(debug) {
 
   items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
 
-  if (PRESS_THUMBS) {
-    const head = items.slice(0, PRESS_THUMB_COUNT);
-    await Promise.allSettled(head.map(async it => {
-      it.image = await ogImage(it.url);
-    }));
-  }
+  // Open each candidate once: confirm the name really appears in the article and
+  // take its preview image while we are there.
+  const candidates = items.slice(0, PRESS_VERIFY_COUNT);
+  await Promise.allSettled(candidates.map(async it => {
+    const page = await readArticle(it.url);
+    it.image = page.image || '';
+    it.verified = page.ok
+      ? page.mentions
+      : PRESS_MUST_MATCH.test((it.title || '') + ' ' + (it.summary || ''));
+  }));
 
+  const before = items.length;
+  items = candidates.filter(it => it.verified);
+  log.push({ stage: 'verified', checked: candidates.length, kept: items.length, dropped: before - items.length });
+
+  items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   items = items.map(it => ({
     title: it.title, url: it.url, outlet: it.outlet,
     summary: it.summary, date: it.date, ts: it.ts, image: it.image || ''
@@ -291,18 +304,45 @@ function prettyOutlet(host) {
   return base.split('.').pop().replace(/(^|[-_])(\w)/g, (m, a, b) => (a ? ' ' : '') + b.toUpperCase());
 }
 
+async function resolveGoogleLink(url) {
+  if (!/news\.google\.com/.test(url)) return url;
+  try {
+    const res = await fetch(url, {
+      redirect: 'follow',
+      cf: { cacheTtl: 86400 },
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+          '(KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+      }
+    });
+    if (res.url && !/news\.google\.com/.test(res.url)) return res.url;
+    const html = await res.text();
+    const m = /<a[^>]+href=["'](https?:\/\/(?!news\.google)[^"']+)["']/.exec(html)
+      || /data-n-au=["'](https?:\/\/[^"']+)["']/.exec(html)
+      || /url=(https?%3A%2F%2F[^"'&]+)/.exec(html);
+    if (m) return decodeURIComponent(m[1]);
+  } catch (e) {}
+  return url;
+}
+
 async function googleNews(q) {
   const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(q)
     + '&hl=en-US&gl=US&ceid=US:en';
   const xml = await getText(url);
-  return parseRss(xml).map(it => {
-    // Google wraps links in a redirect; the real one is usually in the description
+  const items = parseRss(xml).map(it => {
     const m = /href=["'](https?:\/\/(?!news\.google)[^"']+)["']/.exec(it.raw || '');
     if (m) it.url = m[1];
+    // Google puts the outlet after a trailing dash in the headline
+    const src = /\s+-\s+([^-]{2,40})$/.exec(it.title);
+    if (src) it.outlet = src[1].trim();
     it.title = it.title.replace(/\s+-\s+[^-]{2,40}$/, '');
-    it.outlet = prettyOutlet(hostOf(it.url));
     return it;
   });
+  await Promise.allSettled(items.map(async it => {
+    it.url = await resolveGoogleLink(it.url);
+    if (!it.outlet) it.outlet = prettyOutlet(hostOf(it.url));
+  }));
+  return items;
 }
 
 async function getText(url) {
@@ -347,24 +387,38 @@ function parseRss(xml) {
   return out;
 }
 
-async function ogImage(url) {
+async function readArticle(url) {
+  const out = { ok: false, mentions: false, image: '' };
   try {
     const res = await fetch(url, {
       cf: { cacheTtl: 86400 },
-      headers: { 'user-agent': 'Mozilla/5.0 (compatible; cb-feeds/1.0)' }
+      headers: {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+          '(KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        'accept': 'text/html,application/xhtml+xml'
+      }
     });
-    if (!res.ok) return '';
-    const html = (await res.text()).slice(0, 120000);
+    if (!res.ok) return out;
+    const html = (await res.text()).slice(0, 400000);
+    out.ok = true;
+
+    // the name, however the outlet spells or escapes it
+    const text = html
+      .replace(/&#229;|&aring;|&#xe5;/gi, 'å')
+      .replace(/\\u00e5/gi, 'å');
+    out.mentions = PRESS_MUST_MATCH.test(text);
+
     const m = /<meta[^>]+(?:property|name)=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["']/i.exec(html)
-      || /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']og:image["']/i.exec(html);
-    if (!m) return '';
-    let src = m[1];
-    if (src.startsWith('//')) src = 'https:' + src;
-    if (src.startsWith('/')) src = new URL(url).origin + src;
-    return src;
-  } catch (e) {
-    return '';
-  }
+      || /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']og:image["']/i.exec(html)
+      || /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i.exec(html);
+    if (m) {
+      let src = m[1];
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('/')) src = new URL(url).origin + src;
+      out.image = src;
+    }
+  } catch (e) {}
+  return out;
 }
 
 function hostOf(u) {

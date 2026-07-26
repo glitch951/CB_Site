@@ -514,7 +514,10 @@
       masthead('Press'), h('div', { class: 'cb-loading', text: 'Loading…' })
     ]);
     feed('press').then(function (items) {
-      var all = (C.pressPinned || []).concat(items || []);
+      var all = (C.pressPinned || []).map(function (p) {
+        var t = p.ts || Date.parse(p.date || '') || 0;
+        return Object.assign({}, p, { ts: t });
+      }).concat(items || []);
       all.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
       page.innerHTML = '';
       page.appendChild(masthead('Press'));
