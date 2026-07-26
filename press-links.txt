@@ -1,0 +1,18 @@
+# Interview & press links for the christofferbodegard.com press feed.
+# One URL per line. Everything here gets visited once by the cb-feeds worker,
+# which reads the page's own title, date and thumbnail, then files it into the
+# press feed chronologically and remembers it forever (KV).
+#
+# Optional: add a date after the URL for pages whose publish date can't be
+# read automatically (podcasts and older blogs sometimes):
+#   https://example.com/some-interview  2025-03-18
+#
+# Lines starting with # are ignored. Social links (x/bsky/discord) are
+# skipped automatically; YouTube links are welcome - video interviews get
+# their real video title and thumbnail.
+#
+# To activate this file: commit it to the site repo, then set PRESS_LINKS_URL
+# in worker.js to its raw address, e.g.
+#   https://raw.githubusercontent.com/<owner>/<repo>/main/press-links.txt
+
+# --- paste the Discord channel links below this line ---
