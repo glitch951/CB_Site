@@ -44,7 +44,14 @@ function looksLikeIndexPage(it) {
   return PRESS_URL_JUNK.some(p => u.includes(p));
 }
 
-// Try to pull a thumbnail from the article page. Costs one fetch per article.
+// Press feed budgets. Cloudflare's free plan allows 50 subrequests per request,
+// so every per-article fetch below is capped.
+const PRESS_MAX = 80;               // most articles ever returned
+const PRESS_GOOGLE_DECODE_COUNT = 15; // newest google-news links decoded per run
+const PRESS_SCRAPE_COUNT = 20;      // article pages opened for a thumbnail per run
+
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+  '(KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 
 const CORS = {
   'content-type': 'application/json; charset=utf-8',
@@ -75,10 +82,25 @@ function json(data) {
 /* Steam's news API doesn't carry the capsule image an announcement shows on the
    store page. Try the events endpoints, then fall back to scraping the store's
    own news page. Whichever works first wins. */
-function clanImage(file) {
+/* jsondata only stores the file name; the served URL needs the clan's account id
+   in the path: .../images/<clanid>/<file>. That missing id is why every capsule
+   used to 404 and the site fell back to header.jpg. */
+function clanImage(file, clanid) {
   if (!file) return '';
   if (/^https?:/.test(file)) return file;
-  return 'https://clan.cloudflare.steamstatic.com/images/' + String(file).replace(/^\/+/, '');
+  var f = String(file).replace(/^\/+/, '');
+  if (!/^\d{6,}\//.test(f) && clanid) f = clanid + '/' + f;
+  return 'https://clan.cloudflare.steamstatic.com/images/' + f;
+}
+
+/* Clans encode their 32-bit account id in the low bits of the 64-bit steamid. */
+function clanAccountId(ev, body) {
+  if (body && body.clanid) return String(body.clanid);
+  if (ev && ev.clanid) return String(ev.clanid);
+  try {
+    if (ev && ev.clan_steamid) return String(BigInt(ev.clan_steamid) & 0xFFFFFFFFn);
+  } catch (e) {}
+  return '';
 }
 
 function isJunkImage(u) {
@@ -114,11 +136,11 @@ function harvestEvents(data, map) {
     if (typeof jd === 'string') { try { jd = JSON.parse(jd); } catch (e) { jd = null; } }
     const caps = (jd && (jd.localized_capsule_image || jd.localized_title_image)) || [];
     const file = Array.isArray(caps) ? caps.find(Boolean) : caps;
-    const url = clanImage(file);
+    const body = ev.announcement_body || {};
+    const url = clanImage(file, clanAccountId(ev, body));
     if (!url || isJunkImage(url)) continue;
 
-    const body = ev.announcement_body || {};
-    [ev.gid, ev.announcement_gid, body.gid, body.clanid, ev.unique_id]
+    [ev.gid, ev.announcement_gid, body.gid, ev.unique_id]
       .filter(Boolean)
       .forEach(id => { map.byGid[String(id)] = url; });
 
@@ -154,10 +176,12 @@ async function capsules(appid, notes) {
     });
     if (res.ok) {
       const html = await res.text();
+      const cm = /\\?"clanid\\?"\s*:\s*(\d{4,})/.exec(html);
+      const clanid = cm ? cm[1] : '';
       const re = /"gid"\s*:\s*\\?"(\d{6,})\\?"[\s\S]{0,6000}?localized_capsule_image\\?"\s*:\s*\[\s*\\?"([^"\\]+)/g;
       let m;
       while ((m = re.exec(html))) {
-        const url = clanImage(m[2]);
+        const url = clanImage(m[2], clanid);
         if (!map.byGid[m[1]] && !isJunkImage(url)) map.byGid[m[1]] = url;
       }
       if (notes) notes.push({ source: 'newspage', gids: Object.keys(map.byGid).length });
@@ -177,7 +201,8 @@ async function steam(debug) {
   const notes = [];
   for (const app of APPS) {
     const caps = await capsules(app.id, notes);
-    notes.push({ appid: app.id, capsulesFound: Object.keys(caps).length });
+    notes.push({ appid: app.id,
+      capsulesFound: Object.keys(caps.byGid).length + Object.keys(caps.byTitle).length });
     const url = 'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/'
       + '?maxlength=0&count=40&appid=' + app.id;
     const res = await fetch(url, { cf: { cacheTtl: 3600 } });
@@ -211,44 +236,67 @@ async function steam(debug) {
 }
 
 /* ---------- Press ------------------------------------------------ */
+/* Google News search + Bing News search, merged. Google finds more but hides
+   the real URL behind an encoded redirect and carries no image; Bing carries
+   both. Whatever still has no image after merging gets its article page opened
+   once for the og:image - the exact picture Google News shows in its results. */
 async function press(debug) {
   const log = [];
-  let items = [];
+  const lists = await Promise.all(
+    PRESS_QUERIES.map(q => googleNews(q).then(r => {
+      log.push({ source: 'google', query: q, found: r.length }); return r;
+    })).concat(PRESS_QUERIES.map(q => bingNews(q).then(r => {
+      log.push({ source: 'bing', query: q, found: r.length }); return r;
+    })))
+  );
 
-  for (const q of PRESS_QUERIES) {
-    const goog = await googleNews(q);
-    log.push({ source: 'google', query: q, found: goog.length });
-    items = items.concat(goog);
+  // merge duplicates instead of dropping them: a Bing copy of a Google item
+  // donates its real URL and its thumbnail
+  const byKey = new Map();
+  for (const list of lists) for (const it of list) {
+    if (!it.title || !it.url) continue;
+    const key = normTitle(it.title);
+    const prev = byKey.get(key);
+    if (!prev) { byKey.set(key, it); continue; }
+    if (/news\.google\.com/.test(prev.url) && !/news\.google\.com/.test(it.url)) prev.url = it.url;
+    if (!prev.image && it.image) prev.image = it.image;
+    if (!prev.outlet && it.outlet) prev.outlet = it.outlet;
+    if (!prev.summary && it.summary) prev.summary = it.summary;
+    if (!prev.ts && it.ts) { prev.ts = it.ts; prev.date = it.date; }
   }
-
-  // de-duplicate on normalised title
-  const seen = new Set();
-  items = items.filter(it => {
-    if (!it.title || !it.url) return false;
+  let items = [...byKey.values()].filter(it => {
     if (PRESS_BLOCKLIST.some(b => it.url.includes(b))) return false;
     if (looksLikeIndexPage(it)) return false;
-    const key = it.title.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 60);
-    if (seen.has(key)) return false;
-    seen.add(key);
     return true;
   });
 
   items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  items = items.slice(0, PRESS_MAX);
 
-  // Open each candidate once: confirm the name really appears in the article and
-  // take its preview image while we are there.
-  const candidates = items.slice(0, PRESS_VERIFY_COUNT);
-  await Promise.allSettled(candidates.map(async it => {
+  await resolveGoogleUrls(items, log);
+
+  // drop blocklisted hosts that only became visible after resolution
+  items = items.filter(it => !PRESS_BLOCKLIST.some(b => it.url.includes(b)));
+  for (const it of items) {
+    if (!it.outlet) it.outlet = prettyOutlet(hostOf(it.url));
+  }
+
+  // Fetch thumbnails (and verify the name on the way) for items that need one.
+  const toScrape = items
+    .filter(it => !it.image && it.url && !/news\.google\.com/.test(it.url))
+    .slice(0, PRESS_SCRAPE_COUNT);
+  await Promise.allSettled(toScrape.map(async it => {
     const page = await readArticle(it.url);
-    it.image = page.image || '';
-    it.verified = page.ok
-      ? page.mentions
-      : PRESS_MUST_MATCH.test((it.title || '') + ' ' + (it.summary || ''));
+    if (page.image) it.image = page.image;
+    // only drop when we truly read the page and the name is nowhere in it
+    if (page.ok && !page.mentions &&
+        !PRESS_MUST_MATCH.test((it.title || '') + ' ' + (it.summary || ''))) {
+      it.drop = true;
+    }
   }));
-
   const before = items.length;
-  items = candidates.filter(it => it.verified);
-  log.push({ stage: 'verified', checked: candidates.length, kept: items.length, dropped: before - items.length });
+  items = items.filter(it => !it.drop);
+  log.push({ stage: 'scraped', opened: toScrape.length, dropped: before - items.length });
 
   items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   items = items.map(it => ({
@@ -256,7 +304,7 @@ async function press(debug) {
     summary: it.summary, date: it.date, ts: it.ts, image: it.image || ''
   }));
 
-  if (debug) return { count: items.length, log, items };
+  if (debug) return { count: items.length, withImage: items.filter(i => i.image).length, log, items };
   return items;
 }
 
@@ -300,49 +348,119 @@ const OUTLET_NAMES = {
 function prettyOutlet(host) {
   if (!host) return '';
   if (OUTLET_NAMES[host]) return OUTLET_NAMES[host];
-  const base = host.replace(/\.(com|net|org|se|co\.uk|io|gg|news)$/, '');
+  const base = host.replace(/\.(com|net|org|se|co\.uk|io|gg|news)$/, '').replace(/\.[a-z]{2,3}$/, '');
   return base.split('.').pop().replace(/(^|[-_])(\w)/g, (m, a, b) => (a ? ' ' : '') + b.toUpperCase());
-}
-
-async function resolveGoogleLink(url) {
-  if (!/news\.google\.com/.test(url)) return url;
-  try {
-    const res = await fetch(url, {
-      redirect: 'follow',
-      cf: { cacheTtl: 86400 },
-      headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
-          '(KHTML, like Gecko) Chrome/124.0 Safari/537.36'
-      }
-    });
-    if (res.url && !/news\.google\.com/.test(res.url)) return res.url;
-    const html = await res.text();
-    const m = /<a[^>]+href=["'](https?:\/\/(?!news\.google)[^"']+)["']/.exec(html)
-      || /data-n-au=["'](https?:\/\/[^"']+)["']/.exec(html)
-      || /url=(https?%3A%2F%2F[^"'&]+)/.exec(html);
-    if (m) return decodeURIComponent(m[1]);
-  } catch (e) {}
-  return url;
 }
 
 async function googleNews(q) {
   const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(q)
     + '&hl=en-US&gl=US&ceid=US:en';
   const xml = await getText(url);
-  const items = parseRss(xml).map(it => {
-    const m = /href=["'](https?:\/\/(?!news\.google)[^"']+)["']/.exec(it.raw || '');
-    if (m) it.url = m[1];
+  return parseRss(xml).map(it => {
     // Google puts the outlet after a trailing dash in the headline
     const src = /\s+-\s+([^-]{2,40})$/.exec(it.title);
-    if (src) it.outlet = src[1].trim();
+    if (src && !it.outlet) it.outlet = src[1].trim();
     it.title = it.title.replace(/\s+-\s+[^-]{2,40}$/, '');
+    it.summary = ''; // GN descriptions are just the headline again
     return it;
   });
-  await Promise.allSettled(items.map(async it => {
-    it.url = await resolveGoogleLink(it.url);
-    if (!it.outlet) it.outlet = prettyOutlet(hostOf(it.url));
+}
+
+/* Google stopped redirecting news.google.com/rss/articles links server-side in
+   2024, which is what quietly broke the old resolver. Three-layer replacement:
+   1. old-style ids ("CBMi...") carry the URL inside the base64 - free to decode
+   2. new-style ids need the page's signature + timestamp fed to the
+      batchexecute endpoint (one POST decodes the whole batch)
+   3. anything left keeps its google link, and often gets a real URL from the
+      Bing copy of the same article during the merge anyway */
+function decodeGoogleStatic(u) {
+  try {
+    const m = /articles\/([^?/]+)/.exec(u);
+    if (!m) return '';
+    const bin = atob(m[1].replace(/-/g, '+').replace(/_/g, '/'));
+    if (bin.indexOf('AU_yqL') !== -1) return ''; // new format, needs batchexecute
+    const urls = bin.match(/https?:\/\/[\x20-\x7e]+/g) || [];
+    const best = urls.map(x => x.replace(/[\x00-\x1f].*$/, ''))
+      .filter(x => !/news\.google|ampproject/.test(x));
+    return best.length ? best[best.length - 1] : '';
+  } catch (e) { return ''; }
+}
+
+async function googleDecodeParams(u) {
+  try {
+    const m = /articles\/([^?/]+)/.exec(u);
+    if (!m) return null;
+    const res = await fetch('https://news.google.com/rss/articles/' + m[1], {
+      redirect: 'follow', cf: { cacheTtl: 86400 },
+      headers: { 'user-agent': UA, 'accept': 'text/html' }
+    });
+    if (res.url && !/news\.google\.com/.test(res.url)) return { finalUrl: res.url };
+    if (!res.ok) return null;
+    const html = await res.text();
+    const sg = /data-n-a-sg="([^"]+)"/.exec(html);
+    const ts = /data-n-a-ts="([^"]+)"/.exec(html);
+    if (sg && ts) return { id: m[1], sig: sg[1], ts: ts[1] };
+  } catch (e) {}
+  return null;
+}
+
+async function batchDecode(list) {
+  const out = new Array(list.length).fill('');
+  if (!list.length) return out;
+  const reqs = list.map((p, i) => ['Fbv4je',
+    JSON.stringify(['garturlreq',
+      [['X', 'X', ['X', 'X'], null, null, 1, 1, 'US:en', null, 1,
+        null, null, null, null, null, 0, 1], 'X', 'X', 1, [1, 1, 1], 1, 1, null, 0, 0, null, 0],
+      p.id, Number(p.ts), p.sig]),
+    null, String(i + 1)]);
+  try {
+    const res = await fetch('https://news.google.com/_/DotsSplashUi/data/batchexecute', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        'user-agent': UA
+      },
+      body: 'f.req=' + encodeURIComponent(JSON.stringify([reqs]))
+    });
+    if (!res.ok) return out;
+    const text = await res.text();
+    for (const line of text.split('\n')) {
+      if (line.charAt(0) !== '[') continue;
+      let rows; try { rows = JSON.parse(line); } catch (e) { continue; }
+      for (const row of rows) {
+        if (!row || row[0] !== 'wrb.fr' || row[1] !== 'Fbv4je' || !row[2]) continue;
+        let inner; try { inner = JSON.parse(row[2]); } catch (e) { continue; }
+        if (!inner || !inner[1]) continue;
+        const idx = parseInt(row[row.length - 1], 10) - 1;
+        out[idx >= 0 && idx < out.length ? idx : 0] = inner[1];
+      }
+    }
+  } catch (e) {}
+  return out;
+}
+
+async function resolveGoogleUrls(items, log) {
+  const pending = [];
+  for (const it of items) {
+    if (!/news\.google\.com/.test(it.url)) continue;
+    const dec = decodeGoogleStatic(it.url);
+    if (dec) it.url = dec;
+    else pending.push(it);
+  }
+  const batch = pending.slice(0, PRESS_GOOGLE_DECODE_COUNT);
+  const params = [];
+  await Promise.allSettled(batch.map(async it => {
+    const p = await googleDecodeParams(it.url);
+    if (p && p.finalUrl) { it.url = p.finalUrl; return; }
+    if (p) params.push({ it, p });
   }));
-  return items;
+  const urls = await batchDecode(params.map(x => x.p));
+  params.forEach((x, i) => { if (urls[i]) x.it.url = urls[i]; });
+  if (log) log.push({
+    stage: 'google-decode', googleLinks: pending.length + (items.length - pending.length),
+    attempted: batch.length, viaBatch: urls.filter(Boolean).length,
+    stillEncoded: items.filter(it => /news\.google\.com/.test(it.url)).length
+  });
 }
 
 async function getText(url) {
@@ -373,10 +491,16 @@ function parseRss(xml) {
     const desc = tag(block, 'description');
     if (!title || !link) continue;
     const ts = pub ? Date.parse(pub) : 0;
+    let image = clean(tag(block, 'News:Image'))
+      || attr(block, 'media:content', 'url')
+      || attr(block, 'media:thumbnail', 'url')
+      || attr(block, 'enclosure', 'url') || '';
+    if (image && !/^https?:/.test(image)) image = '';
     out.push({
       title,
       url: link,
       outlet: source,
+      image,
       summary: clean(desc).replace(/<[^>]+>/g, '').trim().slice(0, 320),
       raw: desc,
       ts: isNaN(ts) ? 0 : ts,

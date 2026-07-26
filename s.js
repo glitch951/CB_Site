@@ -282,16 +282,38 @@
       }
       var picks = pool.slice(0, Math.min(2, pool.length));
       var sides = ['is-left', 'is-right'];
+      var imgs = [];
+
+      /* Every portrait is drawn at the same pixel density: portraitZoom is how
+         many screen pixels one image pixel gets (default 2 = doubled). A
+         high-res file therefore takes up far more space than a low-res one.
+         If the pair would collide in the middle, both are scaled down by the
+         SAME factor - relative sizes stay honest, and they never overlap
+         (unless portraitAllowOverlap is set in content.json). */
+      function layout() {
+        var vw = holder.clientWidth || window.innerWidth;
+        var zoom = C.portraitZoom != null ? C.portraitZoom : 2;
+        var ready = imgs.filter(function (im) { return im.naturalWidth; });
+        if (!ready.length) return;
+        var widths = ready.map(function (im) { return im.naturalWidth * zoom; });
+        var sum = widths.reduce(function (a, b) { return a + b; }, 0);
+        var fit = C.portraitAllowOverlap ? 1 : Math.min(1, vw / sum);
+        ready.forEach(function (im, n) { im.style.width = widths[n] * fit + 'px'; });
+      }
+
       picks.forEach(function (src, n) {
         var img = h('img', { alt: '', class: sides[n] });
         img.style.setProperty('--portrait-opacity',
           C.portraitOpacity != null ? C.portraitOpacity : .1);
-        img.onload = function () { img.classList.add('is-in'); };
-        img.onerror = function () { img.remove(); };
+        if (C.portraitAlign === 'top') { img.style.top = '0'; img.style.bottom = 'auto'; }
+        img.onload = function () { layout(); img.classList.add('is-in'); };
+        img.onerror = function () { img.remove(); layout(); };
         img.decoding = 'async';
         img.src = src;
+        imgs.push(img);
         holder.appendChild(img);
       });
+      window.addEventListener('resize', layout);
     });
   }
 
@@ -322,6 +344,31 @@
     return fig;
   }
 
+  /* Vertical 9:16 visual for the Backstory and Talks rails. Two moods:
+     ambient (silent, looping, no controls - scenery, not a player) and
+     player (controls shown, nothing moves until the visitor presses play).
+     The rail it sits in is hidden by CSS on anything narrower than 1250px. */
+  function vertMedia(src, opts) {
+    if (!src) return null;
+    opts = opts || {};
+    var node;
+    if (/\.(mp4|webm|mov)([?#]|$)/i.test(src)) {
+      if (opts.ambient) {
+        node = h('video', { src: abs(src), autoplay: '', loop: '', playsinline: '', preload: 'auto' });
+        node.muted = true;
+      } else {
+        node = h('video', { src: abs(src), controls: '', playsinline: '', preload: 'metadata' });
+      }
+    } else {
+      node = h('img', { src: abs(src), alt: '', loading: 'lazy' });
+    }
+    var fig = h('figure', { class: 'cb-vert' }, [
+      node, opts.caption ? h('figcaption', { text: opts.caption }) : null
+    ]);
+    node.onerror = function () { fig.remove(); };
+    return fig;
+  }
+
   function pageBackstory() {
     var b = C.backstory || {};
     var page = h('div', { class: 'cb-page' }, [masthead('Backstory')]);
@@ -329,13 +376,24 @@
     if (b.standfirst) page.appendChild(h('p', { class: 'cb-standfirst', text: b.standfirst }));
     page.classList.add(b.title || b.standfirst ? 'has-head' : 'no-head');
 
+    /* One page-level vertical visual that stays beside the text through every
+       chapter (sticky). Wide screens only - the rail vanishes below 1250px. */
+    var host = page;
+    var vert = vertMedia(b.sideVisual, { ambient: true, caption: b.sideVisualCaption });
+    if (vert) {
+      host = h('div', {});
+      page.appendChild(h('div', { class: 'cb-withside' }, [
+        host, h('aside', { class: 'cb-vert-rail' }, [vert])
+      ]));
+    }
+
     (b.chapters || []).forEach(function (ch) {
       var col = h('div', { class: 'cb-chapter-col' });
       if (ch.title) col.appendChild(h('h3', { class: 'cb-chapter-h', text: ch.title }));
       col.appendChild(h('div', { class: 'cb-body', html: paras(ch.paragraphs) }));
 
       var side = mediaBlock(ch.media, ch.mediaCaption);
-      page.appendChild(h('div', { class: 'cb-chapter-grid' + (side ? '' : ' is-wide') },
+      host.appendChild(h('div', { class: 'cb-chapter-grid' + (side ? '' : ' is-wide') },
         [col, side]));
     });
     return page;
@@ -365,9 +423,28 @@
 
   function pageTalks() {
     var page = h('div', { class: 'cb-page' }, [masthead('Talks')]);
+    var talks = C.talks || [];
     var list = h('div', { class: 'cb-list' });
-    (C.talks || []).forEach(function (t) {
-      list.appendChild(h('div', { class: 'cb-row cb-row-talk' }, [
+    var hasVisuals = talks.some(function (t) { return t.visual; });
+    var rail = null;
+    var rows = [];
+    var selected = -1;
+
+    /* Clicking a talk swaps the visual in the rail. Videos here get controls
+       and wait for the visitor to press play; whatever was playing before is
+       paused when it leaves. */
+    function select(i) {
+      if (!rail || i === selected || !talks[i]) return;
+      selected = i;
+      rows.forEach(function (r, n) { r.classList.toggle('is-selected', n === i); });
+      rail.querySelectorAll('video').forEach(function (v) { v.pause(); });
+      rail.innerHTML = '';
+      var med = vertMedia(talks[i].visual, { caption: talks[i].visualCaption });
+      if (med) rail.appendChild(med);
+    }
+
+    talks.forEach(function (t, i) {
+      var row = h('div', { class: 'cb-row cb-row-talk' }, [
         h('div', { class: 'cb-meta', text: t.date || '' }),
         h('div', {}, [
           h('h4', { text: t.venue || t.title }),
@@ -378,9 +455,25 @@
             text: (t.linkLabel || 'Read more') + ' →'
           }) : null
         ])
-      ]));
+      ]);
+      if (hasVisuals) {
+        row.classList.add('is-selectable');
+        row.addEventListener('click', function (ev) {
+          if (ev.target.closest && ev.target.closest('a')) return;
+          select(i);
+        });
+      }
+      rows.push(row);
+      list.appendChild(row);
     });
-    page.appendChild(list);
+
+    if (hasVisuals) {
+      rail = h('aside', { class: 'cb-vert-rail' });
+      page.appendChild(h('div', { class: 'cb-withside' }, [list, rail]));
+      select(0);
+    } else {
+      page.appendChild(list);
+    }
     return page;
   }
 
@@ -458,7 +551,8 @@
       }
       var top = items[0];
       var body = bb(top.contents);
-      var hero = firstImage(body);
+      var bodyImg = firstImage(body);
+      var hero = top.image || bodyImg;
       page.appendChild(h('div', { class: 'cb-lede' }, [
         h('div', { class: 'cb-postmeta' }, [
           h('span', { class: 'is-orange', text: fmtDate(top.date) }),
@@ -470,7 +564,7 @@
         var fig = h('figure', { class: 'cb-figure' }, [h('img', { src: hero, alt: '' })]);
         fig.querySelector('img').onerror = function () { fig.remove(); };
         page.appendChild(fig);
-        body = body.replace(/<img src="[^"]+"[^>]*>/, '');
+        if (hero === bodyImg) body = body.replace(/<img src="[^"]+"[^>]*>/, '');
       }
       page.appendChild(h('div', { class: 'cb-body is-post', html: body }));
       page.appendChild(h('a', {
@@ -518,7 +612,23 @@
         var t = p.ts || Date.parse(p.date || '') || 0;
         return Object.assign({}, p, { ts: t });
       }).concat(items || []);
-      all.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+
+      // a pinned article may also arrive in the live feed - keep one copy
+      var seen = {};
+      all = all.filter(function (p) {
+        if (!p || !p.title) return false;
+        var key = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 60);
+        if (seen[key]) return false;
+        seen[key] = 1;
+        return true;
+      });
+
+      // chronological (oldest first) unless content.json says pressOrder: "newest"
+      var newestFirst = C.pressOrder === 'newest';
+      all.sort(function (a, b) {
+        return newestFirst ? (b.ts || 0) - (a.ts || 0) : (a.ts || 0) - (b.ts || 0);
+      });
+
       page.innerHTML = '';
       page.appendChild(masthead('Press'));
       if (!all.length) {
@@ -526,61 +636,38 @@
         return;
       }
 
-      var top = all[0];
-      var hero = h('a', {
-        class: 'cb-hero', href: top.url, target: '_blank', rel: 'noopener'
-      }, [
-        top.image
-          ? thumb(top.image, '', 'is-hero')
-          : h('div', { class: 'cb-thumb is-hero is-empty' }),
-        h('div', { class: 'cb-hero-txt' }, [
-          h('div', { class: 'cb-postmeta' }, [
-            h('span', { class: 'is-orange', text: top.outlet || '' }),
-            h('span', { text: top.date || '' })
-          ]),
-          h('h2', { class: 'cb-hero-title', text: top.title }),
-          top.summary ? h('p', { class: 'cb-hero-sum', text: top.summary }) : null,
-          h('span', { class: 'cb-link is-small', text: 'Read it at ' + (top.outlet || 'the source') + ' →' })
-        ])
-      ]);
-      page.appendChild(hero);
+      var list = h('div', { class: 'cb-list' });
+      page.appendChild(list);
+      var more = h('button', {
+        class: 'cb-more is-arrow', type: 'button', text: '↓',
+        'aria-label': 'Show more articles', title: 'Show more articles'
+      });
 
-      if (all.length > 1) {
-        page.appendChild(h('div', { class: 'cb-sep' }, [
-          h('span', { text: 'Coverage' }), h('div', {})
-        ]));
-        var list = h('div', { class: 'cb-list' });
-        page.appendChild(list);
-        var more = h('button', { class: 'cb-more', type: 'button', text: 'Load more' });
-        page.appendChild(more);
-
-        var shown = 1;
-        var STEP = 20;
-        function addRows() {
-          var next = all.slice(shown, shown + STEP);
-          next.forEach(function (p) {
-            var th = p.image
+      var shown = 0;
+      var STEP = 10;
+      function addRows() {
+        all.slice(shown, shown + STEP).forEach(function (p) {
+          list.appendChild(h('a', {
+            class: 'cb-row cb-row-press',
+            href: p.url, target: '_blank', rel: 'noopener'
+          }, [
+            p.image
               ? thumb(p.image, '', 'is-small')
-              : h('div', { class: 'cb-thumb is-small is-empty' });
-            list.appendChild(h('a', {
-              class: 'cb-row cb-row-press',
-              href: p.url, target: '_blank', rel: 'noopener'
-            }, [
-              th,
-              h('div', {}, [
-                h('div', { class: 'cb-meta is-orange', text: p.outlet || '' }),
-                h('div', { class: 'cb-headline', text: p.title })
-              ]),
-              h('div', { class: 'cb-meta cb-right', text: p.date || '' })
-            ]));
-          });
-          shown += next.length;
-          if (shown >= all.length) more.remove();
-          else more.textContent = 'Load more (' + (all.length - shown) + ' left)';
-        }
-        addRows();
-        more.addEventListener('click', addRows);
+              : h('div', { class: 'cb-thumb is-small is-empty' }),
+            h('div', {}, [
+              h('div', { class: 'cb-meta is-orange', text: p.outlet || '' }),
+              h('div', { class: 'cb-headline', text: p.title }),
+              p.summary ? h('div', { class: 'cb-press-sum', text: p.summary }) : null
+            ]),
+            h('div', { class: 'cb-meta cb-right', text: p.date || '' })
+          ]));
+        });
+        shown = Math.min(all.length, shown + STEP);
+        if (shown >= all.length) more.remove();
       }
+      addRows();
+      if (shown < all.length) page.appendChild(more);
+      more.addEventListener('click', addRows);
     }).catch(function () {
       page.innerHTML = '';
       page.appendChild(masthead('Press'));

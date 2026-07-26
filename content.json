@@ -8,6 +8,13 @@
   "//portraits": "Portraits are read automatically from the portraits/ folder of whichever repo this site is served from. Just upload files there - nothing to configure, nothing to list.",
   "portraitsDir": "portraits",
   "portraits": [],
+  "//portraitZoom": "Screen pixels per image pixel; 2 doubles everything. Portraits are drawn at the SAME pixel density, so a high-res file takes up much more space than a low-res one. Anything taller than the window is cropped at the top (that's the zoom). If the pair would overlap, both shrink by the same factor until they just fit side by side.",
+  "portraitZoom": 2,
+  "portraitAllowOverlap": false,
+  "//portraitAlign": "Where the crop anchors: 'bottom' keeps feet on the page edge and crops the top, 'top' does the opposite.",
+  "portraitAlign": "bottom",
+  "//pressOrder": "'oldest' = chronological, oldest article first. Set to 'newest' for newest-first.",
+  "pressOrder": "oldest",
   "social": [
     {
       "label": "X",
@@ -76,6 +83,7 @@
       ]
     }
   ],
+  "//talks-visual": "Each talk can carry a 'visual' (vertical 9:16 image or video) shown in a rail beside the list on wide screens. Clicking a talk swaps the visual; the top talk is shown by default. Videos here get player controls and only start when clicked. Optional 'visualCaption' labels it.",
   "talks": [
     {
       "date": "MAY 2026",
@@ -85,7 +93,8 @@
       "linkLabel": "",
       "paragraphs": [
         "I was invited to host a workshop at Nordic. A so-called MASTERCLASS, in which I went over a more freestyled version of my interactive writing talk, along with almost three hours of QnA! A ton of great questions and always fun to rant - especially since this was right after the release of Ebb!"
-      ]
+      ],
+      "visual": "https://christofferbodegard.com/assets/videos/video02.mp4?v=fc74279e"
     },
     {
       "date": "OCT 2024",
@@ -96,12 +105,16 @@
       "paragraphs": [
         "I've been desperately trying to understand interactive storytelling for years. As I dove into the topic, I stumbled upon a problem: there was no common term for the thing I wanted to do. The thing that Planescape: Torment and Disco Elysium did so well. So I called it 'INTERACTIVE WRITING', which technically already means something entirely different, and this talk goes over my initial exploration of why I needed this term, along with a list of general rules of agency I follow in my personal design philosophy.",
         "None of my talks have been recorded yet, which is probably for the best. But since it was pretty well-received at the conference, some people asked me to make the slides public. Here's the link:"
-      ]
+      ],
+      "visual": "https://christofferbodegard.com/assets/images/image05.jpg?v=fc74279e"
     }
   ],
   "backstory": {
     "title": "",
     "standfirst": "",
+    "//sideVisual": "A single vertical (9:16) visual pinned beside the text on wide screens; it disappears below 1250px. Videos here play silently on loop with no controls. sideVisualCaption is the small label under it.",
+    "sideVisual": "https://christofferbodegard.com/assets/videos/video03.mp4",
+    "sideVisualCaption": "Game development in Skövde",
     "chapters": [
       {
         "title": "University of Skövde",
