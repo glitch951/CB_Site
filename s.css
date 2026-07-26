@@ -228,11 +228,6 @@
 }
 .cb-row-talk.is-selected::before { top: 30px; bottom: 30px; }
 .cb-vert.is-capsule video, .cb-vert.is-capsule img { aspect-ratio: 2 / 3; }
-.cb-vert-empty {
-  aspect-ratio: 9 / 16; border: 1px solid var(--rule); border-radius: 6px;
-  background: repeating-linear-gradient(135deg, rgba(2, 14, 22, .05), rgba(2, 14, 22, .05) 9px, transparent 9px, transparent 18px);
-}
-.cb-vert-empty.is-capsule { aspect-ratio: 2 / 3; }
 .cb-aside {
   margin: 30px 0; padding: 2px 0 2px 22px; border-left: 3px solid var(--orange);
 }.cb-aside div {

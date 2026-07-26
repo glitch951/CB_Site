@@ -27,6 +27,55 @@ const PRESS_QUERIES = [
 // Every result must actually be about him, not just about the game.
 const PRESS_MUST_MATCH = /bodeg[\u00e5a]rd/i;
 
+/* THE ARCHIVE. Not pinned, not promoted - these render inline, sorted by date
+   like everything else. This list exists because no permitted live source can
+   see the past anymore: Google News blocks this worker's datacenter IP and
+   GDELT's search API only covers a rolling ~3 months. Every entry is a real
+   article with a verified URL. Safe to edit or delete entries.
+   This list never needs manual additions: with a KV namespace bound as
+   PRESS_KV, every article the live feed sees is remembered automatically,
+   and a weekly cron trigger keeps that memory growing even with no visitors
+   (dash > worker > Settings: Bindings for KV, Trigger Events for cron). */
+const PRESS_ARCHIVE = [
+  { title: "I was already intrigued by this Disco Elysium-inspired, D&D-based RPG where you play as the world's worst cleric, but its demo blew my expectations out of the water",
+    url: 'https://www.pcgamer.com/i-was-already-intrigued-by-this-disco-elysium-inspired-dandd-based-rpg-where-you-play-as-the-worlds-worst-cleric-but-its-demo-blew-my-expectations-out-of-the-water/',
+    outlet: 'PC Gamer', ts: Date.UTC(2024, 0, 12),
+    image: 'https://cdn.mos.cms.futurecdn.net/9YFzM4oYSNoJW84nGJezv-1200-80.jpg' },
+  { title: 'D&D-skewering, Disco Elysium-inspired RPG Esoteric Ebb had me trying my best to be a cleric while my Intelligence stat kept telling me to become a wizard-king',
+    url: 'https://www.pcgamer.com/games/rpg/d-and-d-skewering-disco-elysium-inspired-rpg-esoteric-ebb-had-me-trying-my-best-to-be-a-cleric-while-my-intelligence-stat-kept-telling-me-to-become-a-wizard-king/',
+    outlet: 'PC Gamer', ts: Date.UTC(2025, 1, 27) },
+  { title: 'Dev making "Planescape Torment + Disco Elysium" says spending 8 years struggling to pay rent and writing over 1 million words for his D&D-inspired RPG was "a ridiculously stupid path"',
+    url: 'https://www.gamesradar.com/games/rpg/dev-making-planescape-torment-disco-elysium-says-spending-8-years-struggling-to-pay-rent-and-writing-over-1-million-words-for-his-d-and-d-inspired-rpg-was-a-ridiculously-stupid-path/',
+    outlet: 'GamesRadar', ts: Date.UTC(2026, 1, 27) },
+  { title: 'Esoteric Ebb Review',
+    url: 'https://www.rpgfan.com/review/esoteric-ebb/',
+    outlet: 'RPGFan', ts: Date.UTC(2026, 2, 2) },
+  { title: "It's only March, but I'm calling it: Esoteric Ebb is 2026's best RPG and the first worthy successor to Disco Elysium",
+    url: 'https://www.pcgamer.com/games/rpg/its-only-march-but-im-calling-it-esoteric-ebb-is-2026s-best-rpg-and-the-first-worthy-successor-to-disco-elysium/',
+    outlet: 'PC Gamer', ts: Date.UTC(2026, 2, 3) },
+  { title: 'Esoteric Ebb Has A Lot Of Hilarious Ways In Which You Can Die',
+    url: 'https://kotaku.com/esoteric-ebb-rpg-dnd-baldurs-gate-3-disco-elysium-2000676274',
+    outlet: 'Kotaku', ts: Date.UTC(2026, 2, 5) },
+  { title: 'Esoteric Ebb Review - A Disco Elysium-Style RPG That Rewards Chaos and Roleplay',
+    url: 'https://monstervine.com/2026/03/esoteric-ebb-review/',
+    outlet: 'MonsterVine', ts: Date.UTC(2026, 2, 9) },
+  { title: 'Esoteric Ebb review: a brilliantly weird fantasy CRPG where politics, dice rolls, and bad decisions collide',
+    url: 'https://www.absolutegeeks.com/article/games/gaming-reviews/esoteric-ebb-review-a-brilliantly-weird-fantasy-crpg-where-politics-dice-rolls-and-bad-decisions-collide/',
+    outlet: 'Absolute Geeks', ts: Date.UTC(2026, 2, 16) },
+  { title: "Esoteric Ebb Review: One Of 2026's Chattiest Role-Playing Games",
+    url: 'https://www.kakuchopurei.com/2026/03/esoteric-ebb-review-kkp/',
+    outlet: 'Kakuchopurei', ts: Date.UTC(2026, 2, 27) },
+  { title: 'Esoteric Ebb is the first RPG since Disco Elysium that made me reroll my entire life',
+    url: 'https://finalboss.io/esoteric-ebb-is-the-first-rpg-since-disco',
+    outlet: 'FinalBoss', ts: Date.UTC(2026, 2, 27) },
+  { title: "'Esoteric Ebb' Takes Its Silly Choices Seriously",
+    url: 'https://medium.com/theuglymonster/esoteric-ebb-takes-its-silly-choices-seriously-c2f1d6461607',
+    outlet: 'The Ugly Monster', ts: Date.UTC(2026, 3, 19) },
+  { title: "2026's best RPG might look like Disco Elysium, but it was heavily inspired by Deus Ex, and its creator wants 'to do a first-person game at some point'",
+    url: 'https://www.pcgamer.com/gaming-industry/2026s-best-rpg-might-look-like-disco-elysium-but-it-was-heavily-inspired-by-deus-ex-and-its-creator-wants-to-do-a-first-person-game-at-some-point/',
+    outlet: 'PC Gamer', ts: Date.UTC(2026, 6, 12) }
+];
+
 // Domains you never want on the press page. (yahoo/msn/flipboard etc. are
 // syndicated mirrors of articles that exist on the real outlet.)
 const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/shorts',
@@ -92,7 +141,7 @@ export default {
         } catch (e) {}
       }
 
-      const data = feed === 'press' ? await press(debug) : await steam(debug);
+      const data = feed === 'press' ? await press(debug, env, ctx) : await steam(debug);
 
       if (!debug && Array.isArray(data) && data.length) {
         try {
@@ -108,6 +157,16 @@ export default {
       return new Response(JSON.stringify({ error: String(err && err.stack || err) }),
         { status: 500, headers: CORS });
     }
+  },
+
+  /* Runs on the cron trigger (worker > Settings > Trigger Events > Cron
+     Triggers, e.g. "0 6 * * 1" for every Monday 06:00 UTC). Rebuilds the
+     press feed in the background so the KV archive keeps absorbing new
+     articles even during stretches when nobody visits the site - GDELT only
+     remembers ~3 months, so anything unseen for longer would otherwise be
+     lost forever. */
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(press(0, env, ctx).catch(() => {}));
   }
 };
 
@@ -284,22 +343,37 @@ async function steam(debug) {
    bot-walls to datacenters and that must never hide coverage.
    If the page is ever empty again, ?feed=press&debug=1 now names the exact
    blocker per source (http status, consent wall, captcha...). */
-async function press(debug) {
+async function press(debug, env, ctx) {
   const log = [];
   const t0 = Date.now();
 
-  /* Both sources start immediately. Google answers in a second or two, so
+  /* All sources start immediately. Google answers in a second or two, so
      its link-decoding runs WHILE GDELT is still scanning - the two slowest
      stages overlap instead of stacking. */
-  const gdeltP = Promise.all(PRESS_QUERIES.map(q => gdelt(q, log)));
+  const gdeltP = gdelt(log);
   const googleP = Promise.all(PRESS_QUERIES.map(q => googleNews(q, log)));
+
+  // the remembered archive: KV history (if a PRESS_KV binding exists) plus
+  // the baked-in seed list; both render inline, sorted by date like the rest
+  let kvArchive = [];
+  if (env && env.PRESS_KV) {
+    try { kvArchive = (await env.PRESS_KV.get('archive', 'json')) || []; } catch (e) {}
+    log.push({ source: 'kv', found: kvArchive.length });
+  } else {
+    log.push({ source: 'kv', found: 0, hint: 'no PRESS_KV binding - archive not persisted' });
+  }
+  const seeds = PRESS_ARCHIVE.map(a => ({
+    title: a.title, url: a.url, outlet: a.outlet, summary: '',
+    image: a.image || '', ts: a.ts, date: fmtDateShort(a.ts)
+  }));
 
   let gItems = mergeLists(await googleP);
   gItems.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   gItems = gItems.slice(0, PRESS_MAX);
   await resolveGoogleUrls(gItems, log);
 
-  let items = mergeLists([gItems].concat(await gdeltP));
+  // live data first so it wins base fields; archive fills in the history
+  let items = mergeLists([gItems, await gdeltP, kvArchive, seeds]);
   items = items.filter(it => {
     if (PRESS_BLOCKLIST.some(b => it.url.includes(b))) return false;
     if (looksLikeIndexPage(it)) return false;
@@ -330,6 +404,14 @@ async function press(debug) {
     title: it.title, url: it.url, outlet: it.outlet,
     summary: it.summary, date: it.date, ts: it.ts, image: it.image || ''
   }));
+
+  // remember everything seen today so it can never be lost to source decay
+  if (env && env.PRESS_KV && items.length) {
+    const union = mergeLists([items, kvArchive])
+      .sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 300);
+    const put = env.PRESS_KV.put('archive', JSON.stringify(union)).catch(() => {});
+    if (ctx && ctx.waitUntil) ctx.waitUntil(put); else await put;
+  }
 
   log.push({ stage: 'timing', ms: Date.now() - t0 });
   if (debug) return { count: items.length, withImage: items.filter(i => i.image).length, log, items };
@@ -365,7 +447,7 @@ function fmtDateShort(ts) {
 
 async function gdeltFetch(q, fullArchive, ms) {
   const url = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' +
-    encodeURIComponent('"' + q + '" sourcelang:eng') +
+    encodeURIComponent(q) +
     '&mode=artlist&format=json&maxrecords=100&sort=datedesc' +
     (fullArchive ? '&startdatetime=20240101000000' : '');
   let status = 0, arts = [];
@@ -398,19 +480,23 @@ async function gdeltFetch(q, fullArchive, ms) {
   return { status, items };
 }
 
-async function gdelt(q, log) {
-  const deep = await gdeltFetch(q, true, 15000);
-  let items = deep.items;
-  let statuses = String(deep.status);
-  if (items.length < 5) {
-    const quick = await gdeltFetch(q, false, 8000);
-    statuses += '/' + quick.status;
-    const seen = new Set(items.map(it => normTitle(it.title)));
-    for (const it of quick.items) {
-      if (!seen.has(normTitle(it.title))) { seen.add(normTitle(it.title)); items.push(it); }
-    }
+async function gdelt(log) {
+  // one OR-combined query covers both spellings in a single call
+  const q = '("' + PRESS_QUERIES.join('" OR "') + '") sourcelang:eng';
+  // the guaranteed recent window and the best-effort archive attempt run in
+  // parallel; GDELT only promises ~3 months, so the deep one is a bonus
+  const [quick, deep] = await Promise.all([
+    gdeltFetch(q, false, 10000),
+    gdeltFetch(q, true, 15000)
+  ]);
+  const seen = new Set(quick.items.map(it => normTitle(it.title)));
+  const items = quick.items.slice();
+  for (const it of deep.items) {
+    const k = normTitle(it.title);
+    if (!seen.has(k)) { seen.add(k); items.push(it); }
   }
-  if (log) log.push({ source: 'gdelt', query: q, status: statuses, found: items.length });
+  if (log) log.push({ source: 'gdelt', status: quick.status + '/' + deep.status,
+    found: items.length, recent: quick.items.length, archiveBonus: deep.items.length });
   return items;
 }
 

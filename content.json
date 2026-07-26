@@ -2,7 +2,7 @@
   "name": "Christoffer Bodegård",
   "bio": "Christoffer Bodegård is a game developer, writer, and fan of interactive storytelling. Creator of <a href=\"https://esotericebb.com/\">Esoteric Ebb</a>. Focused on developing the art of interactive writing for use in role-playing games.",
   "copyright": "©2026 Sudden Snail AB. Esoteric Ebb and its respective logo are trademarks of Sudden Snail AB. All rights reserved.",
-  "homePage": "work",
+  "homePage": "devlogs",
   "feedsUrl": "https://cb-feeds.christofferbodegard.workers.dev",
   "portraitOpacity": 0.1,
   "//portraits": "Portraits are read automatically from the portraits/ folder of whichever repo this site is served from. Just upload files there - nothing to configure, nothing to list.",
@@ -28,7 +28,7 @@
     },
     {
       "label": "Email",
-      "url": "mailto:christofferbodegard@suddensnail.com"
+      "url": "mailto:christofferbodagard@suddensnail.com"
     }
   ],
   "railExtras": [
@@ -37,7 +37,7 @@
       "url": "https://esotericebb.com/#collaborators"
     }
   ],
-  "//work-visual": "Work rows show each game's vertical (2:3) Steam library capsule in a rail beside the list on wide screens; clicking a row swaps the art, top row shown by default. The art is derived automatically from the Steam store link - add a 'visual' URL to override it, or for non-Steam work. Rows with neither show a hatched placeholder frame.",
+  "//work-visual": "Work rows show each game's vertical (2:3) Steam library capsule in a rail beside the list on wide screens; clicking a row swaps the art, top row shown by default. The art is derived automatically from the Steam store link - add a 'visual' URL to override it, or for non-Steam work. Rows with neither show nothing in the rail.",
   "work": [
     {
       "year": "20XX",

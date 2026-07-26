@@ -16,9 +16,9 @@
     return null;
   })();
 
-  var PAGES = ['work', 'devlogs', 'talks', 'press', 'backstory', 'inspirations'];
+  var PAGES = ['devlogs', 'work', 'talks', 'press', 'backstory', 'inspirations'];
   var TITLES = {
-    work: 'Work', devlogs: 'Devlogs', talks: 'Talks',
+    devlogs: 'Devlogs', work: 'Work', talks: 'Talks',
     press: 'Press', backstory: 'Backstory', inspirations: 'Inspirations'
   };
 
@@ -372,9 +372,7 @@
         node.src = opts.fallback;
         return;
       }
-      fig.replaceWith(h('div', {
-        class: 'cb-vert cb-vert-empty' + (capsule ? ' is-capsule' : '')
-      }));
+      fig.remove();
     };
     return fig;
   }
@@ -383,8 +381,8 @@
      selected row. The top row is selected by default; clicking another row
      swaps the visual (pausing any playing video); the little orange marker
      shows which row owns what the rail is showing. entries[i] carries
-     { visual, fallback, caption } for rows[i]; a row without a visual shows
-     the hatched placeholder frame. */
+     { visual, fallback, caption } for rows[i]; a row without a visual leaves
+     the rail empty. */
   function attachVisualRail(page, list, rows, entries, opts) {
     var rail = h('aside', { class: 'cb-vert-rail' });
     var selected = -1;
@@ -395,12 +393,9 @@
       rail.querySelectorAll('video').forEach(function (v) { v.pause(); });
       rail.innerHTML = '';
       var e = entries[i];
-      rail.appendChild(
-        (e.visual && vertMedia(e.visual, { caption: e.caption, fallback: e.fallback })) ||
-        h('div', {
-          class: 'cb-vert cb-vert-empty' + (opts && opts.capsule ? ' is-capsule' : '')
-        })
-      );
+      // a row without a visual simply shows nothing in the rail
+      var med = e.visual && vertMedia(e.visual, { caption: e.caption, fallback: e.fallback });
+      if (med) rail.appendChild(med);
     }
     rows.forEach(function (row, i) {
       row.classList.add('is-selectable');
