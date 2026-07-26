@@ -27,9 +27,10 @@ const PRESS_QUERIES = [
 // Every result must actually be about him, not just about the game.
 const PRESS_MUST_MATCH = /bodeg[\u00e5a]rd/i;
 
-// Domains you never want on the press page.
+// Domains you never want on the press page. (yahoo/msn/flipboard etc. are
+// syndicated mirrors of articles that exist on the real outlet.)
 const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/shorts',
-  'msn.com', 'news.yahoo.com', 'flipboard.com', 'newsbreak.com'];
+  'msn.com', 'yahoo.com', 'flipboard.com', 'newsbreak.com', 'ground.news'];
 
 // URL patterns that are index pages rather than articles. (Do NOT add '/games/'
 // here - PC Gamer and others put real articles under /games/... paths.)
@@ -48,15 +49,23 @@ function looksLikeIndexPage(it) {
 }
 
 // Press feed budgets. Cloudflare's free plan allows 50 subrequests per request,
-// so every per-article fetch below is capped. Google News is the only source;
-// thumbnails come from each article's own og:image - the exact picture Google
-// News shows in its results.
+// so every per-article fetch below is capped. Sources are Google News RSS and
+// the GDELT news API; thumbnails come from GDELT's socialimage field or each
+// article's own og:image - the exact picture Google News shows in its results.
 const PRESS_MAX = 80;               // most articles ever returned
-const PRESS_GOOGLE_DECODE_COUNT = 22; // newest google-news links decoded per run
+const PRESS_GOOGLE_DECODE_COUNT = 20; // newest google-news links decoded per run
 const PRESS_SCRAPE_COUNT = 22;      // article pages opened for a thumbnail per run
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+
+/* Every outbound fetch gets a deadline. Without one, a single outlet
+   tar-pitting bot traffic holds the entire feed response hostage. */
+function tfetch(url, opts, ms) {
+  opts = Object.assign({}, opts || {});
+  try { opts.signal = AbortSignal.timeout(ms || 8000); } catch (e) {}
+  return fetch(url, opts);
+}
 
 const CORS = {
   'content-type': 'application/json; charset=utf-8',
@@ -65,13 +74,36 @@ const CORS = {
 };
 
 export default {
-  async fetch(request) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const feed = url.searchParams.get('feed');
+    const feed = url.searchParams.get('feed') === 'press' ? 'press' : 'steam';
     const debug = url.searchParams.get('debug');
     try {
-      if (feed === 'press') return json(await press(debug));
-      return json(await steam(debug));
+      /* Serve the last finished feed instantly when we have one; rebuild at
+         most once an hour. Best-effort: the Cache API is a silent no-op on
+         *.workers.dev subdomains (it activates for free if this worker is
+         ever routed through the site's own domain), so the browser-side
+         max-age in CORS still does the day-to-day caching either way. */
+      const cacheKey = new Request('https://cb-feeds.cache/' + feed);
+      if (!debug) {
+        try {
+          const hit = await caches.default.match(cacheKey);
+          if (hit) return new Response(await hit.text(), { headers: CORS });
+        } catch (e) {}
+      }
+
+      const data = feed === 'press' ? await press(debug) : await steam(debug);
+
+      if (!debug && Array.isArray(data) && data.length) {
+        try {
+          const put = caches.default.put(cacheKey, new Response(JSON.stringify(data), {
+            headers: { 'content-type': 'application/json; charset=utf-8',
+              'cache-control': 'public, max-age=3600' }
+          }));
+          if (ctx && ctx.waitUntil) ctx.waitUntil(put); else await put;
+        } catch (e) {}
+      }
+      return json(data);
     } catch (err) {
       return new Response(JSON.stringify({ error: String(err && err.stack || err) }),
         { status: 500, headers: CORS });
@@ -114,7 +146,7 @@ function isJunkImage(u) {
 
 async function eventsJson(url) {
   try {
-    const res = await fetch(url, {
+    const res = await tfetch(url, {
       cf: { cacheTtl: 3600 },
       headers: {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
@@ -175,7 +207,7 @@ async function capsules(appid, notes) {
 
   // last resort: the store news page embeds the same data as escaped JSON
   try {
-    const res = await fetch('https://store.steampowered.com/news/app/' + appid, {
+    const res = await tfetch('https://store.steampowered.com/news/app/' + appid, {
       cf: { cacheTtl: 3600 },
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; cb-feeds/1.0)' }
     });
@@ -210,7 +242,7 @@ async function steam(debug) {
       capsulesFound: Object.keys(caps.byGid).length + Object.keys(caps.byTitle).length });
     const url = 'https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/'
       + '?maxlength=0&count=40&appid=' + app.id;
-    const res = await fetch(url, { cf: { cacheTtl: 3600 } });
+    const res = await tfetch(url, { cf: { cacheTtl: 3600 } });
     if (!res.ok) continue;
     const data = await res.json();
     const items = ((data.appnews || {}).newsitems) || [];
@@ -241,27 +273,33 @@ async function steam(debug) {
 }
 
 /* ---------- Press ------------------------------------------------ */
-/* Google News search only (Bing is gone: its results and thumbnails were
-   junk). Every article's real URL is decoded out of Google's redirect, then
-   the newest articles each get their page opened once for the og:image - the
-   same picture Google News shows in its own results. Nothing is dropped based
-   on what those page fetches return: outlets routinely serve bot-walls to
-   datacenter IPs, and dropping on that basis is what emptied the feed. */
+/* Two independent sources so an outage of one can never empty the page:
+     - Google News RSS (sent with consent cookies - Google serves a consent
+       wall to datacenter IPs without them, which is what blanked the feed)
+     - GDELT, a free news-monitoring API with real URLs and each article's
+       own social/og image already attached
+   Results are merged, de-duplicated, newest first. Thumbnails come from
+   GDELT's socialimage or a one-time og:image fetch of the article page.
+   Nothing is dropped because of what article pages return - outlets serve
+   bot-walls to datacenters and that must never hide coverage.
+   If the page is ever empty again, ?feed=press&debug=1 now names the exact
+   blocker per source (http status, consent wall, captcha...). */
 async function press(debug) {
   const log = [];
   const lists = await Promise.all(
-    PRESS_QUERIES.map(q => googleNews(q).then(r => {
-      log.push({ source: 'google', query: q, found: r.length }); return r;
-    }))
+    PRESS_QUERIES.map(q => googleNews(q, log))
+      .concat(PRESS_QUERIES.map(q => gdelt(q, log)))
   );
 
-  // de-duplicate on normalised title, merging fields from the duplicates
+  // de-duplicate on normalised title, merging the best fields of each copy
   const byKey = new Map();
   for (const list of lists) for (const it of list) {
     if (!it.title || !it.url) continue;
     const key = normTitle(it.title);
     const prev = byKey.get(key);
     if (!prev) { byKey.set(key, it); continue; }
+    if (/news\.google\.com/.test(prev.url) && !/news\.google\.com/.test(it.url)) prev.url = it.url;
+    if (!prev.image && it.image) prev.image = it.image;
     if (!prev.outlet && it.outlet) prev.outlet = it.outlet;
     if (!prev.ts && it.ts) { prev.ts = it.ts; prev.date = it.date; }
   }
@@ -284,7 +322,7 @@ async function press(debug) {
     if (!it.outlet) it.outlet = prettyOutlet(hostOf(it.url));
   }
 
-  // Thumbnails for the newest articles (the ones people actually see first).
+  // Thumbnails for the newest articles that still lack one.
   const toScrape = items
     .filter(it => !it.image && it.url && !/news\.google\.com/.test(it.url))
     .slice(0, PRESS_SCRAPE_COUNT);
@@ -305,6 +343,47 @@ async function press(debug) {
   return items;
 }
 
+/* GDELT DOC API: full-text news search, JSON out, socialimage included. */
+function fmtDateShort(ts) {
+  return ts ? new Date(ts).toLocaleDateString('en-GB',
+    { month: 'short', year: 'numeric' }).toUpperCase() : '';
+}
+
+async function gdelt(q, log) {
+  const url = 'https://api.gdeltproject.org/api/v2/doc/doc?query=' +
+    encodeURIComponent('"' + q + '" sourcelang:eng') +
+    '&mode=artlist&format=json&maxrecords=100&sort=datedesc&startdatetime=20240101000000';
+  let status = 0, arts = [];
+  try {
+    const res = await tfetch(url, {
+      cf: { cacheTtl: 3600 },
+      headers: { 'user-agent': UA, 'accept': 'application/json' }
+    });
+    status = res.status;
+    if (res.ok) {
+      const data = await res.json();
+      arts = (data && data.articles) || [];
+    }
+  } catch (e) {}
+  const items = arts.map(a => {
+    const m = /^(\d{4})(\d{2})(\d{2})T?(\d{2})(\d{2})(\d{2})/.exec(a.seendate || '');
+    const ts = m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]) : 0;
+    return {
+      // page titles carry a "| Site" suffix; a plain dash is left alone
+      // because real headlines contain those
+      title: clean(a.title).replace(/\s*\|\s*[^|]{2,40}$/, ''),
+      url: a.url || '',
+      outlet: prettyOutlet(String(a.domain || '').replace(/^www\./, '')),
+      summary: '',
+      image: /^https?:/.test(a.socialimage || '') ? a.socialimage : '',
+      ts,
+      date: fmtDateShort(ts)
+    };
+  }).filter(it => it.title && it.url);
+  if (log) log.push({ source: 'gdelt', query: q, status, found: items.length });
+  return items;
+}
+
 const OUTLET_NAMES = {
   'pcgamer.com': 'PC Gamer',
   'polygon.com': 'Polygon',
@@ -317,7 +396,15 @@ const OUTLET_NAMES = {
   'destructoid.com': 'Destructoid',
   'pcgamesn.com': 'PCGamesN',
   'rpgsite.net': 'RPG Site',
-  'gamespot.com': 'GameSpot'
+  'gamespot.com': 'GameSpot',
+  'rpgfan.com': 'RPGFan',
+  'aftermath.site': 'Aftermath',
+  'gamereactor.eu': 'Gamereactor',
+  'gamereactor.dk': 'Gamereactor DK',
+  'consolecreatures.com': 'Console Creatures',
+  'whatculture.com': 'WhatCulture',
+  'thesixthaxis.com': 'TheSixthAxis',
+  'radiotimes.com': 'Radio Times'
 };
 
 function prettyOutlet(host) {
@@ -327,11 +414,28 @@ function prettyOutlet(host) {
   return base.split('.').pop().replace(/(^|[-_])(\w)/g, (m, a, b) => (a ? ' ' : '') + b.toUpperCase());
 }
 
-async function googleNews(q) {
+async function googleNews(q, log) {
   const url = 'https://news.google.com/rss/search?q=' + encodeURIComponent(q)
     + '&hl=en-US&gl=US&ceid=US:en';
-  const xml = await getText(url);
-  return parseRss(xml).map(it => {
+  let status = 0, xml = '';
+  try {
+    const res = await tfetch(url, {
+      cf: { cacheTtl: 3600 },
+      redirect: 'follow',
+      headers: {
+        'user-agent': UA,
+        'accept': 'application/rss+xml, application/xml, text/xml, */*',
+        'accept-language': 'en-US,en;q=0.9',
+        // Without these Google often answers datacenter IPs with a consent
+        // page instead of the feed. Standard bypass cookies.
+        'cookie': 'CONSENT=YES+cb.20220419-08-p0.en+FX+700; ' +
+          'SOCS=CAISHwgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmVuIAEaBgiA_LyaBg'
+      }
+    });
+    status = res.status;
+    if (res.ok) xml = await res.text();
+  } catch (e) {}
+  const items = parseRss(xml).map(it => {
     // Google puts the outlet after a trailing dash in the headline
     const src = /\s+-\s+([^-]{2,40})$/.exec(it.title);
     if (src && !it.outlet) it.outlet = src[1].trim();
@@ -339,6 +443,24 @@ async function googleNews(q) {
     it.summary = ''; // GN descriptions are just the headline again
     return it;
   });
+  if (log) {
+    const entry = { source: 'google', query: q, status, found: items.length };
+    if (!items.length) entry.hint = sniffGoogleBlock(xml);
+    log.push(entry);
+  }
+  return items;
+}
+
+/* When Google returns nothing, say why - it makes ?debug=1 actually useful. */
+function sniffGoogleBlock(t) {
+  t = String(t || '');
+  if (!t) return 'empty or failed response';
+  if (/consent\.google/i.test(t)) return 'consent wall';
+  if (/unusual traffic|captcha|sorry\/index/i.test(t)) return 'captcha / rate limited';
+  if (!/<item[\s>]/.test(t)) {
+    return 'no <item>s; response starts: ' + t.slice(0, 80).replace(/\s+/g, ' ');
+  }
+  return 'items present but none parsed';
 }
 
 /* Google stopped redirecting news.google.com/rss/articles links server-side in
@@ -365,10 +487,10 @@ async function googleDecodeParams(u) {
   try {
     const m = /articles\/([^?/]+)/.exec(u);
     if (!m) return null;
-    const res = await fetch('https://news.google.com/rss/articles/' + m[1], {
+    const res = await tfetch('https://news.google.com/rss/articles/' + m[1], {
       redirect: 'follow', cf: { cacheTtl: 86400 },
       headers: { 'user-agent': UA, 'accept': 'text/html' }
-    });
+    }, 6000);
     if (res.url && !/news\.google\.com/.test(res.url)) return { finalUrl: res.url };
     if (!res.ok) return null;
     const html = await res.text();
@@ -389,7 +511,7 @@ async function batchDecode(list) {
       p.id, Number(p.ts), p.sig]),
     null, String(i + 1)]);
   try {
-    const res = await fetch('https://news.google.com/_/DotsSplashUi/data/batchexecute', {
+    const res = await tfetch('https://news.google.com/_/DotsSplashUi/data/batchexecute', {
       method: 'POST',
       headers: {
         'content-type': 'application/x-www-form-urlencoded;charset=UTF-8',
@@ -438,23 +560,6 @@ async function resolveGoogleUrls(items, log) {
   });
 }
 
-async function getText(url) {
-  try {
-    const res = await fetch(url, {
-      cf: { cacheTtl: 3600 },
-      headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
-          '(KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-        'accept': 'application/rss+xml, application/xml, text/xml, */*'
-      }
-    });
-    if (!res.ok) return '';
-    return await res.text();
-  } catch (e) {
-    return '';
-  }
-}
-
 function parseRss(xml) {
   const out = [];
   const blocks = String(xml || '').split(/<item[\s>]/).slice(1);
@@ -489,14 +594,14 @@ function parseRss(xml) {
 async function readArticle(url) {
   const out = { ok: false, mentions: false, image: '' };
   try {
-    const res = await fetch(url, {
+    const res = await tfetch(url, {
       cf: { cacheTtl: 86400 },
       headers: {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
           '(KHTML, like Gecko) Chrome/124.0 Safari/537.36',
         'accept': 'text/html,application/xhtml+xml'
       }
-    });
+    }, 6000);
     if (!res.ok) return out;
     const html = (await res.text()).slice(0, 400000);
     out.ok = true;
