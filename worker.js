@@ -31,24 +31,29 @@ const PRESS_MUST_MATCH = /bodeg[\u00e5a]rd/i;
 const PRESS_BLOCKLIST = ['store.steampowered.com', 'reddit.com', 'youtube.com/shorts',
   'msn.com', 'news.yahoo.com', 'flipboard.com', 'newsbreak.com'];
 
-// URL patterns that are index pages rather than articles.
+// URL patterns that are index pages rather than articles. (Do NOT add '/games/'
+// here - PC Gamer and others put real articles under /games/... paths.)
 const PRESS_URL_JUNK = ['/tag/', '/tags/', '/topic/', '/topics/', '/category/',
-  '/categories/', '/author/', '/people/', '/search', '/games/'];
+  '/categories/', '/author/', '/people/', '/search?'];
 
 // A "headline" that is really just a name or a label is a listing page.
+// Real headlines can be short ("Esoteric Ebb Review"), so only drop the
+// truly tiny ones and exact name/game matches.
 function looksLikeIndexPage(it) {
   const t = (it.title || '').trim();
-  if (t.length < 22) return true;
+  if (t.length < 8) return true;
   if (/^(christoffer\s+bodeg[åa]rd|esoteric\s+ebb)$/i.test(t)) return true;
   const u = (it.url || '').toLowerCase();
   return PRESS_URL_JUNK.some(p => u.includes(p));
 }
 
 // Press feed budgets. Cloudflare's free plan allows 50 subrequests per request,
-// so every per-article fetch below is capped.
+// so every per-article fetch below is capped. Google News is the only source;
+// thumbnails come from each article's own og:image - the exact picture Google
+// News shows in its results.
 const PRESS_MAX = 80;               // most articles ever returned
-const PRESS_GOOGLE_DECODE_COUNT = 15; // newest google-news links decoded per run
-const PRESS_SCRAPE_COUNT = 20;      // article pages opened for a thumbnail per run
+const PRESS_GOOGLE_DECODE_COUNT = 22; // newest google-news links decoded per run
+const PRESS_SCRAPE_COUNT = 22;      // article pages opened for a thumbnail per run
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -236,32 +241,28 @@ async function steam(debug) {
 }
 
 /* ---------- Press ------------------------------------------------ */
-/* Google News search + Bing News search, merged. Google finds more but hides
-   the real URL behind an encoded redirect and carries no image; Bing carries
-   both. Whatever still has no image after merging gets its article page opened
-   once for the og:image - the exact picture Google News shows in its results. */
+/* Google News search only (Bing is gone: its results and thumbnails were
+   junk). Every article's real URL is decoded out of Google's redirect, then
+   the newest articles each get their page opened once for the og:image - the
+   same picture Google News shows in its own results. Nothing is dropped based
+   on what those page fetches return: outlets routinely serve bot-walls to
+   datacenter IPs, and dropping on that basis is what emptied the feed. */
 async function press(debug) {
   const log = [];
   const lists = await Promise.all(
     PRESS_QUERIES.map(q => googleNews(q).then(r => {
       log.push({ source: 'google', query: q, found: r.length }); return r;
-    })).concat(PRESS_QUERIES.map(q => bingNews(q).then(r => {
-      log.push({ source: 'bing', query: q, found: r.length }); return r;
-    })))
+    }))
   );
 
-  // merge duplicates instead of dropping them: a Bing copy of a Google item
-  // donates its real URL and its thumbnail
+  // de-duplicate on normalised title, merging fields from the duplicates
   const byKey = new Map();
   for (const list of lists) for (const it of list) {
     if (!it.title || !it.url) continue;
     const key = normTitle(it.title);
     const prev = byKey.get(key);
     if (!prev) { byKey.set(key, it); continue; }
-    if (/news\.google\.com/.test(prev.url) && !/news\.google\.com/.test(it.url)) prev.url = it.url;
-    if (!prev.image && it.image) prev.image = it.image;
     if (!prev.outlet && it.outlet) prev.outlet = it.outlet;
-    if (!prev.summary && it.summary) prev.summary = it.summary;
     if (!prev.ts && it.ts) { prev.ts = it.ts; prev.date = it.date; }
   }
   let items = [...byKey.values()].filter(it => {
@@ -270,33 +271,29 @@ async function press(debug) {
     return true;
   });
 
+  // newest first, always - the site shows them in this order
   items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   items = items.slice(0, PRESS_MAX);
 
   await resolveGoogleUrls(items, log);
 
-  // drop blocklisted hosts that only became visible after resolution
-  items = items.filter(it => !PRESS_BLOCKLIST.some(b => it.url.includes(b)));
+  // drop blocklisted/junk hosts that only became visible after resolution
+  items = items.filter(it => !PRESS_BLOCKLIST.some(b => it.url.includes(b))
+    && !PRESS_URL_JUNK.some(p => it.url.toLowerCase().includes(p)));
   for (const it of items) {
     if (!it.outlet) it.outlet = prettyOutlet(hostOf(it.url));
   }
 
-  // Fetch thumbnails (and verify the name on the way) for items that need one.
+  // Thumbnails for the newest articles (the ones people actually see first).
   const toScrape = items
     .filter(it => !it.image && it.url && !/news\.google\.com/.test(it.url))
     .slice(0, PRESS_SCRAPE_COUNT);
   await Promise.allSettled(toScrape.map(async it => {
     const page = await readArticle(it.url);
     if (page.image) it.image = page.image;
-    // only drop when we truly read the page and the name is nowhere in it
-    if (page.ok && !page.mentions &&
-        !PRESS_MUST_MATCH.test((it.title || '') + ' ' + (it.summary || ''))) {
-      it.drop = true;
-    }
   }));
-  const before = items.length;
-  items = items.filter(it => !it.drop);
-  log.push({ stage: 'scraped', opened: toScrape.length, dropped: before - items.length });
+  log.push({ stage: 'thumbnails', opened: toScrape.length,
+    found: toScrape.filter(it => it.image).length });
 
   items.sort((a, b) => (b.ts || 0) - (a.ts || 0));
   items = items.map(it => ({
@@ -306,28 +303,6 @@ async function press(debug) {
 
   if (debug) return { count: items.length, withImage: items.filter(i => i.image).length, log, items };
   return items;
-}
-
-async function bingNews(q) {
-  const url = 'https://www.bing.com/news/search?q=' + encodeURIComponent(q) + '&format=RSS&count=50';
-  const xml = await getText(url);
-  return parseRss(xml).map(it => {
-    it.url = unwrapBing(it.url);
-    it.outlet = prettyOutlet(hostOf(it.url));
-    return it;
-  });
-}
-
-// Bing wraps every link in a redirect. Pull the real publisher URL back out.
-function unwrapBing(u) {
-  try {
-    const parsed = new URL(u);
-    if (!/bing\.com$/.test(parsed.hostname.replace(/^www\./, ''))) return u;
-    const real = parsed.searchParams.get('url');
-    return real ? decodeURIComponent(real) : u;
-  } catch (e) {
-    return u;
-  }
 }
 
 const OUTLET_NAMES = {
@@ -534,12 +509,15 @@ async function readArticle(url) {
 
     const m = /<meta[^>]+(?:property|name)=["']og:image(?::secure_url)?["'][^>]+content=["']([^"']+)["']/i.exec(html)
       || /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']og:image["']/i.exec(html)
-      || /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i.exec(html);
+      || /<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["']/i.exec(html)
+      || /<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)["']/i.exec(html)
+      || /"image"\s*:\s*\[?\s*"(https?:[^"\\]+)"/.exec(html)
+      || /"image"\s*:\s*\{[^{}]*?"url"\s*:\s*"(https?:[^"\\]+)"/.exec(html);
     if (m) {
-      let src = m[1];
+      let src = m[1].replace(/&amp;/g, '&').replace(/\\\//g, '/');
       if (src.startsWith('//')) src = 'https:' + src;
       if (src.startsWith('/')) src = new URL(url).origin + src;
-      out.image = src;
+      if (/^https?:/.test(src)) out.image = src;
     }
   } catch (e) {}
   return out;

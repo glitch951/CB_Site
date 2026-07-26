@@ -603,70 +603,61 @@
     return page;
   }
 
+  /* Press: the latest articles about him, newest first, straight from the
+     worker's Google News feed. Nothing pinned, nothing merged, no options.
+     Ten rows at a time; the arrow sits below the list, slides down as rows
+     are added, and keeps loading until the feed runs out - at which point it
+     becomes a quiet end-of-coverage mark instead of silently vanishing. */
   function pagePress() {
     var page = h('div', { class: 'cb-page' }, [
-      masthead('Press'), h('div', { class: 'cb-loading', text: 'Loading…' })
+      masthead('Press'), h('div', { class: 'cb-loading', text: 'Loading\u2026' })
     ]);
     feed('press').then(function (items) {
-      var all = (C.pressPinned || []).map(function (p) {
-        var t = p.ts || Date.parse(p.date || '') || 0;
-        return Object.assign({}, p, { ts: t });
-      }).concat(items || []);
-
-      // a pinned article may also arrive in the live feed - keep one copy
-      var seen = {};
-      all = all.filter(function (p) {
-        if (!p || !p.title) return false;
-        var key = p.title.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 60);
-        if (seen[key]) return false;
-        seen[key] = 1;
-        return true;
-      });
-
-      // chronological (oldest first) unless content.json says pressOrder: "newest"
-      var newestFirst = C.pressOrder === 'newest';
-      all.sort(function (a, b) {
-        return newestFirst ? (b.ts || 0) - (a.ts || 0) : (a.ts || 0) - (b.ts || 0);
-      });
+      items = (items || []).filter(function (p) { return p && p.title && p.url; });
+      items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
 
       page.innerHTML = '';
       page.appendChild(masthead('Press'));
-      if (!all.length) {
+      if (!items.length) {
         page.appendChild(h('div', { class: 'cb-loading', text: 'Nothing found right now.' }));
         return;
       }
 
       var list = h('div', { class: 'cb-list' });
       page.appendChild(list);
+
       var more = h('button', {
-        class: 'cb-more is-arrow', type: 'button', text: '↓',
-        'aria-label': 'Show more articles', title: 'Show more articles'
+        class: 'cb-more is-arrow', type: 'button', text: '\u2193',
+        'aria-label': 'Load more articles', title: 'Load more articles'
       });
+      var theEnd = h('div', { class: 'cb-feed-end', text: 'End of coverage' });
+
+      function row(p) {
+        return h('a', {
+          class: 'cb-row cb-row-press',
+          href: p.url, target: '_blank', rel: 'noopener'
+        }, [
+          p.image
+            ? thumb(p.image, '', 'is-small')
+            : h('div', { class: 'cb-thumb is-small is-empty' }),
+          h('div', {}, [
+            h('div', { class: 'cb-meta is-orange', text: p.outlet || '' }),
+            h('div', { class: 'cb-headline', text: p.title }),
+            p.summary ? h('div', { class: 'cb-press-sum', text: p.summary }) : null
+          ]),
+          h('div', { class: 'cb-meta cb-right', text: p.date || '' })
+        ]);
+      }
 
       var shown = 0;
       var STEP = 10;
       function addRows() {
-        all.slice(shown, shown + STEP).forEach(function (p) {
-          list.appendChild(h('a', {
-            class: 'cb-row cb-row-press',
-            href: p.url, target: '_blank', rel: 'noopener'
-          }, [
-            p.image
-              ? thumb(p.image, '', 'is-small')
-              : h('div', { class: 'cb-thumb is-small is-empty' }),
-            h('div', {}, [
-              h('div', { class: 'cb-meta is-orange', text: p.outlet || '' }),
-              h('div', { class: 'cb-headline', text: p.title }),
-              p.summary ? h('div', { class: 'cb-press-sum', text: p.summary }) : null
-            ]),
-            h('div', { class: 'cb-meta cb-right', text: p.date || '' })
-          ]));
-        });
-        shown = Math.min(all.length, shown + STEP);
-        if (shown >= all.length) more.remove();
+        items.slice(shown, shown + STEP).forEach(function (p) { list.appendChild(row(p)); });
+        shown = Math.min(items.length, shown + STEP);
+        if (shown >= items.length) more.replaceWith(theEnd);
       }
       addRows();
-      if (shown < all.length) page.appendChild(more);
+      if (shown < items.length) page.appendChild(more);
       more.addEventListener('click', addRows);
     }).catch(function () {
       page.innerHTML = '';

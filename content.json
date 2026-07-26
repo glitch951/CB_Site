@@ -13,8 +13,6 @@
   "portraitAllowOverlap": false,
   "//portraitAlign": "Where the crop anchors: 'bottom' keeps feet on the page edge and crops the top, 'top' does the opposite.",
   "portraitAlign": "bottom",
-  "//pressOrder": "'oldest' = chronological, oldest article first. Set to 'newest' for newest-first.",
-  "pressOrder": "oldest",
   "social": [
     {
       "label": "X",
@@ -241,13 +239,5 @@
         ]
       }
     ]
-  },
-  "pressPinned": [
-    {
-      "outlet": "PC Gamer",
-      "date": "FEB 2024",
-      "title": "I was already intrigued by this Disco Elysium-inspired D&D-based RPG where you play as the world's worst cleric, but its demo blew my expectations out of the water",
-      "url": "https://www.pcgamer.com/i-was-already-intrigued-by-this-disco-elysium-inspired-dandd-based-rpg-where-you-play-as-the-worlds-worst-cleric-but-its-demo-blew-my-expectations-out-of-the-water/"
-    }
-  ]
+  }
 }
