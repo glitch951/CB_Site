@@ -612,6 +612,32 @@
       list.appendChild(wrap);
     });
     page.appendChild(list);
+
+    /* Esoteric Inspirations: headed groups with plain bullets, then the
+       closing prose notes. All content-driven from content.json. */
+    var eso = ins.esoteric;
+    if (eso && (eso.groups || []).length) {
+      page.appendChild(h('div', { class: 'cb-sep' }, [
+        h('span', { text: eso.title || 'Esoteric Inspirations' }), h('div', {})
+      ]));
+      var cols = h('div', { class: 'cb-insp-extra' });
+      (eso.groups || []).forEach(function (g) {
+        var block = h('div', { class: 'cb-insp-group' }, [
+          h('h4', { text: g.title || '' })
+        ]);
+        if ((g.items || []).length) {
+          block.appendChild(h('ul', {}, g.items.map(function (t) {
+            return h('li', { text: t });
+          })));
+        }
+        cols.appendChild(block);
+      });
+      page.appendChild(cols);
+      (eso.notes || []).forEach(function (n) {
+        page.appendChild(h('p', { class: 'cb-insp-note', text: n }));
+      });
+    }
+
     return page;
   }
 

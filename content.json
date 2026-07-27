@@ -147,7 +147,7 @@
     ]
   },
   "inspirations": {
-    "title": "Here's a list of his top 10 video games:",
+    "title": "Top 10 Video Games",
     "standfirst": "",
     "items": [
       {
@@ -240,7 +240,82 @@
           "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
         ]
       }
-    ]
+    ],
+    "esoteric": {
+      "title": "Esoteric Inspirations",
+      "groups": [
+        {
+          "title": "Planescape: Torment inspired the…",
+          "items": [
+            "Interactive writing",
+            "Weird-fantasy setting",
+            "Comedy (it's surprisingly a very funny game)"
+          ]
+        },
+        {
+          "title": "Disco Elysium inspired the…",
+          "items": [
+            "Chimes (duh!)",
+            "Non-linear structure",
+            "Non-traditional 'combat'"
+          ]
+        },
+        {
+          "title": "Discworld inspired the…",
+          "items": [
+            "Approach to comedic philosophy",
+            "Ankh-Morpork-like urban setting"
+          ]
+        },
+        {
+          "title": "Night in the Woods inspired the…",
+          "items": [
+            "UI design",
+            "Off-beat characters"
+          ]
+        },
+        {
+          "title": "Seinfeld inspired the…",
+          "items": [
+            "Situational comedy",
+            "Dialog style"
+          ]
+        },
+        {
+          "title": "Dark Souls inspired the…",
+          "items": [
+            "Interconnected level design (as silly as it sounds)"
+          ]
+        },
+        {
+          "title": "Monkey Island inspired the…",
+          "items": [
+            "Dialog-based 'combat' system"
+          ]
+        },
+        {
+          "title": "Heroes of Might and Magic III inspired the…",
+          "items": [
+            "Fantasy designs"
+          ]
+        },
+        {
+          "title": "Music:",
+          "items": [
+            "Ice Cream Cathedral",
+            "Amos Roddy"
+          ]
+        },
+        {
+          "title": "Anbennar for worldbuilding!",
+          "items": []
+        }
+      ],
+      "notes": [
+        "Akira (manga and movie) inspired the visuals and characterization. Even with Westbergs obviously being responsible for the artstyle, I'd say I ended up choosing him in part for his adjacent style to Akira, which I would describe as a perfect blend of golden era anime and modern western.",
+        "And then, Lord of the Rings and D&D, along with a thousand iterations of TTRPGs and fantasy stories coagulate into inspiring the rest of what has become the Esoteric Coast."
+      ]
+    }
   },
   "portraitMinHeight": 1.05
 }
