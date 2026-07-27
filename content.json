@@ -8,11 +8,11 @@
   "//portraits": "Portraits are read automatically from the portraits/ folder of whichever repo this site is served from. Just upload files there - nothing to configure, nothing to list.",
   "portraitsDir": "portraits",
   "portraits": [],
-  "//portraitZoom": "Screen pixels per image pixel; 2 doubles everything. Portraits are drawn at the SAME pixel density, so a high-res file takes up much more space than a low-res one. Anything taller than the window is cropped at the top (that's the zoom). If the pair would overlap, both shrink by the same factor until they just fit side by side.",
+  "//portraitZoom": "Screen pixels per image pixel; portraits share the same pixel density so high-res files come out larger. But never small: portraitMinHeight (default 1.05) forces every portrait to be at least that fraction of the window tall regardless of resolution. If the pair would overlap, both shrink by the same factor, but never below the minimum.",
   "portraitZoom": 2,
   "portraitAllowOverlap": false,
-  "//portraitAlign": "Where the crop anchors: 'bottom' keeps feet on the page edge and crops the top, 'top' does the opposite.",
-  "portraitAlign": "bottom",
+  "//portraitAlign": "'center' (default) floats each portrait vertically centered; 'top' or 'bottom' pins it to that edge instead.",
+  "portraitAlign": "center",
   "social": [
     {
       "label": "X",
@@ -241,5 +241,6 @@
         ]
       }
     ]
-  }
+  },
+  "portraitMinHeight": 1.05
 }

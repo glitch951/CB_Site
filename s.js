@@ -284,28 +284,46 @@
       var sides = ['is-left', 'is-right'];
       var imgs = [];
 
-      /* Every portrait is drawn at the same pixel density: portraitZoom is how
-         many screen pixels one image pixel gets (default 2 = doubled). A
-         high-res file therefore takes up far more space than a low-res one.
-         If the pair would collide in the middle, both are scaled down by the
-         SAME factor - relative sizes stay honest, and they never overlap
-         (unless portraitAllowOverlap is set in content.json). */
+      /* Sizing: same pixel density for both (portraitZoom screen px per image
+         px), but never small - every portrait is at least portraitMinHeight
+         of the window tall (default 1.05, i.e. slightly taller than the
+         screen), whatever its source resolution. If the pair would overlap,
+         both shrink by the same factor, but never below that minimum.
+         Placement: vertically centered by default; portraitAlign can be
+         'top' or 'bottom' instead. */
       function layout() {
         var vw = holder.clientWidth || window.innerWidth;
+        var vh = holder.clientHeight || window.innerHeight;
         var zoom = C.portraitZoom != null ? C.portraitZoom : 2;
-        var ready = imgs.filter(function (im) { return im.naturalWidth; });
+        var minH = vh * (C.portraitMinHeight != null ? C.portraitMinHeight : 1.05);
+        var ready = imgs.filter(function (im) { return im.naturalWidth && im.naturalHeight; });
         if (!ready.length) return;
-        var widths = ready.map(function (im) { return im.naturalWidth * zoom; });
+        var floors = ready.map(function (im) { return minH * im.naturalWidth / im.naturalHeight; });
+        var widths = ready.map(function (im, n) {
+          return Math.max(im.naturalWidth * zoom, floors[n]);
+        });
         var sum = widths.reduce(function (a, b) { return a + b; }, 0);
         var fit = C.portraitAllowOverlap ? 1 : Math.min(1, vw / sum);
-        ready.forEach(function (im, n) { im.style.width = widths[n] * fit + 'px'; });
+        ready.forEach(function (im, n) {
+          im.style.width = Math.max(widths[n] * fit, floors[n]) + 'px';
+        });
       }
 
       picks.forEach(function (src, n) {
         var img = h('img', { alt: '', class: sides[n] });
         img.style.setProperty('--portrait-opacity',
           C.portraitOpacity != null ? C.portraitOpacity : .1);
-        if (C.portraitAlign === 'top') { img.style.top = '0'; img.style.bottom = 'auto'; }
+        var flip = n === 1 ? ' scaleX(-1)' : '';
+        if (C.portraitAlign === 'top') {
+          img.style.top = '0';
+          if (flip) img.style.transform = 'scaleX(-1)';
+        } else if (C.portraitAlign === 'bottom') {
+          img.style.bottom = '0';
+          if (flip) img.style.transform = 'scaleX(-1)';
+        } else {
+          img.style.top = '50%';
+          img.style.transform = 'translateY(-50%)' + flip;
+        }
         img.onload = function () { layout(); img.classList.add('is-in'); };
         img.onerror = function () { img.remove(); layout(); };
         img.decoding = 'async';
