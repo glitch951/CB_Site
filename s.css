@@ -42,19 +42,29 @@
    (portraitZoom screen px per image px), so higher-res files render bigger.
    Anything taller than the viewport is simply cropped at the top - that is
    the zoom. s.js also shrinks the pair together if they would overlap. */
-/* Placement (centered / top / bottom + the mirror flip) is set by s.js per
-   the portraitAlign setting; only the anchors and fade live here. */
-.cb-portrait img {
+/* Each portrait is a wrapper holding two layers: a background-colored
+   silhouette (CSS mask of the image) that occludes whatever is behind it,
+   and the image itself at its faint opacity on top. Placement (centered /
+   top / bottom + the mirror flip) is set by s.js per portraitAlign. */
+.cb-portrait-ply {
   position: absolute;
-  width: auto;
-  height: auto;
-  max-width: none;
   opacity: 0;
   transition: opacity 1.6s ease;
 }
-.cb-portrait img.is-left { left: 0; }
-.cb-portrait img.is-right { right: 0; }
-.cb-portrait img.is-in { opacity: var(--portrait-opacity, .1); }
+.cb-portrait-ply.is-in { opacity: 1; }
+.cb-portrait-ply.is-left { left: 0; }
+.cb-portrait-ply.is-right { right: 0; }
+.cb-portrait-fill {
+  position: absolute; inset: 0;
+  background: var(--paper);
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+.cb-portrait-ply img {
+  position: relative;
+  display: block; width: 100%; height: auto;
+  opacity: var(--portrait-opacity, .1);
+}
 
 .cb-extras { display: flex; flex-direction: column; gap: 8px; }
 .cb-extras a { font-size: 14px; text-decoration: none; border-bottom: 1px solid var(--rule); padding-bottom: 4px; opacity: .8; }
@@ -350,6 +360,41 @@
   border-radius: 50%; font-size: 20px; line-height: 1;
 }
 .cb-more.is-arrow:hover { color: var(--orange); }
+/* devlog post navigation ---------------------------------------- */
+.cb-artzone { position: relative; }
+.cb-art { transition: opacity .22s ease; }
+.cb-art.is-swapping { opacity: 0; }
+.cb-artnav {
+  position: absolute; top: 300px; z-index: 5;
+  width: 42px; height: 42px; padding: 0; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font: inherit; font-size: 22px; line-height: 1; cursor: pointer;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid rgba(2, 14, 22, .28); opacity: .7;
+  transition: opacity .15s ease, border-color .15s ease;
+}
+.cb-artnav:hover { opacity: 1; border-color: var(--ink); }
+.cb-artnav.is-prev { left: -62px; }
+.cb-artnav.is-next { right: -62px; }
+.cb-spin {
+  position: absolute; top: 120px; left: 50%; margin-left: -11px; z-index: 4;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid rgba(2, 14, 22, .18); border-top-color: var(--ink);
+  animation: cbSpinTurn .7s linear infinite;
+  opacity: 0; pointer-events: none; transition: opacity .15s ease;
+}
+.cb-artzone.is-busy .cb-spin { opacity: 1; }
+@keyframes cbSpinTurn { to { transform: rotate(360deg); } }
+#cb-app.is-dark .cb-artnav { border-color: rgba(251, 248, 229, .3); }
+#cb-app.is-dark .cb-spin { border-color: rgba(251, 248, 229, .2); border-top-color: var(--ink); }
+
+/* Work & Talks read at the same size as the backstory/devlog body. */
+.cb-row-work .cb-desc, .cb-row-talk .cb-desc {
+  font-size: 18px; line-height: 1.68; max-width: 64ch; opacity: .85;
+}
+.cb-row-work h4, .cb-row-talk h4 { font-size: 29px; }
+.cb-row-talk .cb-subtitle { font-size: 17px; }
+
 .cb-feed-end {
   margin-top: 30px; text-align: center;
   font-family: 'JetBrains Mono', monospace; font-size: 11px;
@@ -409,6 +454,8 @@
 }
 
 @media (max-width: 1150px) {
+  .cb-artnav.is-prev { left: -14px; }
+  .cb-artnav.is-next { right: -14px; }
   .cb-acc .cb-row-insp { grid-template-columns: 30px minmax(0,1fr) 70px 22px; }
   .cb-insp-genre { display: none; }
   .cb-row-press { grid-template-columns: 130px minmax(0,1fr) 104px; }

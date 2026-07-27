@@ -282,58 +282,65 @@
       }
       var picks = pool.slice(0, Math.min(2, pool.length));
       var sides = ['is-left', 'is-right'];
-      var imgs = [];
+      var plies = [];
 
-      /* Sizing: same pixel density for both (portraitZoom screen px per image
-         px), but never small - every portrait is at least portraitMinHeight
-         of the window tall (default 1.05, i.e. slightly taller than the
-         screen), whatever its source resolution. If the pair would overlap,
-         both shrink by the same factor, but never below that minimum.
-         Placement: vertically centered by default; portraitAlign can be
-         'top' or 'bottom' instead. */
+      /* Each portrait is a two-layer stack: underneath, a silhouette of the
+         image filled with the page background color (CSS mask), and on top,
+         the image itself at its faint opacity. The silhouette makes the
+         front portrait fully occlude the one behind it - no ghosting where
+         they overlap - while still reading as faded against the paper. */
       function layout() {
         var vw = holder.clientWidth || window.innerWidth;
         var vh = holder.clientHeight || window.innerHeight;
         var zoom = C.portraitZoom != null ? C.portraitZoom : 2;
         var minH = vh * (C.portraitMinHeight != null ? C.portraitMinHeight : 1.05);
-        var ready = imgs.filter(function (im) { return im.naturalWidth && im.naturalHeight; });
+        var ready = plies.filter(function (p) { return p.img.naturalWidth && p.img.naturalHeight; });
         if (!ready.length) return;
-        var floors = ready.map(function (im) { return minH * im.naturalWidth / im.naturalHeight; });
-        var widths = ready.map(function (im, n) {
-          return Math.max(im.naturalWidth * zoom, floors[n]);
+        var floors = ready.map(function (p) { return minH * p.img.naturalWidth / p.img.naturalHeight; });
+        var widths = ready.map(function (p, n) {
+          return Math.max(p.img.naturalWidth * zoom, floors[n]);
         });
         var sum = widths.reduce(function (a, b) { return a + b; }, 0);
         var fit = C.portraitAllowOverlap ? 1 : Math.min(1, vw / sum);
-        ready.forEach(function (im, n) {
-          im.style.width = Math.max(widths[n] * fit, floors[n]) + 'px';
+        ready.forEach(function (p, n) {
+          var w = Math.max(widths[n] * fit, floors[n]);
+          p.wrap.style.width = w + 'px';
+          p.wrap.style.height = (w * p.img.naturalHeight / p.img.naturalWidth) + 'px';
         });
       }
 
       picks.forEach(function (src, n) {
-        var img = h('img', { alt: '', class: sides[n] });
-        img.style.setProperty('--portrait-opacity',
+        var wrap = h('div', { class: 'cb-portrait-ply ' + sides[n] });
+        wrap.style.setProperty('--portrait-opacity',
           C.portraitOpacity != null ? C.portraitOpacity : .1);
         var flip = n === 1 ? ' scaleX(-1)' : '';
         if (C.portraitAlign === 'top') {
-          img.style.top = '0';
-          if (flip) img.style.transform = 'scaleX(-1)';
+          wrap.style.top = '0';
+          if (flip) wrap.style.transform = 'scaleX(-1)';
         } else if (C.portraitAlign === 'bottom') {
-          img.style.bottom = '0';
-          if (flip) img.style.transform = 'scaleX(-1)';
+          wrap.style.bottom = '0';
+          if (flip) wrap.style.transform = 'scaleX(-1)';
         } else {
-          img.style.top = '50%';
-          img.style.transform = 'translateY(-50%)' + flip;
+          wrap.style.top = '50%';
+          wrap.style.transform = 'translateY(-50%)' + flip;
         }
-        img.onload = function () { layout(); img.classList.add('is-in'); };
-        img.onerror = function () { img.remove(); layout(); };
+        var fill = h('div', { class: 'cb-portrait-fill' });
+        fill.style.webkitMaskImage = 'url("' + src + '")';
+        fill.style.maskImage = 'url("' + src + '")';
+        var img = h('img', { alt: '' });
+        img.onload = function () { layout(); wrap.classList.add('is-in'); };
+        img.onerror = function () { wrap.remove(); layout(); };
         img.decoding = 'async';
         img.src = src;
-        imgs.push(img);
-        holder.appendChild(img);
+        wrap.appendChild(fill);
+        wrap.appendChild(img);
+        plies.push({ wrap: wrap, img: img });
+        holder.appendChild(wrap);
       });
       window.addEventListener('resize', layout);
     });
   }
+
 
   function setActive(page) {
     app.querySelectorAll('[data-page]').forEach(function (a) {
@@ -617,7 +624,7 @@
 
   function pageDevlogs() {
     var page = h('div', { class: 'cb-page' }, [
-      masthead('Devlogs'), h('div', { class: 'cb-loading', text: 'Loading posts…' })
+      masthead('Devlogs'), h('div', { class: 'cb-loading', text: 'Loading posts\u2026' })
     ]);
     feed('steam').then(function (items) {
       page.innerHTML = '';
@@ -626,52 +633,120 @@
         page.appendChild(h('div', { class: 'cb-loading', text: 'No posts found.' }));
         return;
       }
-      var top = items[0];
-      var body = bb(top.contents);
-      var bodyImg = firstImage(body);
-      var hero = top.image || bodyImg;
-      page.appendChild(h('div', { class: 'cb-lede' }, [
-        h('div', { class: 'cb-postmeta' }, [
-          h('span', { class: 'is-orange', text: fmtDate(top.date) }),
-          h('span', { text: top.gameName || '' })
-        ]),
-        h('h2', { class: 'cb-title is-post', text: top.title })
-      ]));
-      if (hero) {
-        var fig = h('figure', { class: 'cb-figure' }, [h('img', { src: hero, alt: '' })]);
-        fig.querySelector('img').onerror = function () { fig.remove(); };
-        page.appendChild(fig);
-        if (hero === bodyImg) body = body.replace(/<img src="[^"]+"[^>]*>/, '');
-      }
-      page.appendChild(h('div', { class: 'cb-body is-post', html: body }));
-      page.appendChild(h('a', {
-        class: 'cb-link', href: top.url, target: '_blank', rel: 'noopener',
-        text: 'Read the whole post on Steam →'
-      }));
 
-      if (items.length > 1) {
-        page.appendChild(h('div', { class: 'cb-sep' }, [
-          h('span', { text: 'Earlier posts' }), h('div', {})
+      /* One post at a time, with quiet arrows flanking it to step through
+         the posts chronologically. The swap crossfades; a small spinner
+         covers the moment the incoming hero image is still arriving. */
+      var idx = 0;
+      var zone = h('div', { class: 'cb-artzone' });
+      var art = h('div', { class: 'cb-art' });
+      var prevB = h('button', {
+        class: 'cb-artnav is-prev', type: 'button', text: '\u2039',
+        'aria-label': 'Newer post', title: 'Newer post'
+      });
+      var nextB = h('button', {
+        class: 'cb-artnav is-next', type: 'button', text: '\u203a',
+        'aria-label': 'Older post', title: 'Older post'
+      });
+      var spin = h('div', { class: 'cb-spin' });
+      zone.appendChild(prevB);
+      zone.appendChild(nextB);
+      zone.appendChild(spin);
+      zone.appendChild(art);
+      page.appendChild(zone);
+
+      var below = h('div', {});
+      page.appendChild(below);
+
+      function buildArticle(i) {
+        art.innerHTML = '';
+        var it = items[i];
+        var body = bb(it.contents);
+        var bodyImg = firstImage(body);
+        var hero = it.image || bodyImg;
+        art.appendChild(h('div', { class: 'cb-lede' }, [
+          h('div', { class: 'cb-postmeta' }, [
+            h('span', { class: 'is-orange', text: fmtDate(it.date) }),
+            h('span', { text: it.gameName || '' })
+          ]),
+          h('h2', { class: 'cb-title is-post', text: it.title })
         ]));
-        var cards = h('div', { class: 'cb-cards' });
-        items.slice(1, 25).forEach(function (it) {
-          var b2 = bb(it.contents);
-          cards.appendChild(h('a', {
-            class: 'cb-card', href: it.url, target: '_blank', rel: 'noopener'
-          }, [
-            thumb(it.image || firstImage(b2), steamHeader(it.appid)),
-            h('div', { class: 'cb-card-txt' }, [
-              h('div', { class: 'cb-card-meta' }, [
-                h('span', { text: fmtDate(it.date) }),
-                h('span', { text: it.gameName || '' })
-              ]),
-              h('h4', { text: it.title }),
-              h('div', { class: 'cb-desc', text: excerpt(b2, 120) })
-            ])
+        if (hero) {
+          var fig = h('figure', { class: 'cb-figure' }, [h('img', { src: hero, alt: '' })]);
+          fig.querySelector('img').onerror = function () { fig.remove(); };
+          art.appendChild(fig);
+          if (hero === bodyImg) body = body.replace(/<img src="[^"]+"[^>]*>/, '');
+        }
+        art.appendChild(h('div', { class: 'cb-body is-post', html: body }));
+        art.appendChild(h('a', {
+          class: 'cb-link', href: it.url, target: '_blank', rel: 'noopener',
+          text: 'Read the whole post on Steam \u2192'
+        }));
+
+        below.innerHTML = '';
+        if (items.length > 1) {
+          below.appendChild(h('div', { class: 'cb-sep' }, [
+            h('span', { text: 'More posts' }), h('div', {})
           ]));
-        });
-        page.appendChild(cards);
+          var cards = h('div', { class: 'cb-cards' });
+          items.slice(0, 25).forEach(function (o, n) {
+            if (n === i) return;
+            var b2 = bb(o.contents);
+            cards.appendChild(h('a', {
+              class: 'cb-card', href: o.url, target: '_blank', rel: 'noopener'
+            }, [
+              thumb(o.image || firstImage(b2), steamHeader(o.appid)),
+              h('div', { class: 'cb-card-txt' }, [
+                h('div', { class: 'cb-card-meta' }, [
+                  h('span', { text: fmtDate(o.date) }),
+                  h('span', { text: o.gameName || '' })
+                ]),
+                h('h4', { text: o.title }),
+                h('div', { class: 'cb-desc', text: excerpt(b2, 120) })
+              ])
+            ]));
+          });
+          below.appendChild(cards);
+        }
       }
+
+      function show(i, animate) {
+        if (i < 0 || i >= items.length) return;
+        idx = i;
+        prevB.style.visibility = idx === 0 ? 'hidden' : '';
+        nextB.style.visibility = idx >= items.length - 1 ? 'hidden' : '';
+        var settle = function () {
+          var heroImg = art.querySelector('.cb-figure img');
+          var done = function () {
+            zone.classList.remove('is-busy');
+            art.classList.remove('is-swapping');
+          };
+          if (animate && heroImg && !heroImg.complete) {
+            var t = setTimeout(done, 1200);
+            heroImg.addEventListener('load', function () { clearTimeout(t); done(); });
+            heroImg.addEventListener('error', function () { clearTimeout(t); done(); });
+          } else {
+            done();
+          }
+        };
+        if (animate) {
+          zone.classList.add('is-busy');
+          art.classList.add('is-swapping');
+          var main = page.closest('.cb-main');
+          if (main) {
+            try { main.scrollTo({ top: 0, behavior: 'smooth' }); }
+            catch (e) { main.scrollTop = 0; }
+          }
+          setTimeout(function () { buildArticle(idx); settle(); }, 200);
+        } else {
+          buildArticle(idx);
+          settle();
+        }
+      }
+
+      prevB.addEventListener('click', function () { show(idx - 1, true); });
+      nextB.addEventListener('click', function () { show(idx + 1, true); });
+      show(0, false);
     }).catch(function () {
       page.innerHTML = '';
       page.appendChild(masthead('Devlogs'));
@@ -679,6 +754,7 @@
     });
     return page;
   }
+
 
   /* Press: the latest articles about him, newest first, straight from the
      worker's Google News feed. Nothing pinned, nothing merged, no options.
@@ -700,6 +776,27 @@
         return;
       }
 
+      /* The freshest article gets the front-page treatment: big thumbnail,
+         big headline, and its own read-more link, like the devlog lede. */
+      var top = items[0];
+      page.appendChild(h('a', {
+        class: 'cb-hero', href: top.url, target: '_blank', rel: 'noopener'
+      }, [
+        top.image
+          ? thumb(top.image, '', 'is-hero')
+          : h('div', { class: 'cb-thumb is-hero is-empty' }),
+        h('div', { class: 'cb-hero-txt' }, [
+          h('div', { class: 'cb-postmeta' }, [
+            h('span', { class: 'is-orange', text: top.outlet || '' }),
+            h('span', { text: top.date || '' })
+          ]),
+          h('h2', { class: 'cb-hero-title', text: top.title }),
+          top.summary ? h('p', { class: 'cb-hero-sum', text: top.summary }) : null,
+          h('span', { class: 'cb-link is-small', text: 'Read it at ' + (top.outlet || 'the source') + ' \u2192' })
+        ])
+      ]));
+
+      var rest = items.slice(1);
       var list = h('div', { class: 'cb-list' });
       page.appendChild(list);
 
@@ -729,12 +826,13 @@
       var shown = 0;
       var STEP = 10;
       function addRows() {
-        items.slice(shown, shown + STEP).forEach(function (p) { list.appendChild(row(p)); });
-        shown = Math.min(items.length, shown + STEP);
-        if (shown >= items.length) more.replaceWith(theEnd);
+        rest.slice(shown, shown + STEP).forEach(function (p) { list.appendChild(row(p)); });
+        shown = Math.min(rest.length, shown + STEP);
+        if (shown >= rest.length) more.replaceWith(theEnd);
       }
       addRows();
-      if (shown < items.length) page.appendChild(more);
+      if (shown < rest.length) page.appendChild(more);
+      else page.appendChild(theEnd);
       more.addEventListener('click', addRows);
     }).catch(function () {
       page.innerHTML = '';
