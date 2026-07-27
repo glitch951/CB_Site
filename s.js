@@ -67,6 +67,7 @@
          .replace(/\[list\]/gi, '\n\n<ul>').replace(/\[\/list\]/gi, '</ul>\n\n')
          .replace(/\[olist\]/gi, '\n\n<ol>').replace(/\[\/olist\]/gi, '</ol>\n\n')
          .replace(/\[\*\]\s*/g, '<li>')
+         .replace(/\s*\[\/\*\]/g, '</li>')
          .replace(/\[img\]\s*([^\[\]\s]+)\s*\[\/img\]/gi, '\n\n<img src="$1" alt="">\n\n')
          .replace(/\[previewyoutube=([\w-]+)[^\]]*\]\s*\[\/previewyoutube\]/gi,
            '\n\n<a class="cb-out" href="https://youtu.be/$1" target="_blank" rel="noopener">Watch on YouTube</a>\n\n')
@@ -91,6 +92,9 @@
         .replace(/\[u\]([\s\S]*?)\[\/u\]/gi, function (m, x) { return '<u>' + keepBreaks(x) + '</u>'; })
         .replace(/\[strike\]([\s\S]*?)\[\/strike\]/gi, function (m, x) { return '<s>' + keepBreaks(x) + '</s>'; })
         .replace(/\[\/?[a-z][^\]]*\]/gi, '');
+
+    // the sign-off gets a line of its own, wherever the italics start
+    s = s.replace(/\s*((?:<em>)?\s*[-\u2013\u2014]\s*(?:<em>)?\s*Christoffer\s+Bodeg[\u00e5a]rd)/i, '\n<br>$1');
 
     // bare URLs the author typed without tags get a line of their own
     s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)\]]+)/g, function (m, pre, url) {
@@ -175,8 +179,16 @@
   }
 
   var THEME_KEY = 'cb-theme';
+  /* No saved choice yet? Follow the computer's own light/dark preference
+     (and keep following it live until the visitor picks a side). */
   function isDark() {
-    try { return localStorage.getItem(THEME_KEY) === 'dark'; } catch (e) { return false; }
+    try {
+      var stored = localStorage.getItem(THEME_KEY);
+      if (stored === 'dark') return true;
+      if (stored === 'light') return false;
+    } catch (e) {}
+    try { return window.matchMedia('(prefers-color-scheme: dark)').matches; } catch (e) {}
+    return false;
   }
   function applyTheme() {
     if (!app) return;
@@ -197,6 +209,23 @@
     return b;
   }
 
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)')
+      .addEventListener('change', function () { applyTheme(); });
+  } catch (e) {}
+
+  /* The wordmark: tiny "A Game By" kicker over the two name lines, with the
+     surname right-aligned against the first name's edge - real text, laid
+     out like the game's logo. */
+  function brandMark(mini) {
+    var parts = String(C.name || '').split(' ');
+    return h('div', { class: 'cb-brand' + (mini ? ' is-mini' : '') }, [
+      h('span', { class: 'cb-brand-kick', text: 'A Game By' }),
+      h('span', { class: 'cb-brand-l1', text: parts[0] || '' }),
+      h('span', { class: 'cb-brand-l2', text: parts.slice(1).join(' ') })
+    ]);
+  }
+
   function build() {
     app = h('div', { id: 'cb-app' });
     var portrait = h('div', { class: 'cb-portrait' });
@@ -205,7 +234,7 @@
 
     var rail = h('div', { class: 'cb-rail' }, [
       h('div', { class: 'cb-rail-top' }, [
-        h('div', { class: 'cb-name', html: String(C.name || '').replace(' ', '<br>') }),
+        brandMark(false),
         h('div', { class: 'cb-hr' }),
         h('nav', { class: 'cb-nav' }, PAGES.map(navLink)),
         h('div', { class: 'cb-hr' }),
@@ -225,7 +254,7 @@
 
     var topbar = h('div', { class: 'cb-topbar' }, [
       h('div', { class: 'cb-topbar-row' }, [
-        h('div', { class: 'cb-name', text: C.name || '' }),
+        brandMark(true),
         themeButton()
       ]),
       h('nav', {}, PAGES.map(navLink))
@@ -635,8 +664,16 @@
       }
 
       /* One post at a time, with quiet arrows flanking it to step through
-         the posts chronologically. The swap crossfades; a small spinner
-         covers the moment the incoming hero image is still arriving. */
+         the posts chronologically. Only substantial posts (over 300 words)
+         qualify for the big treatment; short patch-notes stay in the card
+         grid below. The swap crossfades; a small spinner covers the moment
+         the incoming hero image is still arriving. */
+      function wordCount(it) {
+        return bb(it.contents).replace(/<[^>]*>/g, ' ')
+          .trim().split(/\s+/).filter(Boolean).length;
+      }
+      var feats = items.filter(function (it) { return wordCount(it) > 300; });
+      if (!feats.length) feats = items;
       var idx = 0;
       var zone = h('div', { class: 'cb-artzone' });
       var art = h('div', { class: 'cb-art' });
@@ -660,7 +697,7 @@
 
       function buildArticle(i) {
         art.innerHTML = '';
-        var it = items[i];
+        var it = feats[i];
         var body = bb(it.contents);
         var bodyImg = firstImage(body);
         var hero = it.image || bodyImg;
@@ -689,8 +726,8 @@
             h('span', { text: 'More posts' }), h('div', {})
           ]));
           var cards = h('div', { class: 'cb-cards' });
-          items.slice(0, 25).forEach(function (o, n) {
-            if (n === i) return;
+          items.slice(0, 25).forEach(function (o) {
+            if (o.url === it.url) return;
             var b2 = bb(o.contents);
             cards.appendChild(h('a', {
               class: 'cb-card', href: o.url, target: '_blank', rel: 'noopener'
@@ -711,10 +748,10 @@
       }
 
       function show(i, animate) {
-        if (i < 0 || i >= items.length) return;
+        if (i < 0 || i >= feats.length) return;
         idx = i;
         prevB.style.visibility = idx === 0 ? 'hidden' : '';
-        nextB.style.visibility = idx >= items.length - 1 ? 'hidden' : '';
+        nextB.style.visibility = idx >= feats.length - 1 ? 'hidden' : '';
         var settle = function () {
           var heroImg = art.querySelector('.cb-figure img');
           var done = function () {
@@ -761,9 +798,36 @@
      Ten rows at a time; the arrow sits below the list, slides down as rows
      are added, and keeps loading until the feed runs out - at which point it
      becomes a quiet end-of-coverage mark instead of silently vanishing. */
+  /* While the feed travels, the page wears its own shape: a shimmering
+     skeleton of the hero and the first rows, so a slow worker rebuild looks
+     like a page loading rather than a page broken. */
+  function pressSkeleton() {
+    var sk = h('div', { class: 'cb-skelwrap' });
+    sk.appendChild(h('div', { class: 'cb-skel-hero' }, [
+      h('div', { class: 'cb-skel is-thumb' }),
+      h('div', {}, [
+        h('div', { class: 'cb-skel is-meta' }),
+        h('div', { class: 'cb-skel is-line1' }),
+        h('div', { class: 'cb-skel is-line2' }),
+        h('div', { class: 'cb-skel is-link' })
+      ])
+    ]));
+    for (var i = 0; i < 6; i++) {
+      sk.appendChild(h('div', { class: 'cb-skel-row' }, [
+        h('div', { class: 'cb-skel is-rowthumb' }),
+        h('div', {}, [
+          h('div', { class: 'cb-skel is-rowmeta' }),
+          h('div', { class: 'cb-skel is-rowline' })
+        ]),
+        h('div', { class: 'cb-skel is-rowdate' })
+      ]));
+    }
+    return sk;
+  }
+
   function pagePress() {
     var page = h('div', { class: 'cb-page' }, [
-      masthead('Press'), h('div', { class: 'cb-loading', text: 'Loading\u2026' })
+      masthead('Press'), pressSkeleton()
     ]);
     feed('press').then(function (items) {
       items = (items || []).filter(function (p) { return p && p.title && p.url; });

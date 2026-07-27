@@ -86,7 +86,18 @@
   overflow-y: auto;
 }
 .cb-rail-top { display: flex; flex-direction: column; gap: 30px; }
-.cb-name { font-size: 32px; font-weight: 800; line-height: 1.03; letter-spacing: -.03em; }
+/* the wordmark: kicker + staggered name lines, like the game's logo */
+.cb-brand { display: flex; flex-direction: column; align-items: flex-start; width: fit-content; }
+.cb-brand-kick {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 400;
+  letter-spacing: .22em; text-transform: uppercase; opacity: .55; margin: 0 0 5px 2px;
+}
+.cb-brand-l1, .cb-brand-l2 {
+  font-size: 31px; font-weight: 800; line-height: .98; letter-spacing: -.03em;
+}
+.cb-brand-l2 { align-self: flex-end; }
+.cb-brand.is-mini .cb-brand-kick { font-size: 7px; margin-bottom: 2px; letter-spacing: .18em; }
+.cb-brand.is-mini .cb-brand-l1, .cb-brand.is-mini .cb-brand-l2 { font-size: 16px; }
 .cb-hr { height: 1px; background: var(--rule); }
 
 .cb-nav { display: flex; flex-direction: column; gap: 1px; }
@@ -360,12 +371,52 @@
   border-radius: 50%; font-size: 20px; line-height: 1;
 }
 .cb-more.is-arrow:hover { color: var(--orange); }
+/* the Light/Dark labels differ in width; a fixed box keeps the legal
+   line beside it from reflowing when the theme is toggled */
+.cb-footrow .cb-theme { min-width: 56px; text-align: center; flex-shrink: 0; }
+
+/* devlog lists: real bullets (steam bbcode) */
+.cb-body ul { list-style: disc outside; padding-left: 24px; margin: 14px 0; }
+.cb-body ol { list-style: decimal outside; padding-left: 26px; margin: 14px 0; }
+.cb-body li { margin: 6px 0; }
+
+/* press loading skeleton ----------------------------------------- */
+.cb-skel {
+  border-radius: 5px;
+  background: linear-gradient(100deg, rgba(2,14,22,.07) 40%, rgba(2,14,22,.13) 50%, rgba(2,14,22,.07) 60%);
+  background-size: 200% 100%;
+  animation: cbShimmer 1.3s linear infinite;
+}
+#cb-app.is-dark .cb-skel {
+  background: linear-gradient(100deg, rgba(251,248,229,.07) 40%, rgba(251,248,229,.13) 50%, rgba(251,248,229,.07) 60%);
+  background-size: 200% 100%;
+}
+@keyframes cbShimmer { to { background-position: -200% 0; } }
+.cb-skel-hero {
+  display: grid; grid-template-columns: 340px minmax(0,1fr); gap: 34px;
+  margin-top: 34px; padding-bottom: 34px; border-bottom: 1px solid var(--rule);
+}
+.cb-skel.is-thumb { aspect-ratio: 16 / 9; }
+.cb-skel.is-meta { width: 160px; height: 12px; margin-bottom: 16px; }
+.cb-skel.is-line1 { width: 88%; height: 30px; margin-bottom: 10px; }
+.cb-skel.is-line2 { width: 55%; height: 30px; margin-bottom: 18px; }
+.cb-skel.is-link { width: 130px; height: 12px; }
+.cb-skel-row {
+  display: grid; grid-template-columns: 150px minmax(0,1fr) 112px; gap: 24px;
+  align-items: center; padding: 14px 0; border-top: 1px solid rgba(2,14,22,.14);
+}
+.cb-skel-row:first-of-type { border-top: none; }
+.cb-skel.is-rowthumb { aspect-ratio: 16 / 9; }
+.cb-skel.is-rowmeta { width: 90px; height: 10px; margin-bottom: 10px; }
+.cb-skel.is-rowline { width: 75%; height: 16px; }
+.cb-skel.is-rowdate { width: 80px; height: 10px; justify-self: end; }
+
 /* devlog post navigation ---------------------------------------- */
 .cb-artzone { position: relative; }
 .cb-art { transition: opacity .22s ease; }
 .cb-art.is-swapping { opacity: 0; }
 .cb-artnav {
-  position: absolute; top: 300px; z-index: 5;
+  position: absolute; top: 34px; z-index: 5;
   width: 42px; height: 42px; padding: 0; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font: inherit; font-size: 22px; line-height: 1; cursor: pointer;
@@ -389,11 +440,11 @@
 #cb-app.is-dark .cb-spin { border-color: rgba(251, 248, 229, .2); border-top-color: var(--ink); }
 
 /* Work & Talks read at the same size as the backstory/devlog body. */
-.cb-row-work .cb-desc, .cb-row-talk .cb-desc {
+.cb-page .cb-row-work .cb-desc, .cb-page .cb-row-talk .cb-desc {
   font-size: 18px; line-height: 1.68; max-width: 64ch; opacity: .85;
 }
-.cb-row-work h4, .cb-row-talk h4 { font-size: 29px; }
-.cb-row-talk .cb-subtitle { font-size: 17px; }
+.cb-page .cb-row-work h4, .cb-page .cb-row-talk h4 { font-size: 29px; }
+.cb-page .cb-row-talk .cb-subtitle { font-size: 17px; }
 
 .cb-feed-end {
   margin-top: 30px; text-align: center;
@@ -475,7 +526,7 @@
     backdrop-filter: blur(6px);
     border-bottom: 1px solid var(--rule);
   }
-  .cb-topbar .cb-name { font-size: 19px; }
+  .cb-topbar .cb-brand-l1, .cb-topbar .cb-brand-l2 { font-size: 16px; }
   .cb-topbar nav { display: flex; gap: 14px; overflow-x: auto; scrollbar-width: none; }
   .cb-topbar nav::-webkit-scrollbar { display: none; }
   .cb-topbar nav a { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; text-decoration: none; white-space: nowrap; opacity: .55; padding-bottom: 2px; }
