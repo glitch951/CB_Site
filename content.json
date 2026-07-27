@@ -252,7 +252,7 @@
     ],
     "esoteric": {
       "title": "Esoteric Inspirations",
-      "intro": "One of those classic questions is always: <i>what inspired you?</i> I tend to always give different answers depending on my mood, so don't consider this a finished list or anything - BUT, here's a little compilation of the various pieces of media that I would consider as living in the back of my skull during the development of everything ESOTERIC.",
+      "intro": "One of those classic questions is always: <i>what inspired you?</i> I tend to give different answers depending on my mood, so don't consider this a finished list or anything - BUT, here's a little compilation of the various pieces of media that I would consider as living in the back of my skull during the development of everything <b>ESOTERIC</b>.",
       "groups": [
         {
           "title": "Planescape: Torment inspired the…",
@@ -324,7 +324,7 @@
       "discordUrl": "",
       "notes": [
         "As for visuals and audio, I'm far more inclined to let those live within the skulls of <a href=\"{{collaboratorsUrl}}\">my collaborators</a>. My job mainly revolves around writing/programming/design, as well as compiling and integrating all the 'assets' my wonderful artists create. Therefore, if you want to find out more what makes, for example, Oscar Westberg's artwork look the way it does, or how Anders Bach approaches his idea of this esoteric music - feel free to look them up and ask them yourself. Or just drop a question in <a href=\"{{discordUrl}}\">the Discord</a>, they tend to hang out there sometimes.",
-        "Oh, and of course: Lord of the Rings and D&amp;D, along with a thousand iterations of TTRPGs and fantasy stories that coagulate into inspiring the rest of what has become this ESOTERIC ERA."
+        "Oh, and of course: <b>Lord of the Rings</b> and <b>D&amp;D</b>, along with a thousand iterations of TTRPGs and fantasy stories that coagulate into inspiring the rest of what has become this <b>ESOTERIC ERA</b>."
       ]
     }
   },

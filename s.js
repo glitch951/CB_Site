@@ -27,6 +27,10 @@
   var cache = {};
 
   /* ---------- tiny helpers ------------------------------------- */
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
   function h(tag, attrs, kids) {
     var el = document.createElement(tag);
     for (var k in attrs || {}) {
@@ -623,8 +627,13 @@
       if (eso.intro) page.appendChild(h('p', { class: 'cb-insp-note is-intro', html: eso.intro }));
       var cols = h('div', { class: 'cb-insp-extra' });
       (eso.groups || []).forEach(function (g) {
+        // "<Name> inspired the…": the name carries the weight
+        var t = String(g.title || '');
+        var m = /^(.*?)(\s+inspired the\u2026?.*|:\s*)$/.exec(t);
         var block = h('div', { class: 'cb-insp-group' }, [
-          h('h4', { text: g.title || '' })
+          h('h4', m
+            ? { html: '<b>' + esc(m[1]) + '</b>' + esc(m[2]) }
+            : { html: '<b>' + esc(t) + '</b>' })
         ]);
         if ((g.items || []).length) {
           block.appendChild(h('ul', {}, g.items.map(function (t) {
@@ -653,6 +662,15 @@
   }
 
   /* ---------- feeds -------------------------------------------- */
+  /* The last successful copy of a feed, however old - for painting the page
+     instantly while the fresh copy travels. */
+  function feedCached(kind) {
+    try {
+      var s = JSON.parse(localStorage.getItem('cb-feed-last-' + kind) || 'null');
+      return (s && s.length) ? s : null;
+    } catch (e) { return null; }
+  }
+
   /* Feeds are cached three deep: in memory for this page, in sessionStorage
      for the visit (so reloads are instant), and per 10-minute bucket so
      nothing goes stale for long. Empty results are never stored. */
@@ -666,10 +684,14 @@
       if (stored && stored.length) { cache[kind] = stored; return Promise.resolve(stored); }
     } catch (e) {}
     var url = C.feedsUrl.replace(/\/$/, '') + '/?feed=' + kind + '&t=' + bucket;
+
     return fetch(url).then(function (r) { return r.json(); }).then(function (j) {
       cache[kind] = j;
       try {
-        if (j && j.length) sessionStorage.setItem(key, JSON.stringify(j));
+        if (j && j.length) {
+          sessionStorage.setItem(key, JSON.stringify(j));
+          localStorage.setItem('cb-feed-last-' + kind, JSON.stringify(j));
+        }
       } catch (e) {}
       return j;
     });
@@ -712,6 +734,7 @@
       var feats = items.filter(function (it) { return wordCount(it) > 300; });
       if (!feats.length) feats = items;
       var idx = 0;
+      var cardsIO = null;
       var zone = h('div', { class: 'cb-artzone' });
       var art = h('div', { class: 'cb-art' });
       var prevB = h('button', {
@@ -758,15 +781,21 @@
         }));
 
         below.innerHTML = '';
-        if (items.length > 1) {
+        if (cardsIO) { cardsIO.disconnect(); cardsIO = null; }
+        var others = items.filter(function (o) { return o.url !== it.url; });
+        if (others.length) {
           below.appendChild(h('div', { class: 'cb-sep' }, [
             h('span', { text: 'More posts' }), h('div', {})
           ]));
           var cards = h('div', { class: 'cb-cards' });
-          items.slice(0, 25).forEach(function (o) {
-            if (o.url === it.url) return;
+          below.appendChild(cards);
+
+          /* The full post history loads in as you scroll: nine cards at a
+             time, the next batch appearing well before the bottom is
+             reached. Without IntersectionObserver, everything renders. */
+          var makeCard = function (o) {
             var b2 = bb(o.contents);
-            cards.appendChild(h('a', {
+            return h('a', {
               class: 'cb-card', href: o.url, target: '_blank', rel: 'noopener'
             }, [
               thumb(o.image || firstImage(b2), steamHeader(o.appid)),
@@ -778,9 +807,30 @@
                 h('h4', { text: o.title }),
                 h('div', { class: 'cb-desc', text: excerpt(b2, 120) })
               ])
-            ]));
-          });
-          below.appendChild(cards);
+            ]);
+          };
+          var shown = 0;
+          var CHUNK = 9;
+          var sentinel = h('div', { class: 'cb-scroll-sentinel' });
+          var addCards = function () {
+            others.slice(shown, shown + CHUNK).forEach(function (o) {
+              cards.appendChild(makeCard(o));
+            });
+            shown = Math.min(others.length, shown + CHUNK);
+            if (shown >= others.length && sentinel.parentNode) sentinel.remove();
+          };
+          addCards();
+          if (shown < others.length) {
+            below.appendChild(sentinel);
+            if (window.IntersectionObserver) {
+              cardsIO = new IntersectionObserver(function (entries) {
+                entries.forEach(function (e) { if (e.isIntersecting) addCards(); });
+              }, { rootMargin: '600px' });
+              cardsIO.observe(sentinel);
+            } else {
+              while (shown < others.length) addCards();
+            }
+          }
         }
       }
 
@@ -863,10 +913,12 @@
   }
 
   function pagePress() {
+    var cached = feedCached('press');
     var page = h('div', { class: 'cb-page' }, [
-      masthead('Press'), pressSkeleton()
+      masthead('Press'), cached ? h('div', {}) : pressSkeleton()
     ]);
-    feed('press').then(function (items) {
+
+    function render(items) {
       items = (items || []).filter(function (p) { return p && p.title && p.url; });
       items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
 
@@ -935,13 +987,24 @@
       if (shown < rest.length) page.appendChild(more);
       else page.appendChild(theEnd);
       more.addEventListener('click', addRows);
+    }
+
+    /* Instant paint from the last visit's copy, then the fresh feed swaps in
+       quietly - only if it actually changed. */
+    if (cached) render(cached.slice());
+    feed('press').then(function (fresh) {
+      if (!cached || JSON.stringify(fresh) !== JSON.stringify(cached)) {
+        render((fresh || []).slice());
+      }
     }).catch(function () {
+      if (cached) return; // the stale page beats an error message
       page.innerHTML = '';
       page.appendChild(masthead('Press'));
       page.appendChild(h('div', { class: 'cb-loading', text: 'Press feed unavailable right now.' }));
     });
     return page;
   }
+
 
   /* ---------- router ------------------------------------------- */
   var BUILDERS = {
