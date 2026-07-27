@@ -620,6 +620,7 @@
       page.appendChild(h('div', { class: 'cb-sep' }, [
         h('span', { text: eso.title || 'Esoteric Inspirations' }), h('div', {})
       ]));
+      if (eso.intro) page.appendChild(h('p', { class: 'cb-insp-note is-intro', html: eso.intro }));
       var cols = h('div', { class: 'cb-insp-extra' });
       (eso.groups || []).forEach(function (g) {
         var block = h('div', { class: 'cb-insp-group' }, [
@@ -633,8 +634,18 @@
         cols.appendChild(block);
       });
       page.appendChild(cols);
+      /* {{collaboratorsUrl}} / {{discordUrl}} in a note become real links
+         once those fields are filled in; until then, plain words. */
       (eso.notes || []).forEach(function (n) {
-        page.appendChild(h('p', { class: 'cb-insp-note', text: n }));
+        var htmlNote = String(n).replace(
+          /<a href="\{\{(\w+)\}\}">([\s\S]*?)<\/a>/g,
+          function (m, key, label) {
+            var u = eso[key];
+            return u
+              ? '<a href="' + u + '" target="_blank" rel="noopener">' + label + '</a>'
+              : label;
+          });
+        page.appendChild(h('p', { class: 'cb-insp-note', html: htmlNote }));
       });
     }
 

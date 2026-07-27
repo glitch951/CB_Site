@@ -1,6 +1,6 @@
 {
   "name": "Christoffer Bodegård",
-  "bio": "Christoffer Bodegård is a game developer, writer, and fan of interactive storytelling. Creator of <a href=\"https://esotericebb.com/\">Esoteric Ebb</a>. Focused on developing the art of interactive writing for use in role-playing games.",
+  "bio": "Christoffer Bodegård is a game developer, writer, and fan of interactive storytelling.<br>Creator of <a href=\"https://esotericebb.com/\">Esoteric Ebb</a>.",
   "copyright": "©2026 Sudden Snail AB. Esoteric Ebb and its respective logo are trademarks of Sudden Snail AB. All rights reserved.",
   "homePage": "devlogs",
   "feedsUrl": "https://cb-feeds.christofferbodegard.workers.dev",
@@ -243,13 +243,14 @@
     ],
     "esoteric": {
       "title": "Esoteric Inspirations",
+      "intro": "One of those classic questions is always: <i>what inspired you?</i> I tend to always give different answers depending on my mood, so don't consider this a finished list or anything - BUT, here's a little compilation of the various pieces of media that I would consider as living in the back of my skull during the development of everything ESOTERIC.",
       "groups": [
         {
           "title": "Planescape: Torment inspired the…",
           "items": [
             "Interactive writing",
             "Weird-fantasy setting",
-            "Comedy (it's surprisingly a very funny game)"
+            "Comedy - it's such a funny game"
           ]
         },
         {
@@ -257,7 +258,7 @@
           "items": [
             "Chimes (duh!)",
             "Non-linear structure",
-            "Non-traditional 'combat'"
+            "Micro-reactivity & systemic storytelling"
           ]
         },
         {
@@ -277,8 +278,8 @@
         {
           "title": "Seinfeld inspired the…",
           "items": [
-            "Situational comedy",
-            "Dialog style"
+            "Conversational comedy",
+            "Absurd realism"
           ]
         },
         {
@@ -290,7 +291,8 @@
         {
           "title": "Monkey Island inspired the…",
           "items": [
-            "Dialog-based 'combat' system"
+            "Dialog-based 'combat' system",
+            "Mechanical humor"
           ]
         },
         {
@@ -300,20 +302,20 @@
           ]
         },
         {
-          "title": "Music:",
+          "title": "Anbennar inspired the…",
           "items": [
-            "Ice Cream Cathedral",
-            "Amos Roddy"
+            "Worldbuilding",
+            "Realistic exploration of D&D mechanics",
+            "Ideology within fantasy"
           ]
-        },
-        {
-          "title": "Anbennar for worldbuilding!",
-          "items": []
         }
       ],
+      "//links": "Set these two URLs and the corresponding words in the notes below become links (they render as plain text while empty). collaboratorsUrl is for 'my collaborators', discordUrl for 'the Discord'.",
+      "collaboratorsUrl": "",
+      "discordUrl": "",
       "notes": [
-        "Akira (manga and movie) inspired the visuals and characterization. Even with Westbergs obviously being responsible for the artstyle, I'd say I ended up choosing him in part for his adjacent style to Akira, which I would describe as a perfect blend of golden era anime and modern western.",
-        "And then, Lord of the Rings and D&D, along with a thousand iterations of TTRPGs and fantasy stories coagulate into inspiring the rest of what has become the Esoteric Coast."
+        "As for visuals and audio, I'm far more inclined to let those live within the skulls of <a href=\"{{collaboratorsUrl}}\">my collaborators</a>. My job mainly revolves around writing/programming/design, as well as compiling and integrating all the 'assets' my wonderful artists create. Therefore, if you want to find out more what makes, for example, Oscar Westberg's artwork look the way it does, or how Anders Bach approaches his idea of this esoteric music - feel free to look them up and ask them yourself. Or just drop a question in <a href=\"{{discordUrl}}\">the Discord</a>, they tend to hang out there sometimes.",
+        "Oh, and of course: Lord of the Rings and D&amp;D, along with a thousand iterations of TTRPGs and fantasy stories that coagulate into inspiring the rest of what has become this ESOTERIC ERA."
       ]
     }
   },
