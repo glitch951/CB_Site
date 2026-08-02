@@ -33,6 +33,7 @@
   grid-template-columns: var(--rail) 1fr;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: background .6s ease, color .6s ease;
 }
 
 #cb-app *, #cb-app *::before, #cb-app *::after { box-sizing: border-box; }
@@ -46,6 +47,7 @@
   overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  transition: opacity 1.2s ease;
 }
 /* Both portraits sit on the same plane, one to each side, feet on the page
    bottom. Their size is set by s.js from each file's native resolution
@@ -622,7 +624,7 @@
   --rule: rgba(218, 229, 207, .2);
   --soft: rgba(218, 229, 207, .06);
 }
-#cb-app.is-dark .cb-portrait { display: none; }
+#cb-app.is-dark .cb-portrait { opacity: 0; pointer-events: none; }
 #cb-app.is-dark .cb-rail { background: rgba(2, 14, 22, .6); border-right-color: var(--rule); }
 #cb-app.is-dark .cb-topbar { background: rgba(2, 14, 22, .94); border-bottom-color: var(--rule); }
 #cb-app.is-dark .cb-hr,
