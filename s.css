@@ -69,6 +69,9 @@
 .cb-portrait-fill {
   position: absolute; inset: 0;
   background: var(--paper);
+  /* must match #cb-app's background transition EXACTLY, so the silhouette
+     color glides in lockstep with the page and never shows as a patch */
+  transition: background .6s ease;
   -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
 }
