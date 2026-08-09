@@ -49,7 +49,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09n';
+  var BUILD = '2026-08-09p';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -134,16 +134,20 @@
        Only reach for them if a particular file needs it. The panel
        widens itself to fit the widest entry, so nothing gets squashed. */
     sites: [
-      /* Sizes and left edges are matched to the bar logo automatically,
-         by measuring where the lettering actually sits inside each file
-         (see matchLogos below). Give an entry an explicit height only to
-         override that, as CB_Logo does: it is three stacked lines, so
-         matching its whole block to a one-line wordmark would leave the
-         lines far too small. */
+      /* height and nudgeX are measured from the files themselves, since
+         each one frames its lettering differently. Against a 34px bar
+         logo the lettering is 26.8px tall and starts 3.6px in from the
+         image edge, so:
+           ERA_Logo_Horizontal  lettering is 83.8% of the image and starts
+             4.05% in  ->  32px tall, pulled 6px left
+           CB_Logo  is two stacked lines, the top one 43.2% of the image
+             and flush to the edge  ->  62px tall so "Christoffer" reads
+             at the same size as the wordmarks, pushed 4px right
+         Re-export a logo and these are the two numbers to revisit. */
       { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',
-        logo: IMG + 'ERA_Logo_Horizontal.png' },
+        logo: IMG + 'ERA_Logo_Horizontal.png', height: 32, nudgeX: -6 },
       { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/',
-        logo: IMG + 'CB_Logo.png', height: 40 }
+        logo: IMG + 'CB_Logo.png',           height: 62, nudgeX: 4 }
     ],
 
     /* To use the sans cut of the same superfamily, change both of
@@ -158,14 +162,8 @@
 
     logoH:    34,    // px, logo height in the bar
 
-    /* Every logo file pads its lettering differently: in
-       EE_Logo_Horizontal the letters are 78% of the image height and
-       start 1.7% in from the left, in ERA_Logo_Horizontal it is 84% and
-       4.1%. Matching the image boxes therefore does not match what the
-       eye sees. With this on, each file is measured once and its
-       lettering is lined up with the bar logo's lettering, in both size
-       and left edge. If the measurement cannot run, nothing changes. */
-    matchLogos: true,
+    navGap:   34,    // px, guaranteed clear space between the links and
+                     //     the Buy Now button
     caretW:   20,    // px, arrow button width
     brandGap: 6,     // px, gap between arrow and logo
     logoPadX: 9,     // px, padding inside the logo's hover outline
@@ -266,8 +264,12 @@
 .ee-site:hover,.ee-site:focus-visible{border-color:#DB5B2C}
 
 /* section links: colour switches instantly, no fade */
-.ee-nav{display:flex; align-items:center; gap:clamp(8px,1.6vw,24px);
-  margin-left:clamp(8px,2vw,28px); flex:0 1 auto; min-width:0}
+.ee-nav{
+  display:flex; align-items:center; gap:clamp(8px,1.6vw,24px);
+  margin-left:clamp(14px,2.2vw,34px); margin-right:${CONFIG.navGap}px;
+  flex:0 0 auto;   /* never shrink below its content, or the links slide
+                      under the button instead of collapsing */
+}
 .ee-link{
   padding:6px 0; text-decoration:none; white-space:nowrap; color:#DAE5CF;
   font-size:clamp(13px,1.05vw,16px); letter-spacing:.1em; font-variant:small-caps;
@@ -383,75 +385,6 @@ body{padding-top:${CONFIG.height}px}
   }
 
 
-  /* ------------------------------------------------------------------
-     Measure where the lettering sits inside a logo file: its height and
-     left edge as fractions of the image. Uses a throwaway copy of the
-     image, so if the browser refuses to read the pixels the visible
-     logos are unaffected and matching is simply skipped.
-     ------------------------------------------------------------------ */
-  function measureLogo(src, cb) {
-    var img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onerror = function () { cb(null); };
-    img.onload = function () {
-      var out = null;
-      try {
-        var w = img.naturalWidth, h = img.naturalHeight;
-        if (!w || !h) { cb(null); return; }
-
-        var k = Math.min(1, 300 / w);
-        var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
-        var cv = document.createElement('canvas');
-        cv.width = cw; cv.height = ch;
-        var ctx = cv.getContext('2d');
-        ctx.drawImage(img, 0, 0, cw, ch);
-        var d = ctx.getImageData(0, 0, cw, ch).data;
-        var minX = cw, minY = ch, maxY = -1, x, y, i;
-        for (y = 0; y < ch; y++) {
-          for (x = 0; x < cw; x++) {
-            i = (y * cw + x) * 4;
-            /* the lettering is the pale part; the outline and artwork
-               behind it are dark, so brightness separates them */
-            if (d[i + 3] > 100 && (d[i] + d[i + 1] + d[i + 2]) / 3 > 140) {
-              if (x < minX) minX = x;
-              if (y < minY) minY = y;
-              if (y > maxY) maxY = y;
-            }
-          }
-        }
-        out = (maxY < 0) ? null
-          : { aspect: w / h, left: minX / cw, hFrac: (maxY - minY + 1) / ch };
-      } catch (e) { out = null; }
-      cb(out);
-    };
-    img.src = src;
-  }
-
-  function matchLogos(bar) {
-    if (!CONFIG.matchLogos) return;
-    measureLogo(CONFIG.logo, function (base) {
-      if (!base) return;
-      var barLetterH    = CONFIG.logoH * base.hFrac;
-      var barLetterLeft = CONFIG.logoH * base.aspect * base.left;
-
-      [].forEach.call(bar.querySelectorAll('.ee-sites .ee-site'), function (a, i) {
-        var site = CONFIG.sites[i], im = a.querySelector('img');
-        if (!site || !im) return;
-        measureLogo(site.logo, function (m) {
-          if (!m) return;
-          var h = site.height;
-          if (!h) {
-            h = barLetterH / m.hFrac;                       // match letter height
-            h = Math.max(CONFIG.logoH * 0.5, Math.min(CONFIG.logoH * 2.5, h));
-          }
-          im.style.height = (Math.round(h * 10) / 10) + 'px';
-          im.style.marginLeft =
-            Math.round(barLetterLeft - h * m.aspect * m.left) + 'px';
-        });
-      });
-    });
-  }
-
   function pointerHtml() {
     return '<img class="ee-point" src="' + CONFIG.pointer.src + '" alt="" aria-hidden="true">';
   }
@@ -460,9 +393,11 @@ body{padding-top:${CONFIG.height}px}
     return CONFIG.sites.map(function (s) {
       var h = s.height || CONFIG.logoH;
       var cls = 'ee-site' + (s.align === 'center' ? ' is-center' : '');
+      var st = 'height:' + h + 'px';
+      if (s.nudgeX) st += ';margin-left:' + s.nudgeX + 'px';
       return '<a class="' + cls + '" href="' + s.url + '" aria-label="' + s.name + '">' +
         '<img src="' + s.logo + '" alt="' + s.name + '" loading="lazy" ' +
-        'style="height:' + h + 'px"></a>';
+        'style="' + st + '"></a>';
     }).join('');
   }
 
@@ -554,6 +489,27 @@ body{padding-top:${CONFIG.height}px}
     /* Snagn sits at one fixed offset from the button, always. If the
        window is too narrow to fit him he is simply not shown, so he can
        never drift, be clipped, or push out a scrollbar. */
+    /* The links keep their natural width. When there is no longer room
+       for all of them beside the logo and the button, they fold into the
+       burger rather than overlapping anything. */
+    function fitNav() {
+      var nav = bar.querySelector('.ee-nav');
+      var brand = bar.querySelector('.ee-brand');
+      var right = bar.querySelector('.ee-right');
+      var inner = bar.querySelector('.ee-tb-inner');
+      if (!nav || !brand || !right || !inner) return;
+
+      bar.classList.remove('is-cramped');
+      if (getComputedStyle(nav).display === 'none') return;   // burger already
+
+      var cs = getComputedStyle(inner);
+      var room = inner.clientWidth
+               - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      var need = brand.offsetWidth + nav.scrollWidth + right.offsetWidth
+               + CONFIG.navGap;
+      if (need > room) bar.classList.add('is-cramped');
+    }
+
     function fitPointer() {
       var img = bar.querySelector('.ee-point');
       var wrap = bar.querySelector('.ee-cta-wrap');
@@ -572,14 +528,17 @@ body{padding-top:${CONFIG.height}px}
       var over = wrap.getBoundingClientRect().right + CONFIG.pointer.leftPx + w
                  - (window.innerWidth - 4);
       wrap.classList.toggle('no-room', over > 0);
+      fitNav();
     }
-    matchLogos(bar);
-
     var ptr = bar.querySelector('.ee-point');
     if (ptr) {
       if (ptr.complete) fitPointer(); else ptr.addEventListener('load', fitPointer);
     }
     window.addEventListener('resize', fitPointer, { passive: true });
+    fitNav();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(fitNav);   // link widths change with the webfont
+    }
 
     var caret = bar.querySelector('.ee-caret'),
         sites = bar.querySelector('.ee-sites'),
