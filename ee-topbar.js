@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09d';
+  var BUILD = '2026-08-09e';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -93,12 +93,15 @@
       show:        true,
       heightRatio: 282 / 85,   // 3.318 x the button height
       topRatio:    21 / 85,    // 0.247 x the button height, from its top
-      leftPx:      0,          // nudge left or right of the button's right edge
-      angleA:      -3,         // degrees, first pose
-      angleB:      3,          // degrees, second pose
-      holdMs:      2000,       // how long each pose is held
-      originX:     '6%',       // pivot near the pointing finger
-      originY:     '30%'
+      leftPx:      -14,        // negative slides him onto the button. Measured
+                               // from a screenshot: the fingertip was sitting
+                               // 9 css px clear of the edge, so this puts it a
+                               // few px over it.
+      angleA:      -2,         // degrees, first pose
+      angleB:      2,          // degrees, second pose
+      holdMs:      1000,       // how long each pose is held
+      originX:     '50%',      // he turns on his own axis, not on the finger
+      originY:     '50%'
     },
 
     /* The other sites. Logos only, never text. This site is not
@@ -241,7 +244,8 @@
 }
 
 /* Snagn: hidden until the button is hovered, then straight in, no fade.
-   He hangs below the bar rather than being clipped by it. */
+   He hangs below the bar rather than being clipped by it, and turns on
+   his own centre so the whole figure tilts together. */
 .ee-point{
   position:absolute; z-index:2; pointer-events:none;
   left:calc(100% + ${CONFIG.pointer.leftPx}px + var(--ee-point-shift, 0px));
