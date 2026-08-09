@@ -214,7 +214,6 @@
         h('div', { class: 'ac-bg-stick' }, [bgImg])
       ]));
     }
-    root.appendChild(h('div', { class: 'ac-head', text: 'Ask Chris \u2014 from the Esoteric Ebb Discord' }));
     var all = (data && data.threads) || [];
     if (!all.length) {
       root.appendChild(h('div', { class: 'ac-error', text: 'No threads yet.' }));
@@ -335,7 +334,6 @@
     if (cached && cached.threads) {
       activeInput = render(root, cached);
     } else {
-      root.appendChild(h('div', { class: 'ac-head', text: 'Ask Chris \u2014 from the Esoteric Ebb Discord' }));
       for (var i = 0; i < 4; i++) root.appendChild(h('div', { class: 'ac-skel' }));
     }
 
