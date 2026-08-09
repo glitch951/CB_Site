@@ -15,7 +15,7 @@ Just stand out on Tolstad and listen to those seagulls.
 ## Oscar Westberg
 role: Illustrator
 image: oscar-westberg.png
-link: Home | https://oscarwestberg.se/
+link: Website | https://oscarwestberg.se/
 link: X | https://twitter.com/oscarwestberg
 
 A Swedish illustrator, comic artist, and fellow writer. I found him on Twitter years ago, and fell in love with his unique style. When I needed an illustrator for the project, I sent him a DM.
@@ -27,7 +27,7 @@ I'm very happy he responded to my DM.
 ## Anders Bach, Brian Batz, & Kristian Paulsen
 role: Music composition, production, and mix
 image: anders-brian-kristian.png
-link: Home | http://andersbach.cargo.site/
+link: Website | http://andersbach.cargo.site/
 link: Instagram, Bach | https://www.instagram.com/andersbachshorthair/
 link: Instagram, Batz | https://www.instagram.com/batzstudio/
 link: Instagram, Paulsen | https://www.instagram.com/kristian__paulsen/
@@ -40,7 +40,7 @@ Anders brought along Brian and Kristian for the ride, and together they created 
 
 ## Gibbet Games
 image: gibbet-games.png
-link: Home | https://gibbetgames.com/
+link: Website | https://gibbetgames.com/
 link: X | https://x.com/GIBBETGAMES
 
 Gibbet has been instrumental in crafting the *Esoteric* aesthetic of Ebb. Both from an asset-creation standpoint, as well as from a structural/organizational point as well.
@@ -101,7 +101,7 @@ Mayowa joined the team towards the end stretch, when we needed to finish up the 
 
 ## Speldosa Interactive
 image: speldosa.jpg
-link: Home | https://www.speldosa.com/
+link: Website | https://www.speldosa.com/
 link: X | https://x.com/speldosagames
 link: Instagram | https://www.instagram.com/speldosagames/
 
@@ -149,7 +149,7 @@ QLOC joined in as a third party to playtest the hell out of Ebb during the final
 
 ## Raw Fury
 image: raw-fury.png
-link: Home | https://rawfury.com/
+link: Website | https://rawfury.com/
 
 I signed with Raw Fury on March 2024. Despite them being the publisher of Esoteric Ebb, I also consider them to be a collaborator as well.
 
@@ -160,7 +160,7 @@ Also, thanks for the money! It helped!
 ## Sudden Snail
 role: Writing, Design, Programming
 image: sudden-snail.png
-link: Home | https://christofferbodegard.com/
+link: Website | https://christofferbodegard.com/
 link: Information | https://suddensnail.com/
 link: X | https://twitter.com/chrisbodegard
 
