@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09c';
+  var BUILD = '2026-08-09d';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -132,6 +132,15 @@
        layout space at all, so a full bleed splash stays full bleed.
        true pushes the page down by the bar's height instead. */
     offsetBody:   false,
+
+    /* Stay out of sight until Carrd has finished loading, so the bar
+       does not sit alone on a blank page. Ready means the document has
+       fully loaded and Carrd has dropped its is-preload class.
+       maxWaitMs is a backstop: if something stalls, the bar appears
+       anyway rather than never showing up. */
+    showAfterLoad: true,
+    maxWaitMs:     8000,
+
     hideOnScroll: true,
     hideAfter:    'splash',  // 'splash' is one viewport height, or give a number of px
     hideDelta:    6
@@ -155,6 +164,7 @@
   transition:transform .32s ease;
 }
 .ee-tb.is-hidden{transform:translateY(-100%)}
+.ee-tb.is-loading,.ee-sheet.is-loading{visibility:hidden}
 .ee-tb-inner{
   max-width:1400px; height:100%; margin:0 auto; padding:0 clamp(14px,3vw,30px);
   display:flex; align-items:center; gap:clamp(10px,2vw,26px);
@@ -327,6 +337,31 @@ body{padding-top:${CONFIG.height}px}
     }).join('');
   }
 
+  function whenSiteReady(cb) {
+    if (!CONFIG.showAfterLoad) { cb(); return; }
+
+    var done = false, poll, bail;
+    function preloading() {
+      return document.body && document.body.className.indexOf('is-preload') !== -1;
+    }
+    function finish() {
+      if (done) return;
+      done = true;
+      clearInterval(poll);
+      clearTimeout(bail);
+      window.removeEventListener('load', check);
+      cb();
+    }
+    function check() {
+      if (!done && document.readyState === 'complete' && !preloading()) finish();
+    }
+
+    window.addEventListener('load', check);
+    poll = setInterval(check, 100);
+    bail = setTimeout(finish, CONFIG.maxWaitMs);
+    check();
+  }
+
   function init() {
     teardown();
     loadFont();
@@ -363,8 +398,20 @@ body{padding-top:${CONFIG.height}px}
       '<a class="ee-cta" href="' + CONFIG.cta.href + '" target="_blank" rel="noopener">' + CONFIG.cta.label + '</a>' +
       '<div class="ee-sheet-sites">' + sitesHtml() + '</div>';
 
+    if (CONFIG.showAfterLoad) {
+      bar.classList.add('is-loading');
+      sheet.classList.add('is-loading');
+    }
     document.body.appendChild(bar);
     document.body.appendChild(sheet);
+
+    /* visibility:hidden still lays the bar out, so the logo and Snagn
+       are already fetched and measured by the time it appears. */
+    whenSiteReady(function () {
+      bar.classList.remove('is-loading');
+      sheet.classList.remove('is-loading');
+      fitPointer();
+    });
 
     /* Keep Snagn on screen. He keeps the mockup framing whenever there
        is room, and slides left only if the window is too narrow for him,
