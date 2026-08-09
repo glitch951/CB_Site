@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09g';
+  var BUILD = '2026-08-09i';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -93,15 +93,24 @@
       show:        true,
       heightRatio: 282 / 85,   // 3.318 x the button height
       topRatio:    21 / 85,    // 0.247 x the button height, from its top
-      leftPx:      -14,        // negative slides him onto the button. Measured
-                               // from a screenshot: the fingertip was sitting
-                               // 9 css px clear of the edge, so this puts it a
-                               // few px over it.
+      leftPx:      -22,        // negative slides him onto the button. The PNG
+                               // carries roughly 20px of empty space to the
+                               // left of the glove at this size, so this is
+                               // what puts the fingertip on the red edge
+                               // rather than the image's own bounding box.
       angleA:      -2,         // degrees, first pose
       angleB:      2,          // degrees, second pose
       holdMs:      1000,       // how long each pose is held
       originX:     '50%',      // he turns on his own axis, not on the finger
-      originY:     '50%'
+      originY:     '50%',
+
+      /* The bar keeps enough clear space on the right for him, so he can
+         stand in exactly the same spot at every window width instead of
+         being nudged about or cut off. Set false to let the button sit
+         hard against the edge again, at the cost of losing him on
+         narrower screens. */
+      reserveSpace: true,
+      reserveGap:   10         // px of breathing room past his right edge
     },
 
     /* The other sites. Logos only, never text. This site is not
@@ -257,7 +266,7 @@
    his own centre so the whole figure tilts together. */
 .ee-point{
   position:absolute; z-index:2; pointer-events:none;
-  left:calc(100% + ${CONFIG.pointer.leftPx}px + var(--ee-point-shift, 0px));
+  left:calc(100% + ${CONFIG.pointer.leftPx}px);
   top:${Math.round(CONFIG.pointer.topRatio * CONFIG.ctaH)}px;
   height:${Math.round(CONFIG.pointer.heightRatio * CONFIG.ctaH)}px;
   width:auto; display:block;
@@ -266,6 +275,9 @@
   animation:ee-point ${CONFIG.pointer.holdMs * 2}ms infinite;
 }
 .ee-cta-wrap:hover .ee-point,.ee-cta:focus-visible ~ .ee-point{visibility:visible; opacity:1}
+/* If the window is too narrow for him he stays away entirely. Moving him
+   would make his position depend on the window width, which it must not. */
+.ee-cta-wrap.no-room .ee-point{visibility:hidden}
 @keyframes ee-point{
   0%,48%  {transform:rotate(${CONFIG.pointer.angleA}deg)}
   50%,98% {transform:rotate(${CONFIG.pointer.angleB}deg)}
@@ -438,18 +450,27 @@ body{padding-top:${CONFIG.height}px}
       });
     });
 
-    /* Keep Snagn on screen. He keeps the mockup framing whenever there
-       is room, and slides left only if the window is too narrow for him,
-       so he can never be clipped or push out a scrollbar. */
+    /* Snagn sits at one fixed offset from the button, always. If the
+       window is too narrow to fit him he is simply not shown, so he can
+       never drift, be clipped, or push out a scrollbar. */
     function fitPointer() {
       var img = bar.querySelector('.ee-point');
       var wrap = bar.querySelector('.ee-cta-wrap');
-      if (!img || !wrap) return;
-      img.style.setProperty('--ee-point-shift', '0px');
+      var inner = bar.querySelector('.ee-tb-inner');
+      if (!img || !wrap || !inner) return;
       var w = img.offsetWidth;
       if (!w) return;
-      var over = wrap.getBoundingClientRect().right + CONFIG.pointer.leftPx + w - (window.innerWidth - 6);
-      img.style.setProperty('--ee-point-shift', over > 0 ? (-Math.ceil(over)) + 'px' : '0px');
+
+      /* How far he reaches past the button's right edge. */
+      var reach = CONFIG.pointer.leftPx + w + CONFIG.pointer.reserveGap;
+
+      if (CONFIG.pointer.reserveSpace && reach > 0) {
+        inner.style.paddingRight = reach + 'px';
+      }
+
+      var over = wrap.getBoundingClientRect().right + CONFIG.pointer.leftPx + w
+                 - (window.innerWidth - 4);
+      wrap.classList.toggle('no-room', over > 0);
     }
     var ptr = bar.querySelector('.ee-point');
     if (ptr) {
