@@ -1,0 +1,173 @@
+@intro
+I started working on **EBBRPG** in 2018. Over the course of five years, I made iterations, rewrites, revisions, and ultimately released a playtest and demo during 2023. In those days, I did almost everything myself, which shows. Those releases look pretty rough.
+
+During this time I also made a list. Not the manifesto-kind, but just a list of artists I desperately wanted to work with. All of which came to fruition in 2024, when I finally began a series of official collaborations, aimed at providing some incredible new visuals and audio for [**Esoteric Ebb**](https://store.steampowered.com/app/2057760). The following is the final version of that list, in order of when they each joined the project.
+
+## Sound Respawn (Isac Jonsson)
+role: Sound Design, Mixing, and Implementation
+image: sound-respawn.png
+link: Instagram | https://www.instagram.com/soundrespawn/
+
+Isac joined the project before I'd shown it to anyone else. He created the soundscape for Ebb from scratch, having recorded a massive library of naturalistic sounds and mixed it with the *Esoteric Vibe* of the game. He also worked tirelessly on the implementation of both SFX and soundtrack, as the audio producer on Esoteric Ebb - to make sure the auditory experience is on top of its game.
+
+Just stand out on Tolstad and listen to those seagulls.
+
+## Oscar Westberg
+role: Illustrator
+image: oscar-westberg.png
+link: Home | https://oscarwestberg.se/
+link: X | https://twitter.com/oscarwestberg
+
+A Swedish illustrator, comic artist, and fellow writer. I found him on Twitter years ago, and fell in love with his unique style. When I needed an illustrator for the project, I sent him a DM.
+
+Westberg has created all of the character portraits, item icons, several marketing illustrations, and in general contributed to the entire art style of Esoteric Ebb. He also wrote several of the hilarious headlines and titles on magazines and newspapers you can find around Norvik, along with giving countless ideas of various scenarios in Ebb. He laid the groundwork for everything to come, and was ridiculously easy to work with.
+
+I'm very happy he responded to my DM.
+
+## Anders Bach, Brian Batz, & Kristian Paulsen
+role: Music composition, production, and mix
+image: anders-brian-kristian.png
+link: Home | http://andersbach.cargo.site/
+link: Instagram | https://www.instagram.com/andersbachshorthair/
+link: Instagram | https://www.instagram.com/batzstudio/
+link: Instagram | https://www.instagram.com/kristian__paulsen/
+
+Anders pitched his vision for the Esoteric Ebb soundtrack to me in a cold email, that I ended up fishing out of my spam folder. We were on the same page immediately: building something esoteric, something experimental into traditional fantasy music. From there we would branch out into other murky, extravagant and texture-dense genre territory as well.
+
+Anders brought along Brian and Kristian for the ride, and together they created a vast array of styles to suit the various factions, characters and areas of Ebb. Having them as vibe-crafters early on in the project helped in so many ways to nail the aesthetic and the writing. Some of the best scenes in the game wouldn't exist if not for those tracks being there first.
+
+---
+
+## Gibbet Games
+image: gibbet-games.png
+link: Home | https://gibbetgames.com/
+link: X | https://x.com/GIBBETGAMES
+
+Gibbet has been instrumental in crafting the *Esoteric* aesthetic of Ebb. Both from an asset-creation standpoint, as well as from a structural/organizational point as well.
+
+They were also lovely neighbors at the incubator.
+
+---
+
+## Jonathan Nilsson
+role: 3D Artist
+image: jonathan-nilsson.png
+
+Jonathan is the animator extraordinaire on Ebb, as well as leading the creation of every 3D character, based on Westberg's illustrations. But he's also created original designs for many, many of the magic item in the game. I could list all the characters he made and animated, but it'd be too long. But some of my personal favorites would have to be *Meek the Mimic*, *Agent Viira*, and *Ever-glad*.
+
+Oh, and *Snell* of course. Boy, did he make him handsome.
+
+## Olof Aldsjö
+role: 3D Artist
+image: olof-aldsjo.png
+
+Olof is Ebb's background expert! Not only did he create a large portion of the 3D environments (taking my *very* basic blockouts and turning them into beautiful final designs!) he also created the pipeline used by all the artists to turn this geometry into hand-painted masterpieces.
+
+And, of course, he also created the line-art for so, so many areas as well. Every crack found across the stone and each plank on the wooden housing across places like Upper Tolstad and Visken's Lair - hand-drawn by Olof.
+
+## Paulina Wärn
+role: 3D Artist
+image: paulina-warn.png
+link: ArtStation | https://www.artstation.com/paulina_warn
+link: LinkedIn | https://www.linkedin.com/in/paulina-wärn-176045252/
+
+Balancing thoroughness and efficiency, Paulina has produced various characters and creatures such as *Oyugüi* and *Criminity the Crab*. Beside adapting and exchanging feedback with other collaborators, she also contributed with many original creature & character designs, including Vâttarna!
+
+## Alva Wirsén Holm
+role: 3D Artist
+image: alva-wirsen-holm.png
+
+As a highly versatile 3D artist, Alva has worked on a bit of everything on the visual side. She produced several of the 3D models for characters, designed many of the 3D environments, and last but not least, she was responsible for handling a major piece of the *coloring-duty* on the backgrounds. We're talking the Drunk Sphinx with its chaotic collection of props, the model for the bugbear guardian Moongore, the overgrown Goblin Garden, and so much more.
+
+## Emma Bengtsing
+role: 3D Artist
+image: emma-bengtsing.png
+
+With an incredible expertise on both 3D and lineart, Emma took on the unique Ebb-pipeline to create some of the most intensely detailed areas. From the musky streets down on Waterlane to the overgrown mushroom jungle hidden below, she put in an incredible level of care to every rock and window sill alike, crafting some awesome art. Make sure to zoom in once in a while, and enjoy the view!
+
+## Lovisa Malinen
+role: 3D Artist
+image: lovisa-malinen.jpg
+
+Lovisa is a highly proficient character animator and graphical artist, responsible for several of the iconic hand-painted background textures around Norvik - taking on the roll of line-artist for areas like Pillar Crossing, the oh so important Tea Shop, as well as Ettir's cozy Guard Tower. Lovisa also took on the challenge of coloring almost half the game, to great success. Just look at that wall-art in Darrow's Nest!
+
+## Mayowa Gidi
+role: 3D Artist
+image: mayowa-gidi.png
+
+Mayowa joined the team towards the end stretch, when we needed to finish up the final set of character animations - a LOT of animations - for the many different inhabitants of Norvik. Specifically he handled the many, many mocap recordings of me and Jonathan acting out shambling skeletons, stubborn dwarves, and horrified birdfolk that the Cleric interacts with during his adventure.
+
+---
+
+## Speldosa Interactive
+image: speldosa.jpg
+link: Home | https://www.speldosa.com/
+link: X | https://x.com/speldosagames
+link: Instagram | https://www.instagram.com/speldosagames/
+
+Before we officially worked together, Speldosa provided a ton of support to the project - everything from technical advice and marketing support to great gameplay feedback from their veteran developers. They were instrumental to bringing Ebb through those final steps, allowing me to focus more on making the game while they cleaned my spaghetti code.
+
+## Tobias Löf Melker
+role: Programmer
+image: tobias-lof-melker.png
+
+Tobias and I worked together on a project years ago (he taught me a bunch of programming!) so when I needed help with bugfixing during the final stretch - I knew exactly where to turn. Within a month of gaining access to the code, Tobias had already fixed a series of performance issues and proceeded to dive deep into my ink handler to both future proof it and make it way, way more manageable. Whenever you click on a highlighted word in Ebb, think of Tobias.
+
+## Valgarður Ragnheiðar Ívarsson
+role: Programmer
+image: valgardur-ivarsson.png
+
+Valli and I had *not* worked together before, but I knew from first and second-hand accounts that he was VERY good. While it's honestly difficult to mention any part of the code Valli (and Tobias) didn't touch up at some point, Valli specifically could be well-designated as fixer-of-my-very-messy cleric navigation code. But together, they both were invaluable in organizing and handling the brunt of the many minor (and sometimes major) technical bugs that, when solved, make Esoteric Ebb a smooth experience.
+
+---
+
+## Phil Jamesson
+role: Editor
+image: phil-jamesson.png
+link: Bluesky | https://bsky.app/profile/philjamesson.com
+link: Instagram | https://www.instagram.com/philjamesson/
+link: Twitch | https://www.twitch.tv/philjamesson/
+
+Since Ebb has such a inordinate amount of WORDS in it, I desperately needed help processing and polishing all the lines, chimes, and overall dialogs in the game. To that, Phil was invaluable! As a comedy writer, he helped punch up some of the most memorable interactions, as well as acting as both my #1 test reader and style metronome.
+
+He also wrote the first drafts for a handful of late-game encounters, as well as hundreds of hilarious chimes.
+
+## Jonna Träff
+role: Production Assistant
+image: jonna-traff.png
+link: ArtStation | https://www.artstation.com/jonnatraff
+
+Jonna joined during the final phases of development, acting as internal QA tester, Sudden Snail marketer, and producer of a bunch of the videos I spam posted during and across the launch of Ebb. She found a TON of bugs that would have gotten fixed much later otherwise. So thank Jonna for a smooth Ebb-experience!
+
+## QLOC
+role: QA Testers
+image: qloc.png
+
+QLOC joined in as a third party to playtest the hell out of Ebb during the final few months of development. They were essential in checking each and every alternate path, dynamic piece of content, and strange save-file issues - all of which got solved in time. Thank you, QLOC!
+
+---
+
+## Raw Fury
+image: raw-fury.png
+link: Home | https://rawfury.com/
+
+I signed with Raw Fury on March 2024. Despite them being the publisher of Esoteric Ebb, I also consider them to be a collaborator as well.
+
+A great marketing plan, wonderful trailers, a GODSEND of a QA team, and a team of producers who were lovely to work with throughout the process.
+
+Also, thanks for the money! It helped!
+
+## Sudden Snail
+role: Writing, Design, Programming
+image: sudden-snail.png
+link: Home | https://christofferbodegard.com/
+link: Information | https://suddensnail.com/
+link: X | https://twitter.com/chrisbodegard
+
+And finally, this is just me. [**Sudden Snail**](https://suddensnail.com/) is the title of my production company/studio. It's basically just the legal entity of everything I create. On Ebb, I primarily *design-write* dialogs, implement assets, making sure things look and sound good, and of course I also program everything.
+
+But now, whenever someone asks me if I'm a 'solo developer', I hope this page gives a clear answer: *I used to be*, but now I collaborate with a ton of amazing artists who are much better at visuals and audio than I am, as well as all the other types of support pillars a small indie production can need at times.
+
+It's been really great to work with all of them, and I'm eternally grateful for the incredible work they put in to turn **Esoteric Ebb** from fantasy into reality.
+
+**-Christoffer Bodegård**
