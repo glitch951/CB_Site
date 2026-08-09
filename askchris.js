@@ -285,7 +285,7 @@
       if (!currentTerms.length) {
         count.textContent = '';
       } else if (!threads.length) {
-        count.textContent = 'Nothing matches \u2014 try fewer or different words.';
+        count.textContent = 'Nothing matches, try fewer or different words.';
       } else {
         count.textContent = threads.length +
           (threads.length === 1 ? ' matching thread' : ' matching threads');
