@@ -66,6 +66,25 @@
     '  border-radius: 3px; padding: 0 4px; cursor: pointer;',
     '  transition: color .2s ease; }',
     '.ac-spoiler.is-shown { color: var(--ac-paper); }',
+    '.ac-search { position: relative; margin: 0 0 10px; }',
+    '.ac-input { width: 100%; padding: 12px 44px 12px 18px; font-family: inherit;',
+    '  font-size: 15px; color: var(--ac-ink); background: transparent;',
+    '  border: 1px solid var(--ac-rule); border-radius: 999px; outline: none;',
+    '  transition: border-color .15s ease, box-shadow .15s ease; }',
+    '.ac-input::placeholder { font-weight: 300; opacity: .55; color: inherit; }',
+    '.ac-input:focus { border-color: var(--ac-red);',
+    '  box-shadow: 0 0 0 3px rgba(233,60,60,.12); }',
+    '.ac-input::-webkit-search-cancel-button { display: none; }',
+    '.ac-clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%);',
+    '  width: 30px; height: 30px; border: 0; border-radius: 50%; cursor: pointer;',
+    '  background: none; color: var(--ac-ink); font-size: 20px; line-height: 1;',
+    '  opacity: .5; display: none; }',
+    '.ac-clear:hover { opacity: 1; color: var(--ac-red); }',
+    '.ac-count { font-size: 12px; font-weight: 300; letter-spacing: .1em;',
+    '  text-transform: uppercase; opacity: .55; margin: 0 0 14px; min-height: 15px; }',
+    '.ac-hit { color: var(--ac-red); opacity: 1; font-weight: 700; }',
+    '#askchris mark { background: rgba(233,60,60,.18); color: inherit;',
+    '  border-radius: 2px; padding: 0 1px; }',
     '.ac-more { display: block; margin: 6px auto 0; padding: 10px 26px;',
     '  font-family: inherit; font-size: 12.5px; font-weight: 300;',
     '  letter-spacing: .16em; text-transform: uppercase; color: var(--ac-ink);',
@@ -101,21 +120,42 @@
     } catch (e) { return ''; }
   }
 
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* Wrap each search term's occurrences in <mark>, on escaped text. */
+  function hilite(text, terms) {
+    var safe = esc(text);
+    if (!terms || !terms.length) return safe;
+    terms.forEach(function (term) {
+      var re = new RegExp('(' + esc(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+      safe = safe.replace(re, '<mark>$1</mark>');
+    });
+    return safe;
+  }
+
   function plain(html) {
     var d = document.createElement('div');
     d.innerHTML = html;
     return d.textContent || '';
   }
 
-  function renderThread(t) {
+  function renderThread(t, terms) {
     var q = t.messages[0];
+    var previewText = q ? plain(q.html) : '';
+    // are the matches visible up top, or buried in the replies?
+    var head = (t.title + ' ' + previewText).toLowerCase();
+    var buried = (terms || []).length &&
+      !terms.every(function (x) { return head.indexOf(x) >= 0; });
     var thread = h('div', { class: 'ac-thread' });
     var top = h('button', { class: 'ac-top', type: 'button' }, [
-      h('h3', { class: 'ac-title', text: t.title }),
+      h('h3', { class: 'ac-title', html: hilite(t.title, terms) }),
       h('div', { class: 'ac-meta', html:
         fmtDate(t.createdAt) + ' &nbsp;\u00b7&nbsp; ' + t.replies +
-        (t.replies === 1 ? ' reply' : ' replies') }),
-      q ? h('p', { class: 'ac-preview', text: plain(q.html) }) : null
+        (t.replies === 1 ? ' reply' : ' replies') +
+        (buried ? ' &nbsp;\u00b7&nbsp; <span class="ac-hit">match in replies</span>' : '') }),
+      q ? h('p', { class: 'ac-preview', html: hilite(previewText, terms) }) : null
     ]);
     var body = h('div', { class: 'ac-body' },
       t.messages.map(function (m) {
@@ -136,42 +176,103 @@
     return thread;
   }
 
-  function render(root, data) {
+  function render(root, data, keepQuery) {
     root.innerHTML = '';
     root.appendChild(h('div', { class: 'ac-head', text: 'Ask Chris \u2014 from the Esoteric Ebb Discord' }));
-    var threads = (data && data.threads) || [];
-    if (!threads.length) {
+    var all = (data && data.threads) || [];
+    if (!all.length) {
       root.appendChild(h('div', { class: 'ac-error', text: 'No threads yet.' }));
       return;
     }
 
-    /* Ten threads at a time; the button loads more, and scrolling near it
-       presses it for you - so it reads as infinite scroll with a manual
-       fallback. */
-    var CHUNK = 10;
-    var shown = 0;
+    // one lowercase haystack per thread: title + every kept message
+    all.forEach(function (t) {
+      if (t._search) return;
+      t._search = (t.title + ' ' + t.messages.map(function (m) {
+        return m.author + ' ' + plain(m.html);
+      }).join(' ')).toLowerCase();
+    });
+
+    /* search box */
+    var input = h('input', { class: 'ac-input', type: 'search',
+      placeholder: 'Search questions & answers\u2026',
+      'aria-label': 'Search the archive' });
+    var clear = h('button', { class: 'ac-clear', type: 'button',
+      text: '\u00d7', 'aria-label': 'Clear search' });
+    var count = h('div', { class: 'ac-count' });
+    root.appendChild(h('div', { class: 'ac-search' }, [input, clear]));
+    root.appendChild(count);
+
     var list = h('div', {});
     root.appendChild(list);
     var more = h('button', { class: 'ac-more', type: 'button', text: 'Load more posts' });
+    root.appendChild(more);
+    var io = null;
+    if (window.IntersectionObserver) {
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) { if (e.isIntersecting) more.click(); });
+      }, { rootMargin: '500px' });
+      io.observe(more);
+    }
+
+    var CHUNK = 10;
+    var current = [];
+    var currentTerms = [];
+    var shown = 0;
     function addChunk() {
-      threads.slice(shown, shown + CHUNK).forEach(function (t) {
-        list.appendChild(renderThread(t));
+      current.slice(shown, shown + CHUNK).forEach(function (t) {
+        list.appendChild(renderThread(t, currentTerms));
       });
-      shown = Math.min(threads.length, shown + CHUNK);
-      if (shown >= threads.length && more.parentNode) more.remove();
+      shown = Math.min(current.length, shown + CHUNK);
+      more.style.display = shown >= current.length ? 'none' : '';
     }
     more.addEventListener('click', addChunk);
-    addChunk();
-    if (shown < threads.length) {
-      root.appendChild(more);
-      if (window.IntersectionObserver) {
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) { if (e.isIntersecting) addChunk(); });
-        }, { rootMargin: '500px' });
-        io.observe(more);
+
+    function showList(threads, terms) {
+      current = threads;
+      currentTerms = terms || [];
+      shown = 0;
+      list.innerHTML = '';
+      if (!currentTerms.length) {
+        count.textContent = '';
+      } else if (!threads.length) {
+        count.textContent = 'Nothing matches \u2014 try fewer or different words.';
+      } else {
+        count.textContent = threads.length +
+          (threads.length === 1 ? ' matching thread' : ' matching threads');
       }
+      addChunk();
     }
+
+    function applyQuery() {
+      var q = input.value.trim();
+      clear.style.display = q ? '' : 'none';
+      var terms = q.toLowerCase().split(/\s+/).filter(Boolean);
+      if (!terms.length) { showList(all, []); return; }
+      showList(all.filter(function (t) {
+        return terms.every(function (x) { return t._search.indexOf(x) >= 0; });
+      }), terms);
+    }
+
+    var deb = null;
+    input.addEventListener('input', function () {
+      clearTimeout(deb);
+      deb = setTimeout(applyQuery, 120);
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { input.value = ''; applyQuery(); }
+    });
+    clear.addEventListener('click', function () {
+      input.value = '';
+      applyQuery();
+      input.focus();
+    });
+
+    if (keepQuery) input.value = keepQuery;
+    applyQuery();
+    return input;
   }
+
 
   function boot() {
     var font = document.createElement('link');
@@ -200,8 +301,9 @@
     // instant paint from the last visit, then a quiet refresh
     var cached = null;
     try { cached = JSON.parse(localStorage.getItem('ac-last') || 'null'); } catch (e) {}
+    var activeInput = null;
     if (cached && cached.threads) {
-      render(root, cached);
+      activeInput = render(root, cached);
     } else {
       root.appendChild(h('div', { class: 'ac-head', text: 'Ask Chris \u2014 from the Esoteric Ebb Discord' }));
       for (var i = 0; i < 4; i++) root.appendChild(h('div', { class: 'ac-skel' }));
@@ -214,7 +316,7 @@
         if (!fresh || !fresh.threads) throw new Error('bad payload');
         try { localStorage.setItem('ac-last', JSON.stringify(fresh)); } catch (e) {}
         if (!cached || JSON.stringify(fresh) !== JSON.stringify(cached)) {
-          render(root, fresh);
+          render(root, fresh, activeInput ? activeInput.value : '');
         }
       })
       .catch(function () {
