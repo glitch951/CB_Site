@@ -95,8 +95,7 @@
 .ee-faq-panel-body{line-height:1.62; color:${GREEN}}
 .ee-faq-panel-body > *{margin:0 0 .85em}
 .ee-faq-panel-body > *:last-child{margin-bottom:0}
-.ee-faq-panel-body ul{padding-left:1.15em}
-.ee-faq-panel-body li{margin-bottom:.45em}
+.ee-faq-panel-body li{margin-bottom:.5em}
 .ee-faq-panel-body li:last-child{margin-bottom:0}
 .ee-faq-panel-body a{color:${ORANGE}; text-decoration:none}
 .ee-faq-panel-body a:hover{text-decoration:underline}
@@ -139,7 +138,14 @@
 }
 .ee-a-inner > *{margin:0 0 .85em}
 .ee-a-inner > *:last-child{margin-bottom:0}
-.ee-a-inner ul{padding-left:1.1em}
+/* Carrd resets lists to list-style:none, which swallowed the bullets.
+   These are drawn as content instead, so nothing can strip them. */
+.ee-a-inner ul,.ee-faq-panel-body ul{list-style:none; padding-left:0; margin-left:0}
+.ee-a-inner li,.ee-faq-panel-body li{position:relative; padding-left:1.3em}
+.ee-a-inner li::before,.ee-faq-panel-body li::before{
+  content:"\\2022"; position:absolute; left:.25em; top:0;
+  color:${ORANGE}; font-size:1.05em; line-height:inherit;
+}
 .ee-a-inner a{color:${ORANGE}; text-decoration:none}
 .ee-a-inner a:hover{text-decoration:underline}
 .ee-a-inner strong{color:#fff}

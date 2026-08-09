@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09i';
+  var BUILD = '2026-08-09j';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -62,15 +62,17 @@
     homeHref: '#home',
 
     /* { sep: true } draws a divider instead of a link. */
+    /* Pages on this site first, then the divider, then everything that
+       leaves the site. { sep: true } draws the divider. */
     nav: [
-      { label: 'Devlogs',       href: 'https://christofferbodegard.com/', external: true },
-      { label: 'Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
-      { sep: true },
       { label: 'Ask Chris',     href: '#askchris' },
       { label: 'FAQ',           href: '#faq' },
-      { label: 'Press Kit',     href: 'https://drive.google.com/drive/folders/1p4B3Nj2qKUuBeUHakrodC_ZtwRw8Y6ni?usp=sharing', external: true },
       { label: 'Soundtrack',    href: '#ost' },
-      { label: 'Collaborators', href: '#collaborators' }
+      { label: 'Collaborators', href: '#collaborators' },
+      { sep: true },
+      { label: 'Devlogs',       href: 'https://christofferbodegard.com/', external: true },
+      { label: 'Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
+      { label: 'Press Kit',     href: 'https://drive.google.com/drive/folders/1p4B3Nj2qKUuBeUHakrodC_ZtwRw8Y6ni?usp=sharing', external: true }
     ],
 
     cta: {
