@@ -49,7 +49,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09p';
+  var BUILD = '2026-08-09q';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -81,7 +81,7 @@
       { label: 'Collaborators', href: '#collaborators' },
       { sep: true },
       { label: 'Devlogs',       href: 'https://christofferbodegard.com/', external: true },
-      { label: 'Fan Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
+      { label: 'Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
       { label: 'Press Kit',     href: 'https://drive.google.com/drive/folders/1p4B3Nj2qKUuBeUHakrodC_ZtwRw8Y6ni?usp=sharing', external: true }
     ],
 
@@ -143,11 +143,13 @@
            CB_Logo  is two stacked lines, the top one 43.2% of the image
              and flush to the edge  ->  62px tall so "Christoffer" reads
              at the same size as the wordmarks, pushed 4px right
-         Re-export a logo and these are the two numbers to revisit. */
+         Re-export a logo and height is the number to revisit.
+         nudgeX shifts one entry sideways if it ever needs it; the logos
+         are centred in the panel, so normally nothing needs nudging. */
       { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',
-        logo: IMG + 'ERA_Logo_Horizontal.png', height: 32, nudgeX: -6 },
+        logo: IMG + 'ERA_Logo_Horizontal.png', height: 32 },
       { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/',
-        logo: IMG + 'CB_Logo.png',           height: 62, nudgeX: 4 }
+        logo: IMG + 'CB_Logo.png',             height: 62 }
     ],
 
     /* To use the sans cut of the same superfamily, change both of
@@ -249,7 +251,7 @@
 }
 .ee-sites.is-open{opacity:1; visibility:visible; transform:none}
 .ee-site{
-  display:grid; align-items:center; justify-items:start;
+  display:grid; align-items:center; justify-items:center;
   width:100%;
   /* symmetric side padding, so a centred logo sits on the slot's true centre */
   padding:${CONFIG.slotPadY}px ${CONFIG.logoPadX}px;
@@ -260,7 +262,7 @@
    wordmark renders at its true proportions instead of being squashed
    into a fixed box. */
 .ee-site img{width:auto; max-width:none; display:block}
-.ee-site.is-center{justify-items:center}
+.ee-site.is-start{justify-items:start}
 .ee-site:hover,.ee-site:focus-visible{border-color:#DB5B2C}
 
 /* section links: colour switches instantly, no fade */
@@ -392,7 +394,7 @@ body{padding-top:${CONFIG.height}px}
   function sitesHtml() {
     return CONFIG.sites.map(function (s) {
       var h = s.height || CONFIG.logoH;
-      var cls = 'ee-site' + (s.align === 'center' ? ' is-center' : '');
+      var cls = 'ee-site' + (s.align === 'start' ? ' is-start' : '');
       var st = 'height:' + h + 'px';
       if (s.nudgeX) st += ';margin-left:' + s.nudgeX + 'px';
       return '<a class="' + cls + '" href="' + s.url + '" aria-label="' + s.name + '">' +
