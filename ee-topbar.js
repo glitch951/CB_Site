@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09f';
+  var BUILD = '2026-08-09g';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -172,6 +172,9 @@
   color:#DAE5CF; background:${CONFIG.bg}; overflow:visible;
   transition:transform .32s ease;
 }
+/* is-entering parks the bar above the viewport so its first appearance
+   slides down on the same transition the scroll-up uses */
+.ee-tb.is-entering{transform:translateY(-100%)}
 .ee-tb.is-hidden{transform:translateY(-100%)}
 .ee-tb.is-loading,.ee-sheet.is-loading{visibility:hidden}
 .ee-tb-inner{
@@ -412,7 +415,7 @@ body{padding-top:${CONFIG.height}px}
       '<div class="ee-sheet-sites">' + sitesHtml() + '</div>';
 
     if (CONFIG.showAfterLoad) {
-      bar.classList.add('is-loading');
+      bar.classList.add('is-loading', 'is-entering');
       sheet.classList.add('is-loading');
     }
     document.body.appendChild(bar);
@@ -421,9 +424,18 @@ body{padding-top:${CONFIG.height}px}
     /* visibility:hidden still lays the bar out, so the logo and Snagn
        are already fetched and measured by the time it appears. */
     whenSiteReady(function () {
-      bar.classList.remove('is-loading');
       sheet.classList.remove('is-loading');
       fitPointer();
+
+      /* Become visible while still parked above the viewport, let the
+         browser settle that as the starting style, then drop the offset
+         so the transition actually runs instead of the bar popping in. */
+      bar.classList.remove('is-loading');
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          bar.classList.remove('is-entering');
+        });
+      });
     });
 
     /* Keep Snagn on screen. He keeps the mockup framing whenever there
