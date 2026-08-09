@@ -57,8 +57,9 @@
     heading:   'Collaborators',
     sub:       "my so-called 'escargatoire'",
 
-    avatar:    108,    // px
-    maxWidth:  1020,   // px, the row including the avatar
+    avatar:    162,    // px
+    grow:      1.5,    // how much the avatar swells when its entry is picked
+    maxWidth:  1120,   // px, the row including the avatar
     cacheBust: 5,      // minutes before an edit shows up. 0 disables it
 
     /* To use the sans cut of the same superfamily, change both. */
@@ -107,32 +108,53 @@
 
 .ee-cb-rule{border:0; border-top:1px solid rgba(218,229,207,.12); margin:clamp(22px,3vw,34px) 0}
 
-/* avatar outside the box, on its left */
+/* Avatar outside the box, on its left, centred on the box so it can
+   swell evenly in both directions. Its column is wide enough to hold the
+   grown size, so nothing shifts when an entry is picked. */
 .ee-cb-row{
-  display:grid; grid-template-columns:${OPTS.avatar}px minmax(0,1fr);
-  gap:clamp(16px,2.2vw,26px); align-items:start;
-  margin-bottom:14px;
+  position:relative; cursor:pointer;
+  display:grid;
+  grid-template-columns:${Math.round(OPTS.avatar * OPTS.grow)}px minmax(0,1fr);
+  gap:clamp(14px,1.8vw,22px); align-items:center;
+  margin-bottom:16px;
   opacity:0; transform:translateY(14px);
   transition:opacity .8s ease, transform .8s ease;
 }
 .ee-cb-row.is-in{opacity:1; transform:none}
 
 .ee-cb-ava{
+  position:relative; justify-self:center;
   width:${OPTS.avatar}px; height:${OPTS.avatar}px; border-radius:50%;
-  overflow:hidden; margin-top:6px;
-  border:1px solid rgba(218,229,207,.28);
   display:grid; place-items:center;
+  transition:transform .45s cubic-bezier(.22,.61,.36,1);
+  will-change:transform;
 }
-.ee-cb-ava img{width:100%; height:100%; object-fit:cover; display:block}
+/* The ring is its own layer rather than a border on a clipped box: a
+   border plus overflow:hidden leaves ragged edges on the curve. */
+.ee-cb-ava::after{
+  content:""; position:absolute; inset:0; border-radius:50%;
+  border:1px solid rgba(218,229,207,.28); pointer-events:none;
+  transition:border-color .2s ease;
+}
+.ee-cb-ava img{
+  width:100%; height:100%; object-fit:cover; display:block;
+  border-radius:50%;
+}
 .ee-cb-ava.is-empty{color:rgba(218,229,207,.4); font-size:1.5em; letter-spacing:.06em}
-.ee-cb-row:hover .ee-cb-ava{border-color:${ORANGE}}
+
+/* hovering either half lights up both */
+.ee-cb-row:hover .ee-cb-ava::after,
+.ee-cb-row.is-active .ee-cb-ava::after{border-color:${ORANGE}}
+.ee-cb-row.is-active{z-index:2}
+.ee-cb-row.is-active .ee-cb-ava{transform:scale(${OPTS.grow})}
 
 /* the box: outlined, transparent, bright, like a FAQ answer */
 .ee-cb-box{
   border:1px solid rgba(218,229,207,.28); border-radius:16px;
   padding:1.15em 1.35em 1.25em;
 }
-.ee-cb-row:hover .ee-cb-box{border-color:rgba(219,91,44,.55)}
+.ee-cb-row:hover .ee-cb-box,
+.ee-cb-row.is-active .ee-cb-box{border-color:${ORANGE}}
 
 .ee-cb-role{
   font-size:.72em; letter-spacing:.2em; text-transform:uppercase;
@@ -146,7 +168,7 @@
 .ee-cb-body{line-height:1.62; color:${GREEN}}
 .ee-cb-body > *{margin:0 0 .85em}
 .ee-cb-body > *:last-child{margin-bottom:0}
-.ee-cb-body strong{color:#fff}
+.ee-cb-body strong{color:${GREEN}}
 .ee-cb-body em{font-style:italic}
 .ee-cb-body a{color:${ORANGE}; text-decoration:none}
 .ee-cb-body a:hover{text-decoration:underline}
@@ -168,8 +190,12 @@
 .ee-cb-msg{color:rgba(218,229,207,.55); font-style:italic; padding:2em 0}
 
 @media (max-width:640px){
-  .ee-cb-row{grid-template-columns:1fr; gap:14px}
-  .ee-cb-ava{margin-top:0}
+  .ee-cb-row{grid-template-columns:1fr; gap:14px; justify-items:start}
+  .ee-cb-ava{justify-self:start; width:120px; height:120px}
+  .ee-cb-row.is-active .ee-cb-ava{transform:scale(1.25)}
+}
+@media (prefers-reduced-motion:reduce){
+  .ee-cb-ava{transition:none}
 }
 @media (prefers-reduced-motion:reduce){
   .ee-cb-row{opacity:1; transform:none; transition:none}
@@ -291,6 +317,20 @@
       html += r.rule ? '<hr class="ee-cb-rule">' : rowHtml(r);
     });
     root.innerHTML = html;
+
+    /* Clicking either the avatar or the box picks that entry, and it
+       stays picked until another is chosen. Links inside are left alone
+       so they still open normally. */
+    root.addEventListener('click', function (e) {
+      if (e.target.closest('a')) return;
+      var row = e.target.closest('.ee-cb-row');
+      if (!row) return;
+      var already = row.classList.contains('is-active');
+      [].forEach.call(root.querySelectorAll('.ee-cb-row.is-active'), function (o) {
+        o.classList.remove('is-active');
+      });
+      if (!already) row.classList.add('is-active');
+    });
 
     if ('IntersectionObserver' in window) {
       var io = new IntersectionObserver(function (es) {
