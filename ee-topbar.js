@@ -49,7 +49,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09r';
+  var BUILD = '2026-08-09s';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -187,10 +187,54 @@
     showAfterLoad: true,
     maxWaitMs:     8000,
 
+    /* Carrd only runs an inline embed's script once its section becomes
+       the visible page. So the FAQ, the collaborators and Ask Chris all
+       start from nothing at the moment you click them: empty section,
+       then a network round trip, then a full page of content dropping in.
+       That is the jump.
+       This bar is the one piece that runs site-wide, so it fetches those
+       files quietly in the background and parks them in localStorage
+       under the keys each page reads. By the time you click through, the
+       content is already on the machine and paints immediately.
+       Set to [] to switch this off. */
+    prefetch: [
+      { url: 'https://glitch951.github.io/CB_Site/faq.txt',          key: 'ee-faq-txt' },
+      { url: 'https://glitch951.github.io/CB_Site/collaborators.txt', key: 'ee-collab-txt' },
+      { url: 'https://ask-chris.christofferbodegard.workers.dev/',    key: 'ac-last', bucket: true }
+    ],
+
     hideOnScroll: true,
     hideAfter:    'splash',  // 'splash' is one viewport height, or give a number of px
     hideDelta:    6
   };
+
+  function warm() {
+    var list = CONFIG.prefetch || [];
+    if (!list.length || !window.fetch) return;
+
+    function go() {
+      list.forEach(function (item) {
+        var u = item.url;
+        if (item.bucket) {
+          u += (u.indexOf('?') === -1 ? '?' : '&') + 't=' + Math.floor(Date.now() / 600000);
+        }
+        fetch(u, { cache: 'no-cache' })
+          .then(function (r) { return r.ok ? r.text() : null; })
+          .then(function (txt) {
+            if (!txt) return;
+            (window.__eeWarm = window.__eeWarm || {})[item.key] = txt;
+            try {
+              if (localStorage.getItem(item.key) !== txt) localStorage.setItem(item.key, txt);
+            } catch (e) {}
+          })
+          .catch(function () {});
+      });
+    }
+
+    /* After the page has settled, so this never competes with it. */
+    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 });
+    else setTimeout(go, 1200);
+  }
 
   function loadFont() {
     if (!CONFIG.fontHref || document.getElementById('ee-tb-font')) return;
@@ -481,6 +525,7 @@ body{padding-top:${CONFIG.height}px}
          browser settle that as the starting style, then drop the offset
          so the transition actually runs instead of the bar popping in. */
       bar.classList.remove('is-loading');
+      warm();
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
           bar.classList.remove('is-entering');

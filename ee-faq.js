@@ -292,7 +292,12 @@
 
   var RUN = 0;
 
-  function readStore(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  /* The top bar warms these files site-wide, so by the time this page is
+     opened the text is usually already here and paints with no wait. */
+  function readStore(k) {
+    if (window.__eeWarm && window.__eeWarm[k]) return window.__eeWarm[k];
+    try { return localStorage.getItem(k); } catch (e) { return null; }
+  }
   function writeStore(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
   function bust(u) {
