@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09b';
+  var BUILD = '2026-08-09c';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -61,11 +61,14 @@
     logoAlt:  'Esoteric Ebb',
     homeHref: '#home',
 
+    /* { sep: true } draws a divider instead of a link. */
     nav: [
       { label: 'Devlogs',       href: 'https://christofferbodegard.com/', external: true },
-      { label: 'Ask Chris',     href: '#askchris' },
       { label: 'Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
+      { sep: true },
+      { label: 'Ask Chris',     href: '#askchris' },
       { label: 'FAQ',           href: '#faq' },
+      { label: 'Press Kit',     href: 'https://drive.google.com/drive/folders/1p4B3Nj2qKUuBeUHakrodC_ZtwRw8Y6ni?usp=sharing', external: true },
       { label: 'Soundtrack',    href: '#ost' },
       { label: 'Collaborators', href: '#collaborators' }
     ],
@@ -80,14 +83,22 @@
        The file currently has a space in its name, which has to be
        written as %20 in a URL. Renaming it to Snagn_Pointing.png and
        changing the line below is tidier. */
+    /* Every number here is measured off your mockup and expressed as a
+       multiple of the button's height, so the framing survives a change
+       to ctaH. In the mockup the button was 291x85 and Snagn was
+       224x282, his left edge flush with the button's right edge and his
+       top 21px below the button's top. */
     pointer: {
-      src:      IMG + 'Snagn%20Pointing.png',
-      show:     true,
-      height:   40,     // px
-      side:     'right',// which side of the button he stands on
-      angleA:   -11,    // degrees, first pose
-      angleB:   -1,     // degrees, second pose
-      holdMs:   2000    // how long each pose is held
+      src:         IMG + 'Snagn%20Pointing.png',
+      show:        true,
+      heightRatio: 282 / 85,   // 3.318 x the button height
+      topRatio:    21 / 85,    // 0.247 x the button height, from its top
+      leftPx:      0,          // nudge left or right of the button's right edge
+      angleA:      -3,         // degrees, first pose
+      angleB:      3,          // degrees, second pose
+      holdMs:      2000,       // how long each pose is held
+      originX:     '6%',       // pivot near the pointing finger
+      originY:     '30%'
     },
 
     /* The other sites. Logos only, never text. This site is not
@@ -105,6 +116,7 @@
     bg:       '#020E16',
     height:   74,
     heightSm: 58,
+    ctaH:     38,    // px, Buy Now button height
 
     logoH:    34,    // px, logo height in the bar
     caretW:   20,    // px, arrow button width
@@ -202,25 +214,35 @@
   transition:none;
 }
 .ee-link:hover,.ee-link:focus-visible,.ee-link.is-active{color:#DB5B2C}
+.ee-navsep{
+  color:#DAE5CF; opacity:.30; user-select:none;
+  font-size:clamp(13px,1.05vw,16px); line-height:1;
+}
 
 .ee-right{display:flex; align-items:center; gap:clamp(10px,1.4vw,18px); margin-left:auto}
-.ee-cta-wrap{display:flex; align-items:center; gap:6px}
+.ee-cta-wrap{position:relative; display:inline-flex; align-items:center}
 .ee-cta{
-  display:inline-flex; align-items:center; height:38px; padding:0 clamp(16px,1.6vw,24px);
-  background:#E93C3C; color:#020E16; text-decoration:none; border-radius:8px;
+  display:inline-flex; align-items:center; height:${CONFIG.ctaH}px;
+  padding:0 clamp(16px,1.6vw,24px);
+  background:#E93C3C; color:#fff; text-decoration:none; border-radius:8px;
   font-size:clamp(13px,1.05vw,16px); letter-spacing:.12em;
   text-transform:uppercase; font-weight:700;
   transition:none;
 }
-.ee-cta:hover,.ee-cta:focus-visible{color:#fff}
 
-/* Snagn, pointing */
+/* Snagn: hidden until the button is hovered, then straight in, no fade.
+   He hangs below the bar rather than being clipped by it. */
 .ee-point{
-  height:${CONFIG.pointer.height}px; width:auto; display:block; flex:0 0 auto;
-  pointer-events:none; transform-origin:50% 80%;
+  position:absolute; z-index:2; pointer-events:none;
+  left:calc(100% + ${CONFIG.pointer.leftPx}px + var(--ee-point-shift, 0px));
+  top:${Math.round(CONFIG.pointer.topRatio * CONFIG.ctaH)}px;
+  height:${Math.round(CONFIG.pointer.heightRatio * CONFIG.ctaH)}px;
+  width:auto; display:block;
+  transform-origin:${CONFIG.pointer.originX} ${CONFIG.pointer.originY};
+  visibility:hidden; opacity:0; transition:none;
   animation:ee-point ${CONFIG.pointer.holdMs * 2}ms infinite;
 }
-.ee-point.is-left{order:-1}
+.ee-cta-wrap:hover .ee-point,.ee-cta:focus-visible ~ .ee-point{visibility:visible; opacity:1}
 @keyframes ee-point{
   0%,48%  {transform:rotate(${CONFIG.pointer.angleA}deg)}
   50%,98% {transform:rotate(${CONFIG.pointer.angleB}deg)}
@@ -286,16 +308,16 @@ body{padding-top:${CONFIG.height}px}
     close:  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
 
-  function navHtml(cls) {
+  function navHtml(cls, withSeps) {
     return CONFIG.nav.map(function (n) {
+      if (n.sep) return withSeps ? '<span class="ee-navsep" aria-hidden="true">|</span>' : '';
       var t = n.external ? ' target="_blank" rel="noopener"' : '';
       return '<a class="' + cls + '" href="' + n.href + '"' + t + ' data-href="' + n.href + '">' + n.label + '</a>';
     }).join('');
   }
 
   function pointerHtml() {
-    return '<img class="ee-point' + (CONFIG.pointer.side === 'left' ? ' is-left' : '') +
-      '" src="' + CONFIG.pointer.src + '" alt="" aria-hidden="true">';
+    return '<img class="ee-point" src="' + CONFIG.pointer.src + '" alt="" aria-hidden="true">';
   }
 
   function sitesHtml() {
@@ -325,12 +347,11 @@ body{padding-top:${CONFIG.height}px}
           '</a>' +
           '<div class="ee-sites">' + sitesHtml() + '</div>' +
         '</div>' +
-        '<nav class="ee-nav">' + navHtml('ee-link') + '</nav>' +
+        '<nav class="ee-nav">' + navHtml('ee-link', true) + '</nav>' +
         '<div class="ee-right">' +
           '<div class="ee-cta-wrap">' +
-            (CONFIG.pointer.show && CONFIG.pointer.side === 'left' ? pointerHtml() : '') +
             '<a class="ee-cta" href="' + CONFIG.cta.href + '" target="_blank" rel="noopener">' + CONFIG.cta.label + '</a>' +
-            (CONFIG.pointer.show && CONFIG.pointer.side !== 'left' ? pointerHtml() : '') +
+            (CONFIG.pointer.show ? pointerHtml() : '') +
           '</div>' +
           '<button class="ee-burger" aria-label="Open menu" aria-expanded="false">' + ICON.burger + '</button>' +
         '</div>' +
@@ -338,12 +359,31 @@ body{padding-top:${CONFIG.height}px}
 
     var sheet = document.createElement('div');
     sheet.className = 'ee-sheet';
-    sheet.innerHTML = navHtml('ee-sheet-link') +
+    sheet.innerHTML = navHtml('ee-sheet-link', false) +
       '<a class="ee-cta" href="' + CONFIG.cta.href + '" target="_blank" rel="noopener">' + CONFIG.cta.label + '</a>' +
       '<div class="ee-sheet-sites">' + sitesHtml() + '</div>';
 
     document.body.appendChild(bar);
     document.body.appendChild(sheet);
+
+    /* Keep Snagn on screen. He keeps the mockup framing whenever there
+       is room, and slides left only if the window is too narrow for him,
+       so he can never be clipped or push out a scrollbar. */
+    function fitPointer() {
+      var img = bar.querySelector('.ee-point');
+      var wrap = bar.querySelector('.ee-cta-wrap');
+      if (!img || !wrap) return;
+      img.style.setProperty('--ee-point-shift', '0px');
+      var w = img.offsetWidth;
+      if (!w) return;
+      var over = wrap.getBoundingClientRect().right + CONFIG.pointer.leftPx + w - (window.innerWidth - 6);
+      img.style.setProperty('--ee-point-shift', over > 0 ? (-Math.ceil(over)) + 'px' : '0px');
+    }
+    var ptr = bar.querySelector('.ee-point');
+    if (ptr) {
+      if (ptr.complete) fitPointer(); else ptr.addEventListener('load', fitPointer);
+    }
+    window.addEventListener('resize', fitPointer, { passive: true });
 
     var caret = bar.querySelector('.ee-caret'),
         sites = bar.querySelector('.ee-sites'),
