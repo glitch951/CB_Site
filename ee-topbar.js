@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09e';
+  var BUILD = '2026-08-09f';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -106,9 +106,15 @@
 
     /* The other sites. Logos only, never text. This site is not
        listed, the logo in the corner covers it. */
+    /* height defaults to logoH, so a wordmark renders at exactly the
+       same height as the logo in the bar. align is 'start' (lined up
+       under the bar logo) or 'center'. The panel widens itself to fit
+       the widest entry, so nothing gets squashed. */
     sites: [
-      { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',        logo: IMG + 'ERA_Logo_Horizontal.png' },
-      { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/', logo: IMG + 'CB_Logo.png' }
+      { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',
+        logo: IMG + 'ERA_Logo_Horizontal.png' },
+      { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/',
+        logo: IMG + 'CB_Logo.png', height: 46, align: 'center' }
     ],
 
     /* To use the sans cut of the same superfamily, change both of
@@ -126,7 +132,7 @@
     brandGap: 6,     // px, gap between arrow and logo
     logoPadX: 9,     // px, padding inside the logo's hover outline
 
-    slotW:    230,   // px, dropdown slot width
+    slotMinW: 230,   // px, dropdown grows past this if a logo needs it
     slotH:    72,    // px, dropdown slot height
     panelPad: 10,    // px, padding inside the dropdown panel
     slotPadY: 10,
@@ -197,6 +203,7 @@
   /* offset so each slot's outline sits directly under the logo's outline */
   left:${CONFIG.caretW + CONFIG.brandGap - CONFIG.panelPad - 1}px;  /* -1 for the panel border */
   padding:${CONFIG.panelPad}px; display:grid; gap:8px;
+  width:max-content; min-width:${CONFIG.slotMinW}px; max-width:460px;
   background:${CONFIG.bg}; border:1px solid rgba(218,229,207,.20); border-radius:18px;
   box-shadow:0 20px 44px rgba(0,0,0,.6);
   opacity:0; visibility:hidden; transform:translateY(-6px);
@@ -205,18 +212,17 @@
 .ee-sites.is-open{opacity:1; visibility:visible; transform:none}
 .ee-site{
   display:grid; align-items:center; justify-items:start;
-  width:${CONFIG.slotW}px; height:${CONFIG.slotH}px;
-  padding:${CONFIG.slotPadY}px 16px ${CONFIG.slotPadY}px ${CONFIG.logoPadX}px;
+  width:100%; height:${CONFIG.slotH}px;
+  /* symmetric side padding, so a centred logo sits on the slot's true centre */
+  padding:${CONFIG.slotPadY}px ${CONFIG.logoPadX}px;
   text-decoration:none; line-height:0;
   border:1px solid transparent; border-radius:12px;
 }
-/* px limits rather than percentages: a percentage height does not
-   resolve against a centred grid area, so a tall logo overflowed */
-.ee-site img{
-  max-width:${CONFIG.slotW - CONFIG.logoPadX - 16}px;
-  max-height:${CONFIG.slotH - CONFIG.slotPadY * 2}px;
-  width:auto; height:auto; object-fit:contain; display:block;
-}
+/* Height is set per entry and the width follows the artwork, so every
+   wordmark renders at its true proportions instead of being squashed
+   into a fixed box. */
+.ee-site img{width:auto; max-width:none; display:block}
+.ee-site.is-center{justify-items:center}
 .ee-site:hover,.ee-site:focus-visible{border-color:#DB5B2C}
 
 /* section links: colour switches instantly, no fade */
@@ -336,8 +342,11 @@ body{padding-top:${CONFIG.height}px}
 
   function sitesHtml() {
     return CONFIG.sites.map(function (s) {
-      return '<a class="ee-site" href="' + s.url + '" aria-label="' + s.name + '">' +
-        '<img src="' + s.logo + '" alt="' + s.name + '" loading="lazy"></a>';
+      var h = s.height || CONFIG.logoH;
+      var cls = 'ee-site' + (s.align === 'center' ? ' is-center' : '');
+      return '<a class="' + cls + '" href="' + s.url + '" aria-label="' + s.name + '">' +
+        '<img src="' + s.logo + '" alt="' + s.name + '" loading="lazy" ' +
+        'style="height:' + h + 'px"></a>';
     }).join('');
   }
 
