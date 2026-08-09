@@ -39,7 +39,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09a';
+  var BUILD = '2026-08-09b';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -75,6 +75,21 @@
       href:  'https://store.steampowered.com/app/2057760/Esoteric_Ebb/?utm_source=eewebsite&utm_medium=topbar&utm_campaign=buy'
     },
 
+    /* Snagn points at the Buy Now button and shifts his angle every
+       couple of seconds so he does not look frozen.
+       The file currently has a space in its name, which has to be
+       written as %20 in a URL. Renaming it to Snagn_Pointing.png and
+       changing the line below is tidier. */
+    pointer: {
+      src:      IMG + 'Snagn%20Pointing.png',
+      show:     true,
+      height:   40,     // px
+      side:     'right',// which side of the button he stands on
+      angleA:   -11,    // degrees, first pose
+      angleB:   -1,     // degrees, second pose
+      holdMs:   2000    // how long each pose is held
+    },
+
     /* The other sites. Logos only, never text. This site is not
        listed, the logo in the corner covers it. */
     sites: [
@@ -90,10 +105,15 @@
     bg:       '#020E16',
     height:   74,
     heightSm: 58,
+
     logoH:    34,    // px, logo height in the bar
+    caretW:   20,    // px, arrow button width
+    brandGap: 6,     // px, gap between arrow and logo
+    logoPadX: 9,     // px, padding inside the logo's hover outline
+
     slotW:    230,   // px, dropdown slot width
-    slotH:    72,    // px, dropdown slot height. Tall enough for the CB logo
-    slotPadX: 16,
+    slotH:    72,    // px, dropdown slot height
+    panelPad: 10,    // px, padding inside the dropdown panel
     slotPadY: 10,
 
     /* false means the bar floats over the page and takes up no
@@ -129,9 +149,9 @@
 }
 
 /* brand: arrow, then logo, both on the nav baseline */
-.ee-brand{position:relative; display:flex; flex-direction:row; align-items:center; gap:6px; flex:0 0 auto}
+.ee-brand{position:relative; display:flex; flex-direction:row; align-items:center; gap:${CONFIG.brandGap}px; flex:0 0 auto}
 .ee-caret{
-  padding:0; width:20px; height:20px; border:0; background:none; cursor:pointer;
+  padding:0; width:${CONFIG.caretW}px; height:20px; border:0; background:none; cursor:pointer;
   color:#DAE5CF; opacity:.5; display:grid; place-items:center;
   transition:transform .25s ease;
 }
@@ -140,7 +160,7 @@
 .ee-caret svg{width:11px; height:7px; display:block}
 
 .ee-brand-link{
-  display:block; line-height:0; padding:5px 9px;
+  display:block; line-height:0; padding:5px ${CONFIG.logoPadX}px;
   border:1px solid transparent; border-radius:11px;
 }
 .ee-brand-link:hover,.ee-brand-link:focus-visible{border-color:#DB5B2C}
@@ -148,8 +168,10 @@
 
 /* dropdown: logos only, rounded, orange outline on hover */
 .ee-sites{
-  position:absolute; top:calc(100% + 12px); left:0; z-index:20;
-  padding:10px; display:grid; gap:8px;
+  position:absolute; top:calc(100% + 12px); z-index:20;
+  /* offset so each slot's outline sits directly under the logo's outline */
+  left:${CONFIG.caretW + CONFIG.brandGap - CONFIG.panelPad - 1}px;  /* -1 for the panel border */
+  padding:${CONFIG.panelPad}px; display:grid; gap:8px;
   background:${CONFIG.bg}; border:1px solid rgba(218,229,207,.20); border-radius:18px;
   box-shadow:0 20px 44px rgba(0,0,0,.6);
   opacity:0; visibility:hidden; transform:translateY(-6px);
@@ -157,14 +179,16 @@
 }
 .ee-sites.is-open{opacity:1; visibility:visible; transform:none}
 .ee-site{
-  display:grid; place-items:center; width:${CONFIG.slotW}px; height:${CONFIG.slotH}px;
-  padding:${CONFIG.slotPadY}px ${CONFIG.slotPadX}px; text-decoration:none; line-height:0;
+  display:grid; align-items:center; justify-items:start;
+  width:${CONFIG.slotW}px; height:${CONFIG.slotH}px;
+  padding:${CONFIG.slotPadY}px 16px ${CONFIG.slotPadY}px ${CONFIG.logoPadX}px;
+  text-decoration:none; line-height:0;
   border:1px solid transparent; border-radius:12px;
 }
 /* px limits rather than percentages: a percentage height does not
    resolve against a centred grid area, so a tall logo overflowed */
 .ee-site img{
-  max-width:${CONFIG.slotW - CONFIG.slotPadX * 2}px;
+  max-width:${CONFIG.slotW - CONFIG.logoPadX - 16}px;
   max-height:${CONFIG.slotH - CONFIG.slotPadY * 2}px;
   width:auto; height:auto; object-fit:contain; display:block;
 }
@@ -180,13 +204,28 @@
 .ee-link:hover,.ee-link:focus-visible,.ee-link.is-active{color:#DB5B2C}
 
 .ee-right{display:flex; align-items:center; gap:clamp(10px,1.4vw,18px); margin-left:auto}
+.ee-cta-wrap{display:flex; align-items:center; gap:6px}
 .ee-cta{
   display:inline-flex; align-items:center; height:38px; padding:0 clamp(16px,1.6vw,24px);
-  background:#E93C3C; color:#fff; text-decoration:none; border-radius:8px;
-  font-size:clamp(13px,1.05vw,16px); letter-spacing:.12em; font-variant:small-caps;
-  transition:background .2s ease;
+  background:#E93C3C; color:#020E16; text-decoration:none; border-radius:8px;
+  font-size:clamp(13px,1.05vw,16px); letter-spacing:.12em;
+  text-transform:uppercase; font-weight:700;
+  transition:none;
 }
-.ee-cta:hover{background:#f25151}
+.ee-cta:hover,.ee-cta:focus-visible{color:#fff}
+
+/* Snagn, pointing */
+.ee-point{
+  height:${CONFIG.pointer.height}px; width:auto; display:block; flex:0 0 auto;
+  pointer-events:none; transform-origin:50% 80%;
+  animation:ee-point ${CONFIG.pointer.holdMs * 2}ms infinite;
+}
+.ee-point.is-left{order:-1}
+@keyframes ee-point{
+  0%,48%  {transform:rotate(${CONFIG.pointer.angleA}deg)}
+  50%,98% {transform:rotate(${CONFIG.pointer.angleB}deg)}
+  100%    {transform:rotate(${CONFIG.pointer.angleA}deg)}
+}
 
 .ee-burger{
   display:none; width:32px; height:32px; place-items:center; padding:0;
@@ -218,8 +257,11 @@
   .ee-burger{display:grid}
   .ee-brand-link img{height:26px}
 }
-@media (max-width:520px){ .ee-tb .ee-cta{display:none} .ee-sheet .ee-cta{display:inline-flex} }
-@media (prefers-reduced-motion:reduce){ .ee-tb,.ee-sheet,.ee-sites,.ee-caret{transition:none} }`;
+@media (max-width:520px){ .ee-tb .ee-cta-wrap{display:none} .ee-sheet .ee-cta{display:inline-flex} }
+@media (prefers-reduced-motion:reduce){
+  .ee-tb,.ee-sheet,.ee-sites,.ee-caret{transition:none}
+  .ee-point{animation:none}
+}`;
 
     /* Anchor jumps still stop clear of the bar, whether or not the
        page is offset. */
@@ -251,6 +293,11 @@ body{padding-top:${CONFIG.height}px}
     }).join('');
   }
 
+  function pointerHtml() {
+    return '<img class="ee-point' + (CONFIG.pointer.side === 'left' ? ' is-left' : '') +
+      '" src="' + CONFIG.pointer.src + '" alt="" aria-hidden="true">';
+  }
+
   function sitesHtml() {
     return CONFIG.sites.map(function (s) {
       return '<a class="ee-site" href="' + s.url + '" aria-label="' + s.name + '">' +
@@ -280,7 +327,11 @@ body{padding-top:${CONFIG.height}px}
         '</div>' +
         '<nav class="ee-nav">' + navHtml('ee-link') + '</nav>' +
         '<div class="ee-right">' +
-          '<a class="ee-cta" href="' + CONFIG.cta.href + '" target="_blank" rel="noopener">' + CONFIG.cta.label + '</a>' +
+          '<div class="ee-cta-wrap">' +
+            (CONFIG.pointer.show && CONFIG.pointer.side === 'left' ? pointerHtml() : '') +
+            '<a class="ee-cta" href="' + CONFIG.cta.href + '" target="_blank" rel="noopener">' + CONFIG.cta.label + '</a>' +
+            (CONFIG.pointer.show && CONFIG.pointer.side !== 'left' ? pointerHtml() : '') +
+          '</div>' +
           '<button class="ee-burger" aria-label="Open menu" aria-expanded="false">' + ICON.burger + '</button>' +
         '</div>' +
       '</div>';
