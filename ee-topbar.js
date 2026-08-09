@@ -15,15 +15,44 @@
 
    INSTALL
    Carrd, add a Header section, add an Embed element
-   (Type: Code, Style: Inline):
+   (Type: Code, Style: Inline), and paste the loader below. It
+   appends a fresh query string on every page load, so no browser
+   or CDN cache can serve you an old copy of this file:
 
-     <script defer src="https://glitch951.github.io/CB_Site/ee-topbar.js"></script>
+     <script>
+     (function(){
+       var s = document.createElement('script');
+       s.src = 'https://glitch951.github.io/CB_Site/ee-topbar.js?v=' + Date.now();
+       document.head.appendChild(s);
+     })();
+     </script>
+
+   Delete any older ee-topbar script tag or inline paste from the
+   page first. If one is left behind it is harmless, since this
+   build removes whatever bar is already there before building its
+   own, but there is no reason to load the file twice.
+
+   The console logs the build id and the logo URL on every load,
+   so you can confirm which copy is running.
    ============================================================= */
 
 (function () {
   'use strict';
-  if (window.__eeTopbar) return;
-  window.__eeTopbar = true;
+
+  var BUILD = '2026-08-09a';
+
+  /* This build does not bail out if another copy already ran. It
+     tears down whatever bar is on the page and rebuilds, so a
+     stale cached copy or a leftover inline paste cannot win. */
+  function teardown() {
+    ['.ee-tb', '.ee-sheet', '#ee-topbar-css'].forEach(function (sel) {
+      [].forEach.call(document.querySelectorAll(sel), function (n) {
+        if (n.parentNode) n.parentNode.removeChild(n);
+      });
+    });
+  }
+
+  window.__eeTopbar = BUILD;
 
   var IMG = 'https://glitch951.github.io/CB_Site/images/';
 
@@ -230,8 +259,13 @@ body{padding-top:${CONFIG.height}px}
   }
 
   function init() {
+    teardown();
     loadFont();
     styles();
+    if (window.console && console.info) {
+      console.info('[ee-topbar] build ' + BUILD + ' | logo: ' +
+        String(CONFIG.logo).replace(/^data:.*/, '(inline)').split('/').pop());
+    }
 
     var bar = document.createElement('header');
     bar.className = 'ee-tb';
