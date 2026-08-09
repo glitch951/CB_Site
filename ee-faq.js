@@ -1,11 +1,14 @@
 /* =============================================================
    ESOTERIC EBB - FAQ
 
-   Category headings and click to open answers. No search box,
-   no filter buttons, no boxes. Content comes from faq.txt so it
-   can be edited without touching code.
+   Laid out like the Ask Chris page, but as an FAQ rather than a
+   chat: each question is a rounded outlined box you can click,
+   and its answer opens in a second outlined box below it. The
+   boxes have no fill. The outline and the text are the bright
+   Ebb green, the background stays transparent.
 
-   FONT: nothing declared, everything inherits from Carrd.
+   Content comes from faq.txt, so the questions can be edited
+   without touching any code.
 
    INSTALL
    1. Upload ee-faq.js and faq.txt to the CB_Site repo.
@@ -34,53 +37,94 @@
   window.__eeFaq = true;
 
   var OPTS = {
-    source:    'https://glitch951.github.io/CB_Site/faq.txt',
-    heading:   'FAQ',
+    source:  'https://glitch951.github.io/CB_Site/faq.txt',
+    heading: 'FAQ',
+
+    /* The font is declared outright rather than inherited, because
+       Carrd's own rules were winning inside the embed. To switch to
+       the sans cut of the same superfamily, change both lines to
+       'Averia Sans Libre' and Averia+Sans+Libre. */
+    font:     "'Averia Serif Libre'",
+    fontHref: 'https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,400&display=swap',
+
     cacheBust: 5,      // minutes before an edit shows up. 0 disables it
     single:    false   // true means only one answer open at a time
   };
+
+  var GREEN  = '#DAE5CF';
+  var ORANGE = '#DB5B2C';
+
+  function font() {
+    if (!OPTS.fontHref || document.getElementById('ee-faq-font')) return;
+    var l = document.createElement('link');
+    l.id = 'ee-faq-font';
+    l.rel = 'stylesheet';
+    l.href = OPTS.fontHref;
+    document.head.appendChild(l);
+  }
 
   function styles() {
     var s = document.createElement('style');
     s.id = 'ee-faq-css';
     s.textContent = `
-#ee-faq,#ee-faq *{box-sizing:border-box}
+#ee-faq,#ee-faq *{box-sizing:border-box; font-family:${OPTS.font},Georgia,serif}
 #ee-faq{
-  max-width:820px; margin:0 auto; text-align:left; color:#DAE5CF;
+  max-width:820px; margin:0 auto; text-align:left; color:${GREEN};
   padding:0 clamp(14px,4vw,24px) clamp(30px,6vw,70px);
 }
 .ee-faq-title{
-  margin:0 0 .3em; color:#DB5B2C; font-weight:400;
+  margin:0 0 .3em; color:${ORANGE}; font-weight:400;
   font-size:clamp(30px,4.5vw,54px); line-height:1;
   font-variant:small-caps; letter-spacing:.02em;
 }
 .ee-faq-intro{margin:0 0 clamp(26px,4vw,44px); color:rgba(218,229,207,.6); font-style:italic; line-height:1.55}
 .ee-faq-intro p{margin:0}
 .ee-faq-cat{
-  margin:clamp(30px,4vw,52px) 0 .2em; color:#C1D3AE; font-weight:400;
+  margin:clamp(30px,4vw,52px) 0 .9em; color:#C1D3AE; font-weight:400;
   font-size:clamp(17px,2vw,22px); letter-spacing:.16em; text-transform:uppercase;
 }
 .ee-faq-cat:first-of-type{margin-top:0}
-.ee-q{border-bottom:1px solid rgba(218,229,207,.10)}
+
+.ee-q{margin-bottom:10px}
+
+/* the question: outlined, transparent, bright */
 .ee-q-btn{
-  width:100%; display:flex; gap:.7em; align-items:baseline; text-align:left;
-  padding:.85em 0; background:none; border:0; cursor:pointer; color:inherit;
-  font:inherit; line-height:1.4; transition:color .25s ease;
+  width:100%; display:flex; align-items:center; gap:16px; text-align:left; cursor:pointer;
+  padding:.8em 1.1em; background:transparent; color:${GREEN};
+  border:1px solid rgba(218,229,207,.42); border-radius:16px;
+  font-size:clamp(15px,1.35vw,18px); line-height:1.45;
+  transition:none;
 }
-.ee-q-btn:hover{color:#DB5B2C}
-.ee-q-mark{flex:0 0 auto; color:#DB5B2C; opacity:.75; transition:transform .3s ease}
-.ee-q.is-open .ee-q-btn{color:#DB5B2C}
-.ee-q.is-open .ee-q-mark{transform:rotate(90deg); opacity:1}
-.ee-a{overflow:hidden; height:0; transition:height .38s ease}
-.ee-a-inner{padding:0 0 1.2em 1.5em; line-height:1.62; color:rgba(218,229,207,.78)}
+.ee-q-btn:hover,.ee-q-btn:focus-visible{color:${ORANGE}; border-color:${ORANGE}}
+.ee-q.is-open .ee-q-btn{color:${ORANGE}; border-color:${ORANGE}}
+.ee-q-text{flex:1}
+
+/* plus that becomes a minus */
+.ee-q-mark{position:relative; flex:0 0 auto; width:13px; height:13px}
+.ee-q-mark::before,.ee-q-mark::after{
+  content:""; position:absolute; left:0; top:6px; width:13px; height:1.5px;
+  background:currentColor;
+}
+.ee-q-mark::after{transform:rotate(90deg); transition:transform .25s ease}
+.ee-q.is-open .ee-q-mark::after{transform:rotate(0deg)}
+
+/* the answer: same treatment, dimmer outline, indented */
+.ee-a{height:0; overflow:hidden; transition:height .35s ease}
+.ee-a-pad{padding:8px 0 0 clamp(0px,2.4vw,34px)}
+.ee-a-inner{
+  border:1px solid rgba(218,229,207,.22); border-radius:16px;
+  padding:1em 1.2em; line-height:1.62; color:${GREEN};
+}
 .ee-a-inner > *{margin:0 0 .85em}
 .ee-a-inner > *:last-child{margin-bottom:0}
 .ee-a-inner ul{padding-left:1.1em}
-.ee-a-inner a{color:#DB5B2C; text-decoration:none}
+.ee-a-inner a{color:${ORANGE}; text-decoration:none}
 .ee-a-inner a:hover{text-decoration:underline}
+.ee-a-inner strong{color:#fff}
+.ee-a-inner a strong{color:inherit}
+
 .ee-faq-msg{color:rgba(218,229,207,.55); font-style:italic; padding:2em 0}
-@media (max-width:560px){ .ee-a-inner{padding-left:0} }
-@media (prefers-reduced-motion:reduce){ .ee-a,.ee-q-mark{transition:none} }`;
+@media (prefers-reduced-motion:reduce){ .ee-a,.ee-q-mark::after{transition:none} }`;
     document.head.appendChild(s);
   }
 
@@ -150,10 +194,12 @@
         var id = 'eeq-' + gi + '-' + i;
         html += '<div class="ee-q">' +
           '<button class="ee-q-btn" aria-expanded="false" aria-controls="' + id + '">' +
-            '<span class="ee-q-mark" aria-hidden="true">&rsaquo;</span>' +
             '<span class="ee-q-text">' + it.q + '</span>' +
+            '<span class="ee-q-mark" aria-hidden="true"></span>' +
           '</button>' +
-          '<div class="ee-a" id="' + id + '"><div class="ee-a-inner">' + it.a + '</div></div>' +
+          '<div class="ee-a" id="' + id + '"><div class="ee-a-pad">' +
+            '<div class="ee-a-inner">' + it.a + '</div>' +
+          '</div></div>' +
         '</div>';
       });
     });
@@ -171,7 +217,7 @@
       if (OPTS.single) items.forEach(function (o) { if (o !== q && o.classList.contains('is-open')) close(o); });
       q.classList.add('is-open');
       q.querySelector('.ee-q-btn').setAttribute('aria-expanded', 'true');
-      q.querySelector('.ee-a').style.height = q.querySelector('.ee-a-inner').offsetHeight + 'px';
+      q.querySelector('.ee-a').style.height = q.querySelector('.ee-a-pad').offsetHeight + 'px';
     }
     items.forEach(function (q) {
       q.querySelector('.ee-q-btn').addEventListener('click', function () {
@@ -184,7 +230,7 @@
       rt = setTimeout(function () {
         items.forEach(function (q) {
           if (q.classList.contains('is-open')) {
-            q.querySelector('.ee-a').style.height = q.querySelector('.ee-a-inner').offsetHeight + 'px';
+            q.querySelector('.ee-a').style.height = q.querySelector('.ee-a-pad').offsetHeight + 'px';
           }
         });
       }, 140);
@@ -199,7 +245,7 @@
   function init() {
     var root = document.getElementById('ee-faq');
     if (!root) return;
-    styles();
+    font(); styles();
     root.innerHTML = '<p class="ee-faq-msg">Fetching the questions...</p>';
 
     fetch(bust(OPTS.source), { cache: 'no-cache' })
