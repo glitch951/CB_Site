@@ -14,8 +14,18 @@
    rather than .png, change the extensions in CONFIG.
 
    INSTALL
-   Carrd, add a Header section, add an Embed element
-   (Type: Code, Style: Inline), and paste the loader below. It
+   Add an Embed element anywhere on the site and set it to
+   Type: Code, Style: HIDDEN, Location: Body End.
+
+   Hidden is important. An Inline embed lives inside whichever
+   section it was dropped into, so it only runs when that section is
+   the visible page: land on /#faq and the bar never appears. Hidden
+   hoists the code out to the document body, so it runs once for the
+   whole site no matter which section is showing. The bar attaches
+   itself to document.body and is position:fixed, so where the embed
+   physically sits makes no difference to how it looks.
+
+   Then paste the loader below. It
    appends a fresh query string on every page load, so no browser
    or CDN cache can serve you an old copy of this file:
 
@@ -39,7 +49,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09j';
+  var BUILD = '2026-08-09l';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -117,15 +127,24 @@
 
     /* The other sites. Logos only, never text. This site is not
        listed, the logo in the corner covers it. */
-    /* height defaults to logoH, so a wordmark renders at exactly the
-       same height as the logo in the bar. align is 'start' (lined up
-       under the bar logo) or 'center'. The panel widens itself to fit
-       the widest entry, so nothing gets squashed. */
+    /* Left alone, every entry renders at logoH and lines up under the
+       logo in the bar, which is what you want almost always. The two
+       overrides exist for odd artwork: height: 40 to render one entry
+       larger or smaller, align: 'center' to centre it in the panel.
+       Only reach for them if a particular file needs it. The panel
+       widens itself to fit the widest entry, so nothing gets squashed. */
     sites: [
+      /* The heights differ because the files do. In EE_Logo_Horizontal
+         the lettering is 78% of the image height, in ERA_Logo_Horizontal
+         it is 84%, so at the same box height ERA's letters come out 7%
+         taller. 32 makes the two wordmarks read at the same size.
+         CB_Logo is three stacked lines with no padding at all, so it
+         needs a taller box to keep its lines legible next to a
+         single-line wordmark. */
       { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',
-        logo: IMG + 'ERA_Logo_Horizontal.png' },
+        logo: IMG + 'ERA_Logo_Horizontal.png', height: 32 },
       { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/',
-        logo: IMG + 'CB_Logo.png', height: 46, align: 'center' }
+        logo: IMG + 'CB_Logo.png', height: 40 }
     ],
 
     /* To use the sans cut of the same superfamily, change both of
