@@ -383,8 +383,29 @@
         if (!fresh || !fresh.threads) throw new Error('bad payload');
         try { localStorage.setItem('ac-last', JSON.stringify(fresh)); } catch (e) {}
         if (!cached || JSON.stringify(fresh) !== JSON.stringify(cached)) {
-          render(root, fresh, activeInput ? activeInput.value : '');
+          activeInput = render(root, fresh, activeInput ? activeInput.value : '');
         }
+        /* The worker crawls in bounded passes; if it says more threads are
+           waiting, pump a few passes in the background and re-render once
+           the archive is complete. Any visitor heals the backlog. */
+        var pumps = 0;
+        function pump() {
+          if (pumps++ >= 8) return;
+          fetch(WORKER_URL.replace(/\/$/, '') + '/?warm=1&r=' + Date.now())
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+              if (j && j.backlog > 0) { setTimeout(pump, 4000); return; }
+              return fetch(WORKER_URL.replace(/\/$/, '') + '/?t=' + Date.now())
+                .then(function (r) { return r.json(); })
+                .then(function (full) {
+                  if (!full || !full.threads) return;
+                  try { localStorage.setItem('ac-last', JSON.stringify(full)); } catch (e) {}
+                  activeInput = render(root, full, activeInput ? activeInput.value : '');
+                });
+            })
+            .catch(function () {});
+        }
+        if (fresh.backlog > 0) setTimeout(pump, 1500);
       })
       .catch(function () {
         if (cached && cached.threads) return; // stale beats an error
