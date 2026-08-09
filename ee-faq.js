@@ -151,6 +151,18 @@
 .ee-a-inner strong,.ee-faq-panel-body strong{color:${GREEN}}
 .ee-a-inner a strong{color:inherit}
 
+/* Ghost boxes, painted the instant this script runs, so the page never
+   sits there looking empty and broken while the text is on its way. */
+.ee-sk{animation:ee-sk-pulse 1.5s ease-in-out infinite}
+@keyframes ee-sk-pulse{0%,100%{opacity:.30}50%{opacity:.60}}
+.ee-sk-bar{display:block; border-radius:8px; background:rgba(218,229,207,.16)}
+.ee-sk-cat{width:210px; height:16px; margin:2.4em 0 1.2em}
+.ee-sk-q{
+  height:3.4em; border:1px solid rgba(218,229,207,.20); border-radius:16px;
+  margin-bottom:10px;
+}
+@media (prefers-reduced-motion:reduce){ .ee-sk{animation:none; opacity:.4} }
+
 .ee-faq-msg{color:rgba(218,229,207,.55); font-style:italic; padding:2em 0}
 /* first paint eases in rather than snapping into place */
 #ee-faq.is-arriving{opacity:0}
@@ -305,6 +317,18 @@
     return u + (u.indexOf('?') === -1 ? '?' : '&') + 'v=' + Math.floor(Date.now() / (OPTS.cacheBust * 60000));
   }
 
+  /* Rough stand-in for the real page: a title block, a category heading
+     and enough question rows to fill the screen. */
+  function skeleton(root) {
+    var rows = Math.max(6, Math.ceil(window.innerHeight / 90));
+    var html = '<div class="ee-sk">' +
+      '<span class="ee-sk-bar" style="width:150px;height:46px;margin-bottom:14px"></span>' +
+      '<span class="ee-sk-bar" style="width:min(460px,80%);height:13px;margin-bottom:6px"></span>' +
+      '<span class="ee-sk-bar ee-sk-cat"></span>';
+    for (var i = 0; i < rows; i++) html += '<div class="ee-sk-q"></div>';
+    root.innerHTML = html + '</div>';
+  }
+
   function paint(root, txt, animate) {
     var data = parse(txt);
     if (!data.groups.length) return false;
@@ -341,7 +365,7 @@
     /* Repeat visits paint instantly from the last copy, so there is no
        waiting at all, then quietly refresh if the file has changed. */
     if (cached) painted = paint(root, cached, false);
-    if (!painted) root.innerHTML = '<p class="ee-faq-msg">Fetching the questions...</p>';
+    if (!painted) skeleton(root);
 
     fetch(bust(OPTS.source), { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })

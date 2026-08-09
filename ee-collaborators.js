@@ -187,6 +187,26 @@
 }
 .ee-cb-links a:hover{border-bottom-color:${ORANGE}}
 
+/* Ghost rows, painted the instant this script runs, so the page never
+   sits there looking empty and broken while the text is on its way. */
+.ee-sk{animation:ee-sk-pulse 1.5s ease-in-out infinite}
+@keyframes ee-sk-pulse{0%,100%{opacity:.30}50%{opacity:.60}}
+.ee-sk-bar{display:block; border-radius:8px; background:rgba(218,229,207,.16)}
+.ee-sk-row{
+  display:grid; grid-template-columns:${Math.round(OPTS.avatar * OPTS.grow)}px minmax(0,1fr);
+  gap:clamp(14px,1.8vw,22px); align-items:center; margin-bottom:16px;
+}
+.ee-sk-ava{
+  justify-self:center; width:${OPTS.avatar}px; height:${OPTS.avatar}px;
+  border-radius:50%; border:1px solid rgba(218,229,207,.20);
+}
+.ee-sk-box{height:210px; border:1px solid rgba(218,229,207,.20); border-radius:16px}
+@media (max-width:640px){
+  .ee-sk-row{grid-template-columns:1fr}
+  .ee-sk-ava{justify-self:start; width:120px; height:120px}
+}
+@media (prefers-reduced-motion:reduce){ .ee-sk{animation:none; opacity:.4} }
+
 .ee-cb-msg{color:rgba(218,229,207,.55); font-style:italic; padding:2em 0}
 /* first paint eases in rather than snapping into place */
 #ee-collab.is-arriving{opacity:0}
@@ -362,6 +382,21 @@
     return u + (u.indexOf('?') === -1 ? '?' : '&') + 'v=' + Math.floor(Date.now() / (OPTS.cacheBust * 60000));
   }
 
+  /* Rough stand-in for the real page: a heading block and a few entry
+     rows, avatar circle and all. */
+  function skeleton(root) {
+    var rows = Math.max(2, Math.ceil(window.innerHeight / 320));
+    var html = '<div class="ee-sk">' +
+      '<span class="ee-sk-bar" style="width:190px;height:12px;margin-bottom:12px"></span>' +
+      '<span class="ee-sk-bar" style="width:290px;height:46px;margin-bottom:18px"></span>' +
+      '<span class="ee-sk-bar" style="width:min(640px,90%);height:13px;margin-bottom:6px"></span>' +
+      '<span class="ee-sk-bar" style="width:min(560px,80%);height:13px;margin-bottom:34px"></span>';
+    for (var i = 0; i < rows; i++) {
+      html += '<div class="ee-sk-row"><div class="ee-sk-ava"></div><div class="ee-sk-box"></div></div>';
+    }
+    root.innerHTML = html + '</div>';
+  }
+
   function paint(root, txt, animate) {
     var data = parse(txt);
     if (!data.rows.length) return false;
@@ -393,7 +428,7 @@
     var painted = false;
 
     if (cached) painted = paint(root, cached, false);
-    if (!painted) root.innerHTML = '<p class="ee-cb-msg">Gathering the escargatoire...</p>';
+    if (!painted) skeleton(root);
 
     fetch(bust(OPTS.source), { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
