@@ -1,22 +1,23 @@
 /* =============================================================
    ESOTERIC EBB - TOP BAR
 
-   Horizontal logo on the left with a dropdown arrow to its left,
-   section links, and the Steam button on the right.
+   Dropdown arrow, horizontal logo, section links, Steam button.
+   Solid background at all times. Hides on the way down past the
+   splash, comes back on the way up.
 
-   FONT: no font family is declared for the bar itself, so the
-   logo link and the section links inherit Carrd's typeface,
-   which is Averia Serif Libre. The only exception is the
-   dropdown, where sites without a horizontal logo are set in
-   Figtree. That one webfont is loaded by this script.
+   FONT: declared outright rather than inherited, because Carrd's
+   own rules win inside an embed and the links came out in the
+   wrong serif. The webfont is loaded by this script.
+
+   IMAGES: everything lives in CB_Site/images/. Filenames must
+   match exactly, including capitals. If your files are .jpg
+   rather than .png, change the extensions in CONFIG.
 
    INSTALL
-   1. Upload this file, plus logo-horizontal.png and any site
-      logos, to the CB_Site repo.
-   2. Carrd, add a Header section, add an Embed element
-      (Type: Code, Style: Inline):
+   Carrd, add a Header section, add an Embed element
+   (Type: Code, Style: Inline):
 
-      <script defer src="https://glitch951.github.io/CB_Site/ee-topbar.js"></script>
+     <script defer src="https://glitch951.github.io/CB_Site/ee-topbar.js"></script>
    ============================================================= */
 
 (function () {
@@ -24,8 +25,10 @@
   if (window.__eeTopbar) return;
   window.__eeTopbar = true;
 
+  var IMG = 'https://glitch951.github.io/CB_Site/images/';
+
   var CONFIG = {
-    logo:     'https://glitch951.github.io/CB_Site/logo-horizontal.png',
+    logo:     IMG + 'EE_Logo_Horizontal.png',
     logoAlt:  'Esoteric Ebb',
     homeHref: '#home',
 
@@ -43,79 +46,100 @@
       href:  'https://store.steampowered.com/app/2057760/Esoteric_Ebb/?utm_source=eewebsite&utm_medium=topbar&utm_campaign=buy'
     },
 
-    /* The other sites. This site is not listed, the logo covers it.
-       An entry with no logo is set in Figtree instead. */
+    /* The other sites. Logos only, never text. This site is not
+       listed, the logo in the corner covers it. */
     sites: [
-      { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',        logo: 'https://glitch951.github.io/CB_Site/logo-era.png' },
-      { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/', logo: '' }
+      { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',        logo: IMG + 'ERA_Logo_Horizontal.png' },
+      { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/', logo: IMG + 'CB_Logo.png' }
     ],
 
-    loadFigtree: true,   // set false if Carrd already serves Figtree
+    /* To use the sans cut of the same superfamily, change both of
+       these to Averia Sans Libre / Averia+Sans+Libre. */
+    font:     "'Averia Serif Libre'",
+    fontHref: 'https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,400&display=swap',
 
-    height:     70,
-    heightSm:   56,
-    offsetBody: true,
+    bg:       '#020E16',
+    height:   74,
+    heightSm: 58,
+    logoH:    34,    // px, logo height in the bar
+    slotW:    230,   // px, dropdown slot width
+    slotH:    72,    // px, dropdown slot height. Tall enough for the CB logo
+    slotPadX: 16,
+    slotPadY: 10,
 
-    /* The bar sits over the splash, then gets out of the way.
-       Scrolling up brings it back at any point. */
+    /* false means the bar floats over the page and takes up no
+       layout space at all, so a full bleed splash stays full bleed.
+       true pushes the page down by the bar's height instead. */
+    offsetBody:   false,
     hideOnScroll: true,
-    hideAfter:    'splash',  // 'splash' means one viewport height, or give a number of px
-    hideDelta:    6          // px of movement before it reacts, stops it twitching
+    hideAfter:    'splash',  // 'splash' is one viewport height, or give a number of px
+    hideDelta:    6
   };
 
-  function figtree() {
-    if (!CONFIG.loadFigtree || document.getElementById('ee-figtree')) return;
+  function loadFont() {
+    if (!CONFIG.fontHref || document.getElementById('ee-tb-font')) return;
     var l = document.createElement('link');
-    l.id = 'ee-figtree';
+    l.id = 'ee-tb-font';
     l.rel = 'stylesheet';
-    l.href = 'https://fonts.googleapis.com/css2?family=Figtree:wght@500;600&display=swap';
+    l.href = CONFIG.fontHref;
     document.head.appendChild(l);
   }
 
   function styles() {
     var css = `
-.ee-tb,.ee-tb *{box-sizing:border-box}
+.ee-tb,.ee-tb *,.ee-sheet,.ee-sheet *{box-sizing:border-box; font-family:${CONFIG.font},Georgia,serif}
 .ee-tb{
   position:fixed; top:0; left:0; right:0; z-index:9000; height:${CONFIG.height}px;
-  color:#DAE5CF; background:rgba(2,14,22,0);
-  transition:background .35s ease, transform .32s ease;
+  color:#DAE5CF; background:${CONFIG.bg}; overflow:visible;
+  transition:transform .32s ease;
 }
 .ee-tb.is-hidden{transform:translateY(-100%)}
-.ee-tb.is-stuck{background:rgba(2,14,22,.92); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
 .ee-tb-inner{
   max-width:1400px; height:100%; margin:0 auto; padding:0 clamp(14px,3vw,30px);
   display:flex; align-items:center; gap:clamp(10px,2vw,26px);
 }
 
-/* brand: arrow first, then the logo, both on the nav baseline */
-.ee-brand{position:relative; display:flex; flex-direction:row; align-items:center; gap:8px; flex:0 0 auto}
+/* brand: arrow, then logo, both on the nav baseline */
+.ee-brand{position:relative; display:flex; flex-direction:row; align-items:center; gap:6px; flex:0 0 auto}
 .ee-caret{
-  padding:0; width:18px; height:18px; border:0; background:none; cursor:pointer;
-  color:#DAE5CF; opacity:.45; display:grid; place-items:center;
+  padding:0; width:20px; height:20px; border:0; background:none; cursor:pointer;
+  color:#DAE5CF; opacity:.5; display:grid; place-items:center;
   transition:transform .25s ease;
 }
 .ee-caret:hover,.ee-caret[aria-expanded="true"]{opacity:1; color:#DB5B2C}
 .ee-caret[aria-expanded="true"]{transform:rotate(180deg)}
 .ee-caret svg{width:11px; height:7px; display:block}
-.ee-brand-link{display:block; line-height:0}
-.ee-brand-link img{height:clamp(20px,2.2vw,30px); width:auto; display:block}
 
+.ee-brand-link{
+  display:block; line-height:0; padding:5px 9px;
+  border:1px solid transparent; border-radius:11px;
+}
+.ee-brand-link:hover,.ee-brand-link:focus-visible{border-color:#DB5B2C}
+.ee-brand-link img{height:${CONFIG.logoH}px; width:auto; display:block}
+
+/* dropdown: logos only, rounded, orange outline on hover */
 .ee-sites{
-  position:absolute; top:calc(100% + 10px); left:0; min-width:230px; padding:8px 0; z-index:20;
-  background:rgba(2,14,22,.96); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+  position:absolute; top:calc(100% + 12px); left:0; z-index:20;
+  padding:10px; display:grid; gap:8px;
+  background:${CONFIG.bg}; border:1px solid rgba(218,229,207,.20); border-radius:18px;
+  box-shadow:0 20px 44px rgba(0,0,0,.6);
   opacity:0; visibility:hidden; transform:translateY(-6px);
-  transition:opacity .2s ease, transform .2s ease, visibility .2s;
+  transition:opacity .18s ease, transform .18s ease, visibility .18s;
 }
 .ee-sites.is-open{opacity:1; visibility:visible; transform:none}
-.ee-site{display:block; padding:10px 18px 10px 26px; text-decoration:none; line-height:0}
-.ee-site img{height:22px; width:auto; max-width:190px; object-fit:contain; display:block; opacity:.85}
-.ee-site:hover img{opacity:1}
-.ee-site-name{
-  font-family:"Figtree",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
-  font-weight:600; font-size:15px; letter-spacing:.01em; line-height:1.3;
-  color:#DAE5CF; opacity:.85; white-space:nowrap;
+.ee-site{
+  display:grid; place-items:center; width:${CONFIG.slotW}px; height:${CONFIG.slotH}px;
+  padding:${CONFIG.slotPadY}px ${CONFIG.slotPadX}px; text-decoration:none; line-height:0;
+  border:1px solid transparent; border-radius:12px;
 }
-.ee-site:hover .ee-site-name{opacity:1; color:#DB5B2C}
+/* px limits rather than percentages: a percentage height does not
+   resolve against a centred grid area, so a tall logo overflowed */
+.ee-site img{
+  max-width:${CONFIG.slotW - CONFIG.slotPadX * 2}px;
+  max-height:${CONFIG.slotH - CONFIG.slotPadY * 2}px;
+  width:auto; height:auto; object-fit:contain; display:block;
+}
+.ee-site:hover,.ee-site:focus-visible{border-color:#DB5B2C}
 
 /* section links: colour switches instantly, no fade */
 .ee-nav{display:flex; align-items:center; gap:clamp(8px,1.6vw,24px); margin-left:clamp(8px,2vw,28px)}
@@ -128,15 +152,15 @@
 
 .ee-right{display:flex; align-items:center; gap:clamp(10px,1.4vw,18px); margin-left:auto}
 .ee-cta{
-  display:inline-flex; align-items:center; height:36px; padding:0 clamp(16px,1.6vw,24px);
-  background:#E93C3C; color:#fff; text-decoration:none; border-radius:6px;
+  display:inline-flex; align-items:center; height:38px; padding:0 clamp(16px,1.6vw,24px);
+  background:#E93C3C; color:#fff; text-decoration:none; border-radius:8px;
   font-size:clamp(13px,1.05vw,16px); letter-spacing:.12em; font-variant:small-caps;
   transition:background .2s ease;
 }
 .ee-cta:hover{background:#f25151}
 
 .ee-burger{
-  display:none; width:30px; height:30px; place-items:center; padding:0;
+  display:none; width:32px; height:32px; place-items:center; padding:0;
   background:none; border:0; color:#DAE5CF; cursor:pointer;
 }
 .ee-burger:hover{color:#DB5B2C}
@@ -145,7 +169,7 @@
 
 .ee-sheet{
   position:fixed; inset:0; z-index:8999; padding:calc(${CONFIG.heightSm}px + 24px) 24px 30px;
-  background:#020E16; overflow-y:auto; color:#DAE5CF;
+  background:${CONFIG.bg}; overflow-y:auto; color:#DAE5CF;
   opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s;
 }
 .ee-sheet.is-open{opacity:1; visibility:visible}
@@ -155,26 +179,29 @@
   border-bottom:1px solid rgba(218,229,207,.12); transition:none;
 }
 .ee-sheet a.ee-sheet-link:hover{color:#DB5B2C}
-.ee-sheet .ee-cta{margin-top:22px; width:100%; justify-content:center; height:48px; font-size:18px}
-.ee-sheet-sites{margin-top:26px}
-.ee-sheet-sites .ee-site{padding:12px 0}
+.ee-sheet .ee-cta{margin-top:22px; width:100%; justify-content:center; height:50px; font-size:18px}
+.ee-sheet-sites{margin-top:26px; display:grid; gap:8px; justify-content:start}
+.ee-sheet-sites .ee-site{border-color:rgba(218,229,207,.18)}
 
 @media (max-width:1080px){
   .ee-tb{height:${CONFIG.heightSm}px}
   .ee-nav{display:none}
   .ee-burger{display:grid}
+  .ee-brand-link img{height:26px}
 }
 @media (max-width:520px){ .ee-tb .ee-cta{display:none} .ee-sheet .ee-cta{display:inline-flex} }
 @media (prefers-reduced-motion:reduce){ .ee-tb,.ee-sheet,.ee-sites,.ee-caret{transition:none} }`;
 
+    /* Anchor jumps still stop clear of the bar, whether or not the
+       page is offset. */
+    css += `
+html{scroll-padding-top:${CONFIG.height + 12}px}
+@media (max-width:1080px){ html{scroll-padding-top:${CONFIG.heightSm + 10}px} }`;
+
     if (CONFIG.offsetBody) {
       css += `
 body{padding-top:${CONFIG.height}px}
-html{scroll-padding-top:${CONFIG.height + 12}px}
-@media (max-width:1080px){
-  body{padding-top:${CONFIG.heightSm}px}
-  html{scroll-padding-top:${CONFIG.heightSm + 10}px}
-}`;
+@media (max-width:1080px){ body{padding-top:${CONFIG.heightSm}px} }`;
     }
     var s = document.createElement('style');
     s.id = 'ee-topbar-css';
@@ -197,15 +224,13 @@ html{scroll-padding-top:${CONFIG.height + 12}px}
 
   function sitesHtml() {
     return CONFIG.sites.map(function (s) {
-      var inner = s.logo
-        ? '<img src="' + s.logo + '" alt="' + s.name + '" loading="lazy">'
-        : '<span class="ee-site-name">' + s.name + '</span>';
-      return '<a class="ee-site" href="' + s.url + '">' + inner + '</a>';
+      return '<a class="ee-site" href="' + s.url + '" aria-label="' + s.name + '">' +
+        '<img src="' + s.logo + '" alt="' + s.name + '" loading="lazy"></a>';
     }).join('');
   }
 
   function init() {
-    figtree();
+    loadFont();
     styles();
 
     var bar = document.createElement('header');
@@ -262,30 +287,24 @@ html{scroll-padding-top:${CONFIG.height + 12}px}
     var ticking = false, lastY = window.pageYOffset || 0;
 
     function threshold() {
-      if (typeof CONFIG.hideAfter === 'number') return CONFIG.hideAfter;
-      return window.innerHeight;   // 'splash'
+      return typeof CONFIG.hideAfter === 'number' ? CONFIG.hideAfter : window.innerHeight;
     }
-
     function onScroll() {
-      if (ticking) return;
+      if (!CONFIG.hideOnScroll || ticking) return;
       ticking = true;
       requestAnimationFrame(function () {
         var y = window.pageYOffset || document.documentElement.scrollTop;
-        bar.classList.toggle('is-stuck', y > 10);
-
-        if (CONFIG.hideOnScroll) {
-          var open = sites.classList.contains('is-open') || sheet.classList.contains('is-open');
-          var delta = y - lastY;
-          if (open || y <= threshold()) {
-            bar.classList.remove('is-hidden');
-          } else if (delta > CONFIG.hideDelta) {
-            bar.classList.add('is-hidden');
-            setSites(false);
-          } else if (delta < -CONFIG.hideDelta) {
-            bar.classList.remove('is-hidden');
-          }
-          if (Math.abs(delta) > CONFIG.hideDelta) lastY = y;
+        var open = sites.classList.contains('is-open') || sheet.classList.contains('is-open');
+        var delta = y - lastY;
+        if (open || y <= threshold()) {
+          bar.classList.remove('is-hidden');
+        } else if (delta > CONFIG.hideDelta) {
+          bar.classList.add('is-hidden');
+          setSites(false);
+        } else if (delta < -CONFIG.hideDelta) {
+          bar.classList.remove('is-hidden');
         }
+        if (Math.abs(delta) > CONFIG.hideDelta) lastY = y;
         ticking = false;
       });
     }
