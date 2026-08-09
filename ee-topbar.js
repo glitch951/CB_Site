@@ -81,7 +81,7 @@
       { label: 'Collaborators', href: '#collaborators' },
       { sep: true },
       { label: 'Devlogs',       href: 'https://christofferbodegard.com/', external: true },
-      { label: 'Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
+      { label: 'Fan Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
       { label: 'Press Kit',     href: 'https://drive.google.com/drive/folders/1p4B3Nj2qKUuBeUHakrodC_ZtwRw8Y6ni?usp=sharing', external: true }
     ],
 

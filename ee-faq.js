@@ -148,7 +148,7 @@
 }
 .ee-a-inner a{color:${ORANGE}; text-decoration:none}
 .ee-a-inner a:hover{text-decoration:underline}
-.ee-a-inner strong{color:#fff}
+.ee-a-inner strong,.ee-faq-panel-body strong{color:${GREEN}}
 .ee-a-inner a strong{color:inherit}
 
 .ee-faq-msg{color:rgba(218,229,207,.55); font-style:italic; padding:2em 0}
