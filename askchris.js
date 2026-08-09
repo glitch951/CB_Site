@@ -72,6 +72,9 @@
     '.ac-list.is-fading { opacity: 0; }',
     '@keyframes acIn { from { opacity: 0; transform: translateY(8px); }',
     '  to { opacity: 1; transform: none; } }',
+    /* A repaint (fresh data arriving over the cached copy) must not
+       re-run the entrance animation, or the whole list visibly flashes. */
+    '#askchris.ac-quiet .ac-thread { animation: none; }',
     '.ac-thread { border: 1px solid var(--ac-rule); border-radius: 12px;',
     '  margin: 0 0 14px; background: var(--ac-paper); overflow: hidden;',
     '  animation: acIn .28s ease both; }',
@@ -225,6 +228,12 @@
     ? PORTRAITS[Math.floor(Math.random() * PORTRAITS.length)] : '';
 
   function render(root, data, keepQuery) {
+    /* Pin the current height before emptying the node, so the page does
+       not collapse and snap back while the new list is built. */
+    var prevH = root.offsetHeight;
+    var repaint = root.getAttribute('data-ac-painted') === '1';
+    if (repaint && prevH > 100) root.style.minHeight = prevH + 'px';
+    if (repaint) root.classList.add('ac-quiet');
     root.innerHTML = '';
     if (portraitPick) {
       var bgImg = h('img', { alt: '', src: portraitPick });
@@ -338,6 +347,13 @@
 
     if (keepQuery) input.value = keepQuery;
     applyQuery();
+
+    root.setAttribute('data-ac-painted', '1');
+    requestAnimationFrame(function () {
+      root.style.minHeight = '';
+      root.classList.remove('ac-quiet');
+      try { localStorage.setItem('ac-h', String(root.offsetHeight)); } catch (e) {}
+    });
     return input;
   }
 
@@ -365,6 +381,12 @@
       var sp = e.target.closest && e.target.closest('.ac-spoiler');
       if (sp) { sp.classList.toggle('is-shown'); e.stopPropagation(); }
     });
+
+    /* Hold the space this page took last time, so it does not open
+       collapsed and then shove everything down once data lands. */
+    var lastH = 0;
+    try { lastH = parseInt(localStorage.getItem('ac-h') || '0', 10) || 0; } catch (e) {}
+    root.style.minHeight = (lastH > 200 ? lastH : Math.round(window.innerHeight * 0.7)) + 'px';
 
     // instant paint from the last visit, then a quiet refresh
     var cached = null;
@@ -399,6 +421,9 @@
                 .then(function (r) { return r.json(); })
                 .then(function (full) {
                   if (!full || !full.threads) return;
+                  var same = false;
+                  try { same = localStorage.getItem('ac-last') === JSON.stringify(full); } catch (e) {}
+                  if (same) return;   // nothing changed, do not repaint
                   try { localStorage.setItem('ac-last', JSON.stringify(full)); } catch (e) {}
                   activeInput = render(root, full, activeInput ? activeInput.value : '');
                 });
@@ -408,6 +433,7 @@
         if (fresh.backlog > 0) setTimeout(pump, 1500);
       })
       .catch(function () {
+        root.style.minHeight = '';
         if (cached && cached.threads) return; // stale beats an error
         root.innerHTML = '';
         root.appendChild(h('div', { class: 'ac-error', text: 'Could not load the archive right now.' }));

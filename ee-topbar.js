@@ -49,7 +49,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09q';
+  var BUILD = '2026-08-09r';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -81,7 +81,7 @@
       { label: 'Collaborators', href: '#collaborators' },
       { sep: true },
       { label: 'Devlogs',       href: 'https://christofferbodegard.com/', external: true },
-      { label: 'Fan Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
+      { label: 'Wiki',          href: 'https://esotericebb.wiki.gg/wiki/Esoteric_Ebb', external: true },
       { label: 'Press Kit',     href: 'https://drive.google.com/drive/folders/1p4B3Nj2qKUuBeUHakrodC_ZtwRw8Y6ni?usp=sharing', external: true }
     ],
 
@@ -592,6 +592,24 @@ body{padding-top:${CONFIG.height}px}
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+
+    /* Carrd swaps sections on the hash. Letting the browser handle the
+       anchor means a fast second click can land while it is still settling
+       the first, and the click appears to do nothing. Setting the hash
+       ourselves makes the newest click win every time. */
+    function onNavClick(e) {
+      var a = e.currentTarget;
+      var href = a.getAttribute('href') || '';
+      if (href.charAt(0) !== '#' || href.length < 2) return;   // off-site links
+      e.preventDefault();
+      setSites(false);
+      setSheet(false);
+      if (location.hash !== href) location.hash = href;
+      else window.dispatchEvent(new HashChangeEvent('hashchange'));
+    }
+    [].forEach.call(document.querySelectorAll('.ee-link, .ee-sheet-link'), function (a) {
+      a.addEventListener('click', onNavClick);
+    });
 
     function syncActive() {
       var h = location.hash || CONFIG.homeHref;

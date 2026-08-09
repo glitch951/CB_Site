@@ -188,6 +188,9 @@
 .ee-cb-links a:hover{border-bottom-color:${ORANGE}}
 
 .ee-cb-msg{color:rgba(218,229,207,.55); font-style:italic; padding:2em 0}
+/* first paint eases in rather than snapping into place */
+#ee-collab.is-arriving{opacity:0}
+#ee-collab.is-arriving.is-here{opacity:1; transition:opacity .22s ease}
 
 @media (max-width:640px){
   .ee-cb-row{grid-template-columns:1fr; gap:14px; justify-items:start}
@@ -344,25 +347,59 @@
     }
   }
 
+  var RUN = 0;
+
+  function readStore(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function writeStore(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
   function bust(u) {
     if (!OPTS.cacheBust) return u;
     return u + (u.indexOf('?') === -1 ? '?' : '&') + 'v=' + Math.floor(Date.now() / (OPTS.cacheBust * 60000));
+  }
+
+  function paint(root, txt, animate) {
+    var data = parse(txt);
+    if (!data.rows.length) return false;
+    render(root, data);
+    if (animate) {
+      root.classList.add('is-arriving');
+      requestAnimationFrame(function () { root.classList.add('is-here'); });
+    }
+    requestAnimationFrame(function () {
+      root.style.minHeight = '';
+      writeStore('ee-collab-h', String(root.offsetHeight));
+    });
+    return true;
   }
 
   function init() {
     var root = document.getElementById('ee-collab');
     if (!root) return;
     font(); styles();
-    root.innerHTML = '<p class="ee-cb-msg">Gathering the escargatoire...</p>';
+
+    /* Hold the space this page took last time, so it does not open as a
+       sliver and then shove the footer down when the text lands. */
+    var lastH = parseInt(readStore('ee-collab-h') || '0', 10) || 0;
+    root.style.minHeight =
+      (lastH > 200 ? lastH : Math.round(window.innerHeight * 0.75)) + 'px';
+
+    var token = ++RUN;
+    var cached = readStore('ee-collab-txt');
+    var painted = false;
+
+    if (cached) painted = paint(root, cached, false);
+    if (!painted) root.innerHTML = '<p class="ee-cb-msg">Gathering the escargatoire...</p>';
 
     fetch(bust(OPTS.source), { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
       .then(function (txt) {
-        var data = parse(txt);
-        if (!data.rows.length) throw new Error('empty');
-        render(root, data);
+        if (token !== RUN) return;
+        if (painted && txt === cached) return;
+        if (paint(root, txt, !painted)) writeStore('ee-collab-txt', txt);
       })
       .catch(function () {
+        if (token !== RUN || painted) return;
+        root.style.minHeight = '';
         root.innerHTML = '<p class="ee-cb-msg">The collaborator list could not be loaded. ' +
           'Try again in a moment.</p>';
       });

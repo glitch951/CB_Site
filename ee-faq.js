@@ -152,6 +152,9 @@
 .ee-a-inner a strong{color:inherit}
 
 .ee-faq-msg{color:rgba(218,229,207,.55); font-style:italic; padding:2em 0}
+/* first paint eases in rather than snapping into place */
+#ee-faq.is-arriving{opacity:0}
+#ee-faq.is-arriving.is-here{opacity:1; transition:opacity .22s ease}
 @media (prefers-reduced-motion:reduce){ .ee-a,.ee-q-mark::after{transition:none} }`;
     document.head.appendChild(s);
   }
@@ -287,25 +290,64 @@
     }, { passive: true });
   }
 
+  var RUN = 0;
+
+  function readStore(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function writeStore(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
   function bust(u) {
     if (!OPTS.cacheBust) return u;
     return u + (u.indexOf('?') === -1 ? '?' : '&') + 'v=' + Math.floor(Date.now() / (OPTS.cacheBust * 60000));
+  }
+
+  function paint(root, txt, animate) {
+    var data = parse(txt);
+    if (!data.groups.length) return false;
+    render(root, data);
+    wire(root);
+    if (animate) {
+      root.classList.add('is-arriving');
+      requestAnimationFrame(function () { root.classList.add('is-here'); });
+    }
+    /* Let go of the reserved space now that the real content holds it up,
+       and remember this height for the next visit. */
+    requestAnimationFrame(function () {
+      root.style.minHeight = '';
+      writeStore('ee-faq-h', String(root.offsetHeight));
+    });
+    return true;
   }
 
   function init() {
     var root = document.getElementById('ee-faq');
     if (!root) return;
     font(); styles();
-    root.innerHTML = '<p class="ee-faq-msg">Fetching the questions...</p>';
+
+    /* Hold the space the page took last time. Without this the section is
+       one line tall until the text arrives, and everything below it jumps. */
+    var lastH = parseInt(readStore('ee-faq-h') || '0', 10) || 0;
+    root.style.minHeight =
+      (lastH > 200 ? lastH : Math.round(window.innerHeight * 0.75)) + 'px';
+
+    var token = ++RUN;
+    var cached = readStore('ee-faq-txt');
+    var painted = false;
+
+    /* Repeat visits paint instantly from the last copy, so there is no
+       waiting at all, then quietly refresh if the file has changed. */
+    if (cached) painted = paint(root, cached, false);
+    if (!painted) root.innerHTML = '<p class="ee-faq-msg">Fetching the questions...</p>';
 
     fetch(bust(OPTS.source), { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
       .then(function (txt) {
-        var data = parse(txt);
-        if (!data.groups.length) throw new Error('empty');
-        render(root, data); wire(root);
+        if (token !== RUN) return;              // a newer run took over
+        if (painted && txt === cached) return;  // nothing changed, no repaint
+        if (paint(root, txt, !painted)) writeStore('ee-faq-txt', txt);
       })
       .catch(function () {
+        if (token !== RUN || painted) return;
+        root.style.minHeight = '';
         root.innerHTML = '<p class="ee-faq-msg">The questions could not be loaded. Try again in a moment.</p>';
       });
   }
