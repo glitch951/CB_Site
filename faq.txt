@@ -2,6 +2,13 @@
 Here's a collection of questions I've been asked over the years.
 Last updated on March 3rd 2026.
 
+@panel FAN MERCH POLICY
+It's a bit of a tricky situation, since the trademark/copyright needs to be protected and so on. But the general guidelines I follow are:
+
+- Small-scale only: in-person convention Artist Alleys, or individual items sold privately are very OK. Please avoid mass-producing items, and please do not sell anything online.
+- Original art only: Your merch needs to feature your own original artwork or craft. Please don't use official game assets, exact character art, or the official game logo.
+- No Print-on-Demand: Please avoid uploading designs to mass-market print-on-demand sites like Redbubble, Teespring, Amazon, or similar.
+
 # Development
 
 ## What's the current state of development?

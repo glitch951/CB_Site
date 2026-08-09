@@ -22,6 +22,10 @@
       @intro
       Lines here appear under the FAQ heading.
 
+      @panel FAN MERCH POLICY
+      A standing notice, always open, shown above the questions.
+      Add as many as you like; they appear in the order written.
+
       # Category name
       ## The question?
       The answer. A blank line starts a new paragraph.
@@ -79,6 +83,24 @@
 }
 .ee-faq-intro{margin:0 0 clamp(26px,4vw,44px); color:rgba(218,229,207,.6); font-style:italic; line-height:1.55}
 .ee-faq-intro p{margin:0}
+/* a standing notice, always open, sat above the questions */
+.ee-faq-panel{
+  border:1px solid rgba(219,91,44,.55); border-radius:16px;
+  padding:1.1em 1.3em 1.2em; margin:0 0 clamp(26px,4vw,42px);
+}
+.ee-faq-panel-title{
+  margin:0 0 .65em; color:${ORANGE}; font-weight:400;
+  font-size:clamp(15px,1.6vw,19px); letter-spacing:.18em; line-height:1.2;
+}
+.ee-faq-panel-body{line-height:1.62; color:${GREEN}}
+.ee-faq-panel-body > *{margin:0 0 .85em}
+.ee-faq-panel-body > *:last-child{margin-bottom:0}
+.ee-faq-panel-body ul{padding-left:1.15em}
+.ee-faq-panel-body li{margin-bottom:.45em}
+.ee-faq-panel-body li:last-child{margin-bottom:0}
+.ee-faq-panel-body a{color:${ORANGE}; text-decoration:none}
+.ee-faq-panel-body a:hover{text-decoration:underline}
+
 .ee-faq-cat{
   margin:clamp(30px,4vw,52px) 0 .9em; color:#C1D3AE; font-weight:400;
   font-size:clamp(17px,2vw,22px); letter-spacing:.16em; text-transform:uppercase;
@@ -158,35 +180,57 @@
     return out.join('');
   }
   function parse(txt) {
-    var intro = [], groups = [], cat = null, item = null, buf = [], inIntro = false;
-    function closeItem() {
-      if (item) { item.a = blocks(buf); if (item.a) cat.items.push(item); }
-      item = null; buf = [];
+    var intro = [], panels = [], groups = [];
+    var cat = null, item = null, panel = null, buf = [], mode = null;
+
+    function flush() {
+      if (mode === 'intro') { intro = buf; }
+      else if (mode === 'panel' && panel) { panel.body = blocks(buf); panels.push(panel); panel = null; }
+      else if (mode === 'item' && item) {
+        item.a = blocks(buf);
+        if (item.a) cat.items.push(item);
+        item = null;
+      }
+      buf = [];
     }
+
     txt.replace(/\r/g, '').split('\n').forEach(function (line) {
       var t = line.trim();
-      if (/^@intro\s*$/i.test(t)) { closeItem(); inIntro = true; cat = null; return; }
+      var pm = /^@panel\s+(.*)$/i.exec(t);
       var m2 = /^##\s+(.*)$/.exec(t);
       var m1 = /^#\s+(.*)$/.exec(t);
-      if (m1 || m2) inIntro = false;
+
+      if (/^@intro\s*$/i.test(t)) { flush(); mode = 'intro'; return; }
+      if (pm) { flush(); mode = 'panel'; panel = { title: pm[1].trim(), body: '' }; return; }
       if (m2) {
-        closeItem();
+        flush();
         if (!cat) { cat = { category: '', items: [] }; groups.push(cat); }
-        item = { q: inline(m2[1].trim()), a: '' };
+        mode = 'item'; item = { q: inline(m2[1].trim()), a: '' };
         return;
       }
-      if (m1) { closeItem(); cat = { category: m1[1].trim(), items: [] }; groups.push(cat); return; }
-      if (inIntro) { intro.push(line); return; }
-      if (item) buf.push(line);
+      if (m1) { flush(); cat = { category: m1[1].trim(), items: [] }; groups.push(cat); mode = null; return; }
+      if (mode) buf.push(line);
     });
-    closeItem();
-    return { intro: blocks(intro), groups: groups.filter(function (g) { return g.items.length; }) };
+    flush();
+
+    return {
+      intro: blocks(intro),
+      panels: panels,
+      groups: groups.filter(function (g) { return g.items.length; })
+    };
   }
 
   /* ---------- render ---------- */
   function render(root, data) {
     var html = '<h2 class="ee-faq-title">' + OPTS.heading + '</h2>' +
       (data.intro ? '<div class="ee-faq-intro">' + data.intro + '</div>' : '');
+
+    (data.panels || []).forEach(function (p) {
+      html += '<section class="ee-faq-panel">' +
+        '<h3 class="ee-faq-panel-title">' + esc(p.title) + '</h3>' +
+        '<div class="ee-faq-panel-body">' + p.body + '</div>' +
+      '</section>';
+    });
 
     data.groups.forEach(function (g, gi) {
       if (g.category) html += '<h3 class="ee-faq-cat">' + esc(g.category) + '</h3>';
