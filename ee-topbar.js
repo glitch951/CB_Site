@@ -49,7 +49,7 @@
 (function () {
   'use strict';
 
-  var BUILD = '2026-08-09l';
+  var BUILD = '2026-08-09n';
 
   /* This build does not bail out if another copy already ran. It
      tears down whatever bar is on the page and rebuilds, so a
@@ -134,15 +134,14 @@
        Only reach for them if a particular file needs it. The panel
        widens itself to fit the widest entry, so nothing gets squashed. */
     sites: [
-      /* The heights differ because the files do. In EE_Logo_Horizontal
-         the lettering is 78% of the image height, in ERA_Logo_Horizontal
-         it is 84%, so at the same box height ERA's letters come out 7%
-         taller. 32 makes the two wordmarks read at the same size.
-         CB_Logo is three stacked lines with no padding at all, so it
-         needs a taller box to keep its lines legible next to a
-         single-line wordmark. */
+      /* Sizes and left edges are matched to the bar logo automatically,
+         by measuring where the lettering actually sits inside each file
+         (see matchLogos below). Give an entry an explicit height only to
+         override that, as CB_Logo does: it is three stacked lines, so
+         matching its whole block to a one-line wordmark would leave the
+         lines far too small. */
       { name: 'Esoteric Era',         url: 'https://esoteric-era.com/',
-        logo: IMG + 'ERA_Logo_Horizontal.png', height: 32 },
+        logo: IMG + 'ERA_Logo_Horizontal.png' },
       { name: 'Christoffer Bodegård', url: 'https://christofferbodegard.com/',
         logo: IMG + 'CB_Logo.png', height: 40 }
     ],
@@ -158,12 +157,20 @@
     ctaH:     38,    // px, Buy Now button height
 
     logoH:    34,    // px, logo height in the bar
+
+    /* Every logo file pads its lettering differently: in
+       EE_Logo_Horizontal the letters are 78% of the image height and
+       start 1.7% in from the left, in ERA_Logo_Horizontal it is 84% and
+       4.1%. Matching the image boxes therefore does not match what the
+       eye sees. With this on, each file is measured once and its
+       lettering is lined up with the bar logo's lettering, in both size
+       and left edge. If the measurement cannot run, nothing changes. */
+    matchLogos: true,
     caretW:   20,    // px, arrow button width
     brandGap: 6,     // px, gap between arrow and logo
     logoPadX: 9,     // px, padding inside the logo's hover outline
 
     slotMinW: 230,   // px, dropdown grows past this if a logo needs it
-    slotH:    72,    // px, dropdown slot height
     panelPad: 10,    // px, padding inside the dropdown panel
     slotPadY: 10,
 
@@ -245,7 +252,7 @@
 .ee-sites.is-open{opacity:1; visibility:visible; transform:none}
 .ee-site{
   display:grid; align-items:center; justify-items:start;
-  width:100%; height:${CONFIG.slotH}px;
+  width:100%;
   /* symmetric side padding, so a centred logo sits on the slot's true centre */
   padding:${CONFIG.slotPadY}px ${CONFIG.logoPadX}px;
   text-decoration:none; line-height:0;
@@ -259,7 +266,8 @@
 .ee-site:hover,.ee-site:focus-visible{border-color:#DB5B2C}
 
 /* section links: colour switches instantly, no fade */
-.ee-nav{display:flex; align-items:center; gap:clamp(8px,1.6vw,24px); margin-left:clamp(8px,2vw,28px)}
+.ee-nav{display:flex; align-items:center; gap:clamp(8px,1.6vw,24px);
+  margin-left:clamp(8px,2vw,28px); flex:0 1 auto; min-width:0}
 .ee-link{
   padding:6px 0; text-decoration:none; white-space:nowrap; color:#DAE5CF;
   font-size:clamp(13px,1.05vw,16px); letter-spacing:.1em; font-variant:small-caps;
@@ -271,14 +279,16 @@
   font-size:clamp(13px,1.05vw,16px); line-height:1;
 }
 
-.ee-right{display:flex; align-items:center; gap:clamp(10px,1.4vw,18px); margin-left:auto}
-.ee-cta-wrap{position:relative; display:inline-flex; align-items:center}
+.ee-right{display:flex; align-items:center; gap:clamp(10px,1.4vw,18px);
+  margin-left:auto; flex:0 0 auto}
+.ee-cta-wrap{position:relative; display:inline-flex; align-items:center; flex:0 0 auto}
 .ee-cta{
   display:inline-flex; align-items:center; height:${CONFIG.ctaH}px;
   padding:0 clamp(16px,1.6vw,24px);
   background:#E93C3C; color:#fff; text-decoration:none; border-radius:8px;
   font-size:clamp(13px,1.05vw,16px); letter-spacing:.12em;
   text-transform:uppercase; font-weight:700;
+  white-space:nowrap; flex:0 0 auto;
   transition:none;
 }
 
@@ -370,6 +380,76 @@ body{padding-top:${CONFIG.height}px}
       var t = n.external ? ' target="_blank" rel="noopener"' : '';
       return '<a class="' + cls + '" href="' + n.href + '"' + t + ' data-href="' + n.href + '">' + n.label + '</a>';
     }).join('');
+  }
+
+
+  /* ------------------------------------------------------------------
+     Measure where the lettering sits inside a logo file: its height and
+     left edge as fractions of the image. Uses a throwaway copy of the
+     image, so if the browser refuses to read the pixels the visible
+     logos are unaffected and matching is simply skipped.
+     ------------------------------------------------------------------ */
+  function measureLogo(src, cb) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onerror = function () { cb(null); };
+    img.onload = function () {
+      var out = null;
+      try {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) { cb(null); return; }
+
+        var k = Math.min(1, 300 / w);
+        var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+        var cv = document.createElement('canvas');
+        cv.width = cw; cv.height = ch;
+        var ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+        var d = ctx.getImageData(0, 0, cw, ch).data;
+        var minX = cw, minY = ch, maxY = -1, x, y, i;
+        for (y = 0; y < ch; y++) {
+          for (x = 0; x < cw; x++) {
+            i = (y * cw + x) * 4;
+            /* the lettering is the pale part; the outline and artwork
+               behind it are dark, so brightness separates them */
+            if (d[i + 3] > 100 && (d[i] + d[i + 1] + d[i + 2]) / 3 > 140) {
+              if (x < minX) minX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        out = (maxY < 0) ? null
+          : { aspect: w / h, left: minX / cw, hFrac: (maxY - minY + 1) / ch };
+      } catch (e) { out = null; }
+      cb(out);
+    };
+    img.src = src;
+  }
+
+  function matchLogos(bar) {
+    if (!CONFIG.matchLogos) return;
+    measureLogo(CONFIG.logo, function (base) {
+      if (!base) return;
+      var barLetterH    = CONFIG.logoH * base.hFrac;
+      var barLetterLeft = CONFIG.logoH * base.aspect * base.left;
+
+      [].forEach.call(bar.querySelectorAll('.ee-sites .ee-site'), function (a, i) {
+        var site = CONFIG.sites[i], im = a.querySelector('img');
+        if (!site || !im) return;
+        measureLogo(site.logo, function (m) {
+          if (!m) return;
+          var h = site.height;
+          if (!h) {
+            h = barLetterH / m.hFrac;                       // match letter height
+            h = Math.max(CONFIG.logoH * 0.5, Math.min(CONFIG.logoH * 2.5, h));
+          }
+          im.style.height = (Math.round(h * 10) / 10) + 'px';
+          im.style.marginLeft =
+            Math.round(barLetterLeft - h * m.aspect * m.left) + 'px';
+        });
+      });
+    });
   }
 
   function pointerHtml() {
@@ -493,6 +573,8 @@ body{padding-top:${CONFIG.height}px}
                  - (window.innerWidth - 4);
       wrap.classList.toggle('no-room', over > 0);
     }
+    matchLogos(bar);
+
     var ptr = bar.querySelector('.ee-point');
     if (ptr) {
       if (ptr.complete) fitPointer(); else ptr.addEventListener('load', fitPointer);
