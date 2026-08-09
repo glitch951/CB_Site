@@ -1,0 +1,315 @@
+@intro
+Here's a collection of questions I've been asked over the years.
+Last updated on March 3rd 2026.
+
+# Development
+
+## What's the current state of development?
+Esoteric Ebb released on March 3rd 2026.
+
+## Who am I?
+I'm Chris! I'm a writer and game developer from Sweden. I've worked on a handful of titles in my career as a freelance writer and I wrote my master's thesis on the topic of agency in dynamic dialog choices in interactive narratives. Don't look it up, it's terrible.
+
+## Who are the current team members?
+I've managed to secure a bunch of really cool artists to make the visuals and audio for the game. Check them out on the [**collaborators page**](#collaborators)!
+
+## Why call it a 'Disco-like'?
+The development of EBBRPG (as it is known internally) began in 2018 as an attempt to make another spiritual successor to Planescape: Torment. When Disco arrived in 2019 with its sexy vertical dialog box, open-ended interactive design, and talking skill system, I knew I wanted this to be a future path for the genre. So I took my old design and merged it with elements of Disco.
+
+Since then I've been calling Ebb a 'Disco-like'. Will I keep calling it that? Who knows. Using a trendsetting game to codify genres has been a staple of games since... Pong? Doom? I don't know. It's old. But I honestly don't care about labels, Disco-like is just catchier than 'Non-combat focused text-heavy talking skill system RPG'. For now at least.
+
+## Is it an RPG, a Point and Click Adventure game, or a CYOA?
+Good questions, and I have no good answer. Esoteric Ebb could very well be a Point and Click adventure game with RPG elements, or just some kind of **Interactive Narrative**. I call it an RPG because it seems like that's what people assume it is, after playing for a few minutes. But I really don't have strong feelings on exactly what **you** should call it. So call it whatever you want.
+
+## What languages will EBB be available in?
+English is the only language EBB is developed for as of now. I would love to translate it to as many languages as possible, but considering we're aiming for over half a million words for the final product, such an undertaking would be massive. But if the game is successful enough, anything is possible! I'm specifically looking at wishlists to see which regions are most worthwhile in localization - so if you want it in your language, go wishlist!
+
+## Will EBB have voice acting?
+Just like with translations, the answer is: I would love to. But. BUT. It is a terrifying undertaking to voice an entire game with this much dialog in it, and we simply do not have the time to do it.
+
+## Do you need voice actors for the game?
+Not right now! But if we end up needing it in the future, I'll be sure to put out a casting call.
+
+## What's your inspiration for the music direction?
+I was pretty lost on where to go on that originally. The obvious choice is of course: **fantasy music**, but as much as that would **work** I never felt like it would hit the beats I was looking for. I felt like Ebb needed to be **esoteric**, whatever that meant.
+
+Then one day, I found a cold email in my spam folder from a Danish guy who told me the exact same thing. This guy, Anders, is what I would describe as an experimental-type musician. That got me excited- the possibility of asking an artist like him to find a mix between that **expected** fantasy music, and the more electronic/not-so expected music.
+
+It's worked out great. [**Anders, Brian, and Kristian**](#collaborators) have crafted an amazing soundtrack.
+
+## Once you finish ebb what then? Will you work on more games or is this a one and done?
+Oh, I have plans. It depends a lot on how things turn out, but I really enjoy working with Ink and writing interactive fiction like this. So I'll most likely keep doing it for as long as I can.
+
+## Do you have a Patreon, or can I donate to support development?
+Currently I don't have one. I prefer to not use alternate revenue streams if possible.
+
+## How can I support the development?
+Three things, in order of impact:
+
+- Purchase the game.
+- Leave an honest review.
+- Recommend it to people.
+
+Although, if you're reading this you're statistically likely to already have supported the development by simply **being interested**. So thanks!
+
+
+# Technical Stuff
+
+## What platform are you developing EBB for?
+Primarily PC as of now. I'm very interested in bringing the game to consoles, and mobile devices as well.
+
+## Will EBB support Ultra Wide Monitors?
+I'm using one right now, so you're damn right it does. In fact, it supports a wide variety of weird aspect ratios. So go nuts! The UI might get a little cramped if you play taller than 16:10 though, so keep that in mind. I am trusting you with this power.
+
+## Minimum Spec Requirements?
+Check the steam page for an up-to-date suggested spec sheet. But it shouldn't be too heavy on the average computer. It should also run smoothly on the Steam Deck!
+
+## Will the game be fully subtitled?
+I don't think I'll have time to implement complete subtitles for all audio (i.e. complete accessibility for deaf people), even if that would be neat. But all narrative content, and all information required to play the game, will be presented in text.
+
+## What engine is EBB made in?
+Unity!
+
+## How did you do the environments?
+The backgrounds are 3D geometry that's been UVmapped from the fixed orthographic perspective used in-game. A hand-drawn texture is then projected onto the world, along with real-time lighting. All dynamic objects, including characters, are cell-shaded/outlined.
+
+In the early days I used to do this all by myself, and it didn't look great. Now I'm working with a team of wonderful artists who create the visuals, and [**they're all amazing**](#collaborators).
+
+## What do you use for the dialogs?
+I use ink script. I love it.
+
+
+# Gameplay
+
+## How long will EBB be?
+It ended up being something like 25h on an average playthrough. But you WILL get a different number yourself. If you know what to do and get lucky with your rolls, you can complete it in like 45 minutes. If you want to savor every part of it, you can easily squeeze out 50 hours of playtime.
+
+## How replayable will it be?
+Every major quest has multiple outcomes and solutions. There are tons of different routes to take in dialogs, and factions to cozy up to. I'm absolutely aiming to make your first single playthrough a strong, definitive experience of Esoteric Ebb, but for hardcore fans there will be a ton of reasons to replay it.
+
+## The BIG question: Does Ebb have combat?
+Encounters in Esoteric Ebb are handled in a modified version of the dialog system. This allows for turn orders, hit points, and character abilities to matter. But when it's your turn, instead of just attacking you get to choose between a number of intricate roleplaying actions, usually some kind of tactical choice.
+
+Do you run or stand your ground? Do you help your companion or go for the potential killing blow? This allows for a freedom that simulates how a real D&D encounter would play out. In Ebb you can cast GREASE to make the group of bad guys slip and fall off the side of a building. Or you can take a series of strange (esoteric) actions to lower the DC of various 'solutions'. A single well placed spell can end any encounter. The wrong spell might make it worse.
+
+Since these encounters are both deadly and intricate, there's a limited number of them. And if you're smart of course, you can avoid the majority of them.
+
+## Can I use my Strength to suplex people?
+I haven't implemented that move in particular, but the Cleric is pretty prone to punching bad guys and monsters alike.
+
+## Why isometric?
+I like the style of it. It's a classic trope in the CRPG genre. Plus it allows for some really sweet hand-drawn background art.
+
+## Can I change the look of the player character?
+Clerics employed in the City of Norvik are required to wear official uniforms. For personal (and deeply idiotic) reasons you just can't remove your helmet.
+
+So you'll have to accessorize! Equip various barely functional weapons, esoteric trinkets, and weird coats. They can change your baseline stats and grant advantage/disadvantage in various encounters.
+
+## Is this just like playing D&D?
+No. I've taken elements from 5e, and I'm following the basic rules and core mechanics. But I'd describe it more as playing a one-on-one session with a very strange DM (me!). Spells are homebrewed to fit the gameplay better. Temporary ability score changes are MUCH easier to get your hands on. The definition of encounters lean more towards the Monkey Island variety.
+
+It's very different.
+
+## With the release of new rules in the 2024 Player's Handbook, are there any plans to incorporate some of those features into Esoteric Ebb?
+Since the release into the Creative Commons, I have forked that into my own system called the Esoteric 5e ruleset. This is what powers Esoteric Ebb.
+
+## How many spell levels will be available for the Cleric?
+The Cleric will gain access to third level spell slots at most, since this is a low tier adventure module. That means, in practice, he'll be able to cast spells like 'Speak with Dead' towards the end of the game.
+
+## Can you cast spells in conversations? Like, let's say a person got stabbed and is dying, can you use Cure Wounds to save them?
+The magic system has changed a lot over the years, and I did originally plan for Cure Wounds to be both self-cast and targeted in dialogs. However, so far it turns out that the Cleric keeps being the only one actually taking any damage in every single encounter.
+
+However, each spell has different rules on how it can be used. Cure Wounds can be self-cast at any point. Speak with Animal can only be cast when speaking with an animal. Shield of Faith can be cast at any point, but takes up your concentration. Detect Secret can only be cast out-of-dialog. Basically, when it makes sense for the Cleric to cast a spell, you probably can. Oh, and you can cast one spell per round during encounters as well!
+
+## Any chance more Cantrips are added?
+I've experimented with almost every basic Cantrip over the years, and tested different implementations. At one point they were passive bonuses in dialogs, and before that they were only used in story-related situations. Currently I've limited myself to only implementing Cantrips that have an interesting effect for exploration, out-of-dialogs.
+
+Thaumaturgy is a must, though! You're playing as The Cleric after all.
+
+## What is the QUESTING TREE??
+It's a mental map of your quests. It works like a normal mind-map styled quest journal with the added bonus of being able to discuss each quest with your ability scores once it's completed. In those discussions you will then be able to unlock this game's version of feats, which give unique gameplay options.
+
+It's originally very inspired by the legendary 'thought cabinet' obviously. But currently the design leans more toward it being a straight up skill tree mixed with the aforementioned quest journal.
+
+And it's called a 'tree' because of the shape of it. Each quest branches off into various directions, reaching farther into the unknown. Follow the red thread to the top of the tree. Etc.
+
+## What about character creation?
+You get to pick your ability scores at the start. Then you choose two ability scores to be 'proficiencies' in. Finally, you choose your background.
+
+It's important to note: all background choices are canon. As in, if you read them from start to finish, you get a story about the Cleric's entire childhood and youth adult life. Your choice here only impacts which stats are boosted.
+
+There are some presets you can choose from as well, but really, you only play as THE CLERIC. It's funny, I've spent two years researching this exact subject for my thesis, and I've found some divisive results. Obviously being able to make any character you want should be ideal in an RPG. But the problem comes with granting positive agency to those choices. Especially in narrative form. To successfully provide strong agency to choices you need to be able to provide meaningful feedback. And to do that for a completely customized character in a digital product is...
+
+Very difficult. There's a reason why the digital RPGs generally regarded with the 'best story' or 'good writing' have various degrees of predetermined characters.
+
+## Where are the 5e SKILLS?
+They're in here somewhere. Just not directly interactable. Obviously you can still **persuade** someone, it'll just be handled directly with Charisma.
+
+I basically removed the idea of skills and put them straight onto the ability scores. It's less choice, sure, but it also allows me to design the game to be more reactive to those choices. Constitution doesn't even have any skills, right? Like I said before, this game uses a very homebrewed version of 5e.
+
+## Can you die in EBB?
+Yep.
+
+Your hit points are your most valued resources in Ebb. There are tons of items that allow you to heal, and the only spell you have when you start out is Cure Wounds (the basic healing spell). Playing the game, even with perfect rolls, will eventually eat away at your HP. The main gameplay challenge in Ebb is surviving this balancing act. This also allows me to design higher level areas based on how much damage they dish out on average.
+
+However, when you reach 0 HP you don't die immediately. You get to roll Death Saving Throws (like in 5e!). If you fail, you die. Meaning, you have to reload and try an alternate solution.
+
+If you succeed in your Death Saving Throws, you spring back to life, and get to continue playing. But each time you do, you get more and more stacks of Exhaustion placed on your cleric.
+
+Get 10 stacks of Exhaustion and you die.
+
+It's essentially another mechanical layer to interact with, giving some more depth to your resource juggling. Some feats will interact with this system as well, allowing you to build a unique cleric that might handle Exhaustions much better than others.
+
+## Instead of using and displaying the 6 skill scores during conversations, rolls and equipment, is there any plan to replace them with or also use them in conjunction with the 18 skills?
+I did originally plan to use the skills, but I ran into a number of problems. For example, I wanted the chimes to be balanced, so each voice was a valid choice. But if I took the original 5e skills, then STR just gets Athletics (and possibly intimidation), while CON gets nothing. And if I make use of varying modifiers on the skills (i.e. allow skills to be rolled with non-normal ability scores depending on the situation) then it makes for a headache in UI and design.
+
+I realized the only thing I really lost by abstracting the skills into the ability scores was the player choice of proficiency in character creation. Which is a big deal. But considering I'm doing a bunch of weird stuff with the ability scores, like blurring the line between the physical and mental stats, and changing core mechanics in 5e, I realized this will actually give a smoother experience. And I did end up re-adding proficiencies as well, except as an abstract ability score proficiency. So you get to choose two stats at character creation that get your proficiency bonus added to every roll for the entire game. These are essentially the ability scores your cleric are 'good' at.
+
+## Can you increase your stats by leveling up?
+You get 1 ability score increase per level up.
+
+## How do the dice rolls work?
+You can roll in and out of dialogs. Depending on variables and your equipment the DC of checks will be altered. For example, if you manage to piss off ALFOZ, then it'll be easier to trick him into punching you. The DC will be lowered by -2 if you piss him off, and another -3 if you manage to **really** piss him off. While wearing a Belt of Dwarvenkind will give you advantage against him, since he's a dwarf. Duh.
+
+It's sort of the same way I try to handle DCs in my campaigns so that even minor choices make an impact.
+
+I'm still working to make the RNG as fair as possible. Digital RNG can be, as any VTT user would know, very shady sometimes.
+
+Just trust the machine. Right?
+
+## How does the day night cycle work?
+Once it gets dark you can choose to long rest for 8 hours. The later you choose to long rest, the shorter your next day will be of course. You can also skip out on sleeping, but once the sun rises you'll get Exhaustion stacks.
+
+You do not want to have Exhaustion stacks. Apart from eventually killing you, they also give you -1 on every roll for each stack you got. Real bad.
+
+Characters will switch positions during the day and night. Most doors will be locked at night, and others will open. You'll have to use the time wisely as the election is just around the corner...
+
+## Is it possible for us to buy a fully gold armour set? I need to flex on the tea shop owner with my divine drip.
+Changing out of the Urthguard uniform is not allowed of course, but there will be a bunch of different helmets and accessories. You will be able to customize the Cleric in a bunch of unique and interesting ways.
+
+And while there won't be a complex bartering system, you can spend money on a few different useful and/or fun things, including purchasing equipment. You do get a discount based on your natural Charisma score, just like in real life.
+
+## What's your method for designing and keeping track of all the player choices/story variables in the game?
+I've built a system that I call 'StoryVariables', which is just a list with variable IDs + an index. It's very basic, but the way I merged it into Ink script allows me to create dynamic choices and dialog lines fast and efficiently, and on the fly. I usually split variables into three vague tiers in order to manage them better.
+
+**Branch Variables** - that actively alters big pieces of content and changes the story significantly. These are the big choices, mostly the outcomes of quests, and how you choose to complete them.
+
+**Major Variables** - that alters everything from character impressions/relations to what you steal and which monsters you defeat (and how). Essentially, all the minor steps you take to complete quests. Every single one of these should get some type of reactivity in the epilogue ending.
+
+**Minor Variables** - these alter things more locally. They happen all the time in dialogs, from every little choice you make while talking about lore, or just introducing yourself in a way that temporarily annoys the NPC. These can alter content, but are in a majority of cases only used to alter the DCs of rolls involving the active characters. Major and Branch variables also alter DCs, but in more impactful ways. A minor variable will rarely give you dis/advantage, and will usually be a -1, or +2, etc.
+
+Then there are also system-dependent variables, hooked into the other mechanics. Basically, the chimes need to be able to comment on which spells you have prepared, and which areas you've visited already, etc.
+
+Beyond that, I just manage the variables by designing the broader storylines before-hand, and writing a lot of 'pseudocode' for unwritten dialogs. I need to first know where the various branches will end up - then I can start to figure out how the dialogs are going to play out.
+
+## Do you have a reason for your non-traditional method of point buy?
+I tried a few different systems of point buy, and eventually settled on this weird format. Partially because I wanted it to be as simple as possible, with three stats being set to the minimum allowing three stats to be set to max. And avoiding point increases on higher stats was mainly a way to give the player more freedom in making more unique builds (and also I copied PS:T!).
+
+
+# Story
+
+## Is this game political?
+Yes, it is very political. In fact, it is set during an ELECTION WEEK. Right before the first ever election in this metropolis called Norvik. So if I wanted EBB to not be political I really screwed myself, didn't I?
+
+So why is it political? Mainly because I like writing political conflicts. It's such a wonderful setup for character development - in the days leading up to an election every conversation becomes a battlefield.
+
+The catchphrase I've given my dear Cleric is 'What will you vote in the election?', which is such a great conversation starter. You can very quickly show deep character fundamentals, even with characters that normally wouldn't be so open with a random RPG protagonist. And having major factions in the story that you can align yourself with is a typical RPG trope for a good reason: it gives an immediate call to tribalism. Us vs. them. What are you, anti- or pro-skub? Pick a side, asshole!
+
+## What's YOUR politics?
+TBA (i.e. play the game and try to figure it out).
+
+## Is there a route where you remain purely neutral and don't join a political party?
+Yeah, that's basically the Charisma route. Say whatever you need to say to make every side like you. Keep mentioning how **apolitical** you are to stay neutral. It's probably going to be a difficult playstyle, since no one really likes you in the end. But no one hates you either. Fun.
+
+## What does the title mean? It's kind of weird.
+The meaning is very esoteirc (sic) and deeply rooted in the setting. Plus it sounds cool. But in short, it essentially means something akin to: 'somebody popped the **fucking balloon** and now the party's over'.
+
+## What are some of the inspirations for EBB?
+Planescape: Torment and Disco Elysium, primarily! Both in design and gameplay, as well as the wonderful 2e sourcebooks and modules of the Planescape settings itself. I highly recommend reading **DEAD GODS**. It's great.
+
+Then there's Troika, with Arcanum in particular being a game that really opened my eyes to RPG design (you're damn right you can 'speak with dead' on every corpse in EBB!), the style and comedy of Terry Pratchett (Discworld in particular), the wonderful (and objectively perfect) fantasy design of Heroes III, and many more I can't seem to recall at the moment.
+
+## Is there any other inspiration that isn't Disco and D&D?
+I'll probably write a proper post about this once the game is out, but off the top of my head, I can think of Monkey Island, Deus Ex, 999, and, uh... Seinfeld? LOTR? Am I just listing things that I like? Ebb is in many ways just a hodgepodge of everything I like in game design and writing after all.
+
+## Is EBB set in a medieval fantasy world?
+Not quite. Ebb is set in a homebrew setting I call **The Esoteric Coast**. When I first started playing with it, I think I pitched it to my players as something like, 'what if we skipped the industrial revolution with magic, and then had a world war.' (or Low-tech Eberron maybe?)
+
+But then why does the character speak like they're from the 21st century? The general tone of modernism came to when I actually started playtesting it a lot. Since, you know, unless you have some damn fine roleplayers in your group, most D&D play is kind of ridiculously anachronistic. At least when it's not focused on being a too 'serious' sort of campaign. So when I wanted the players' tone to match the setting, the setting became really weird.
+
+You have this world where, thanks to easy access to magic, most people around the Coast modernized from a typical early medieval D&D setting to early 20th century in just a hundred years or so. But then the Coast War happened. In the aftermath, magic very quickly ebbed (see?) around the Coast, so people then had to rely on old tech once more. That's how you get a city like Norvik with several active printing presses pushing out newspapers alongside a port filled with early medieval longboats. Or a bucket-helmed holy warrior rushing past on a bicycle because he's late for filing his tax returns. Basically, 'what if we took all these fantasy tropes, and just treated them extremely seriously?'
+
+It's supposed to ride that line between stupid and engaging. Does it succeed? We'll see.
+
+## What kind of races exist in the game?
+The world of JOR is kind of weird, since its sentient people are essentially just a mix of a bunch of different 'folk' from other fantasy worlds. Like, literally, there are no native creatures to this world. Everyone arrived through the so-called Gates of Jor ~1500-3000 years ago. The idea is then that any fantasy creature could potentially exist on Jor, like a slightly more grounded version of Planescape.
+
+But as for the main sentient ones featured in Ebb, you've got all the standard 5e races (humans/dwarves/elves/etc). Then, for some examples just off the top of my head, you've got a large collections of merfolk in the underwater Gravity Flip cities, catfolk sailors who mostly live on the Deep Isles, the elemental cultures of Kargamesh, the Golden Horde celestials, and the industrial devils of Bloodcity Bay. But that's just scratching the surface.
+
+Imagine if every fantasy trope tried to invade a newly formed fantasy realm, and then they all got sort of stuck there for a thousand years. That's the short pitch.
+
+## What is an "esoteric event"?
+In the setting, the term **Esoteric Event** is often used to describe any strange and magical events that cannot immediately be explained. However, officially, it's supposed to specifically mean situations where Wild Magic-type effects occur. These Esoteric Events are more common the further inland you go, while the Coast is relatively calm and easy to navigate.
+
+The most common type of Esoteric Event is the Esoteric Pocket. These are specific areas, sometimes miles wide, sometimes just a couple of feet, which contain a specific warping of reality. The most common type of Esoteric Pocket is the One-Rule Pocket. In these, one rule of reality or magic is changed. There are also Biome Pockets, Dread Pockets, and several other categorizations.
+
+The Cleric will not encounter many of these, since the game takes place entirely in Norvik. But there are still many stable Esoteric Pockets littered around the city. You get to learn about all this weird lore if you play with high INT.
+
+## Do the backgrounds actually affect anything other than stats?
+Mechanically, the backgrounds just affects your stats. Although, if read chronologically, the backgrounds actually show the canon backstory of The Cleric. Just a little trick to incorporate exposition into the character creator.
+
+## The encounter with the assassin in the first demo will still be in the final game but just revised, right?
+Yes. Although it'll be in a different location. So you'll have to keep your eyes open.
+
+## Will there be scary moments in the game?
+It's very subjective of course, but I'd argue there's no real 'scary' part of Ebb. Unless you count getting caught in traps, or attacked by monsters, dealing with politics, or encountering esoteric/supernatural stuff as 'scary'.
+
+## How many characters are in the game?
+Somewhere around 50 characters with portraits, and around 70 if you include those without.
+
+## Can you romance characters in Ebb?
+In the words of a certain dungeon master: **You can certainly try.**
+
+But to give a less vague answer, the Cleric is able to, and I quote, 'attempt to flirt' with various characters across the game. Personally, I don't believe he will be too successful, but again, **you can certainly try**.
+
+## How many companions are there?
+You'll have to play the game to find out.
+
+## Does Dexterity represent hedonistic thoughts?
+Dexterity is self-preservation and reactivity, which in some sense tends to come out as getting loot/paid, as well as aligning with the revolutionary republican ideal.
+
+It can sometimes be a bit hedonistic, in that selfish way, but mostly that's represented more by Charisma (on a social level) and Constitution (on a primal level).
+
+## Will your actions be able to influence who wins the election?
+The Cleric can influence the outcome of the election just as much as the average voter can in a real democracy. However, your choices will influence the Cleric's position at the end of the campaign. Which faction you lean into, and who you support, matters a lot.
+
+## I know you've obviously built the game so that all stats offer a variety of insights and features but are there any stats you'd say are essential to have high in order to experience the game well? Planescape obviously requires insane Wisdom and Intelligence and a little Charisma to experience most of its philosophy and similarly Disco Elysium's world and content is best explored with high PSY, INT and Shivers.
+That's something I've thought about a lot, especially when I chose to have cleric as the 'only' class. Because to play a cleric in 5e correctly, you need Wisdom, right? Since the game is heavily conversation based, it'd be easy to make INT/WIS/CHA the only stats that actually matter.
+
+I really wanted every ability score combination/build to be a fully functional and fun way of playing the game. You won't lose out on content by playing low Charisma, you'll just get to see a very un-charismatic Cleric. Playing with only STR/DEX/CON works great as well, since I've essentially homebrewed them into honorary mental stats. Playing with high Intelligence will absolutely give you more lore-dumps on average, but high Strength will give you a better understanding of religion and how it's interwoven with city intrigue. Dexterity will make you witty, and more streetsmart. Constitution gives you esoteric **feelings** (which, yes, is a bit like Shivers). Low Wisdom is probably the hardest to write, and also the funniest, since you just always have a complete and inanely incorrect view of the world around you.
+
+My suggestion is to play a Cleric with at least two ability scores above 14, and one at 6. That way, you have some stats to focus on (so you can unlock those sweet high-DC checks in the late game), and one stat you're able to dump completely for equally fun low-DC checks. As for solving dice checks, while there is some content that is actually locked behind certain rolls, there will always be alternate ways of either lowering those DCs, bypassing them with spells, or just trying it a few times. And don't forget that there is hidden content behind **losing** rolls as well.
+
+Beyond that, I'm also trying to give each ability score its own mechanical advantage. DEX has stealing and initiative. INT allows you to memorize more spells. CHA lowers prices on goods. CON increases HP. WIS empowers spells. STR lets you equip more stuff.
+
+Every build of Esoteric Ebb should be unique and equally fun to play. The descriptions in the character creator should help you figure out which build you would be most interested in.
+
+## There seems to be overlap between some stats. Are both Dexterity and Charisma witty? Is there a physical power element to both Strength and Constitution?
+There is absolutely a certain overlap, but that's built into the system. Charisma and Dexterity generally agree with one another. But the more different they are, the more the stats dislike each other. Strength and Intelligence are like a theologist and an atheist screaming at each other in your mind.
+
+But they should still have unique voices. Dexterity is way more focused on self-preservation and greed, while Charisma is all about making everyone like you, no matter what. There's overlap between those two, but they take different paths to get there.
+
+## Speaking of which, what elements of Both Disco and Planescape did you find the most profound or awesome or most wanted to replicate?
+It's silly, but I've always found that the best part of both PST and DE was the comedy. Both games are incredibly funny, and especially in PST's case it's not nearly discussed as much as all the philosophical stuff. So I'd say that. And as for less narrative stuff: the incredible linear design of DE. I really love open-ended storytelling. Mix that with strong authorial-intent interactive writing, and you got yourself a real treat.
+
+## Will there be multiple endings?
+Yes. The ending is very much dependent on your choices, and there are several 'Frays' (bad endings) to be found as well.
+
+## What's this about a tea shop?
+In Norvik, a tea shop is a place for young people to gather and exchange exciting radical ideas.
+
+Somebody blew up a tea shop at the heart of the city, just a week before the first ever election. That's the inciting incident of the game. Who blew it up? Why are those in power trying to cover it up?
+
+Only YOU can find out in **Esoteric Ebb**!
+
+Now go play it!
