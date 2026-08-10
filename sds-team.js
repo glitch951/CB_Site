@@ -55,15 +55,28 @@
        and colour are set here instead. These are measured off the page as
        it was: name 71px, the small lines 20 and 24, in #C6D6B6.
        Change these four and nothing else. */
-    /* Reconstructed from a screenshot of the page as it was, by
-       rendering each line and fitting size and weight until the ink
-       matched the pixels: "Founded by" 114x20, the name 87 tall, the
-       tagline 907x36, in #C6D6B6. These four groups are the only
-       things to touch if anything reads off. */
-    color:     '#C6D6B6',
-    typeSize:  { role: '22px', name: '84px', tag: '37px' },
-    typeWeight:{ role: '600',  name: '800',  tag: '400' },
-    typeGap:   { role: '6px',  name: '2px' },
+    color:      '#C6D6B6',
+    typeWeight: { role: '600', name: '800', tag: '400' },
+
+    /* Sizes are not fixed. On the original page the name ran the full
+       width of the column, and the other two lines were in fixed
+       proportion to it. Those proportions were measured off a screenshot
+       (name 917 wide, tagline 907, "Founded by" 115), and the widget now
+       fits the longest name to the column and derives the rest from
+       these ratios. That way it reproduces the original layout whatever
+       the column width and whatever font Carrd is serving, instead of
+       depending on me guessing a pixel size. */
+    fit: {
+      nameFillsColumn: 1.00,   // longest name, as a share of the column
+      tagOfName:       0.989,  // 907 / 917
+      roleOfName:      0.125,  // 115 / 917
+      gapRoleName:     0.09,   // vertical gaps, as a share of name size
+      gapNameTag:      0.02,
+      avatarOfName:    1.95,
+      iconOfName:      0.34,
+      iconGapOfName:   0.30,
+      minName: 28, maxName: 130
+    },
 
     loadFont: true,
     fontHref: 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap',
@@ -137,14 +150,15 @@
     s.id = 'ss-team-css';
     s.textContent = `
 .ss-team,.ss-team *{box-sizing:border-box}
-.ss-team{text-align:center; padding:0 ${OPTS.arrowInset + 6}px}
-.ss-inner{display:inline-block; text-align:left; position:relative}
+.ss-team{text-align:left}
+.ss-inner{position:relative; text-align:left}
 
 /* --- avatar + icons + bar --- */
 .ss-top{display:flex; align-items:center; gap:${OPTS.gap}px; margin-bottom:18px}
+.ss-side{flex:1 1 auto}
 .ss-ava{
   flex:0 0 auto; position:relative;
-  width:${OPTS.avatar}px; height:${OPTS.avatar}px; border-radius:50%;
+  width:var(--ss-avatar); height:var(--ss-avatar); border-radius:50%;
   display:grid; place-items:center;
 }
 .ss-ava img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%}
@@ -152,16 +166,17 @@
   content:""; position:absolute; inset:0; border-radius:50%;
   border:1px solid currentColor; opacity:.35; pointer-events:none;
 }
-.ss-ava.is-empty{font-size:${Math.round(OPTS.avatar / 3.4)}px; opacity:.5}
+.ss-ava.is-empty{font-size:calc(var(--ss-avatar) / 3.4); opacity:.5}
 
 .ss-side{min-width:0}
-.ss-links{display:flex; align-items:center; gap:${OPTS.iconGap}px; flex-wrap:wrap}
+/* one row, always: wrapping icons was making the block grow a line */
+.ss-links{display:flex; align-items:center; gap:var(--ss-icon-gap); flex-wrap:nowrap}
 .ss-links a{
   display:grid; place-items:center; color:inherit; line-height:0;
   opacity:.9; transition:opacity .18s ease, transform .18s ease;
 }
 .ss-links a:hover{opacity:1; transform:translateY(-2px)}
-.ss-links svg{width:${OPTS.iconSize}px; height:${OPTS.iconSize}px; fill:currentColor}
+.ss-links svg{width:var(--ss-icon); height:var(--ss-icon); fill:currentColor}
 
 /* one segment per person; the live one fills over the interval */
 .ss-bar{display:flex; gap:6px; margin-top:16px}
@@ -197,9 +212,9 @@
   display:grid; place-items:center; transition:opacity .18s ease;
 }
 .ss-arrow:hover,.ss-arrow:focus-visible{opacity:1}
-.ss-arrow.is-prev{left:-${OPTS.arrowInset}px}
-.ss-arrow.is-next{right:-${OPTS.arrowInset}px}
-.ss-arrow svg{width:26px; height:26px; fill:none; stroke:currentColor;
+.ss-arrow.is-prev{left:calc(var(--ss-arrow) * -1)}
+.ss-arrow.is-next{right:calc(var(--ss-arrow) * -1)}
+.ss-arrow svg{width:calc(var(--ss-name) * .28); height:calc(var(--ss-name) * .28); fill:none; stroke:currentColor;
   stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
 
 .ss-sk{opacity:.4; animation:ss-pulse 1.5s ease-in-out infinite}
@@ -224,11 +239,12 @@
        and colour are set here. Measured off the page as it was. */
     s.textContent += `
 .ss-team{color:${OPTS.color}}
-.ss-team .ss-role{font-size:${OPTS.typeSize.role}; font-weight:${OPTS.typeWeight.role};
-  margin-bottom:${OPTS.typeGap.role}}
-.ss-team .ss-name{font-size:${OPTS.typeSize.name}; font-weight:${OPTS.typeWeight.name};
-  letter-spacing:-.02em; margin-bottom:${OPTS.typeGap.name}}
-.ss-team .ss-tag{font-size:${OPTS.typeSize.tag}; font-weight:${OPTS.typeWeight.tag}}`;
+.ss-team .ss-role{font-size:var(--ss-role); font-weight:${OPTS.typeWeight.role};
+  margin:0 0 var(--ss-gap-role)}
+.ss-team .ss-name{font-size:var(--ss-name); font-weight:${OPTS.typeWeight.name};
+  margin:0 0 var(--ss-gap-name); line-height:1; white-space:nowrap}
+.ss-team .ss-tag{font-size:var(--ss-tag); font-weight:${OPTS.typeWeight.tag};
+  margin:0; white-space:nowrap}`;
 
     if (OPTS.loadFont) {
       s.textContent += `
@@ -350,23 +366,81 @@
     var segs    = [].slice.call(root.querySelectorAll('.ss-seg'));
     var at = 0, busy = false, fallbackTimer = null;
 
-    /* Measure every person up front and hold the largest of everything.
-       The block is centred on the page, so if its width changed with the
-       length of a name the avatar and the icons would slide sideways
-       every time it cycled. Locking the width keeps every part of the
-       layout still, and only the words change. */
+    /* Two jobs, in order.
+
+       First, size the type. On the original the name filled the column
+       and the other lines were in fixed proportion to it, so rather than
+       hardcoding pixel sizes the longest name is fitted to the column
+       and everything else follows from the measured ratios. This holds
+       whatever the column width and whatever font is actually serving.
+
+       Second, freeze the layout. Every person is measured and the block
+       is held at the widest arrangement, so the avatar, the icons, the
+       bar and the text never move as it cycles.
+     */
     function lock() {
       var inner = root.querySelector('.ss-inner');
+      var F = OPTS.fit;
+
       inner.style.width = '';
       links.style.minWidth = '';
       text.style.minWidth = '';
       text.style.minHeight = '';
 
-      var probe = inner.cloneNode(true);
+      var column = root.clientWidth;
+      if (!column) return;
+
+      var probe = document.createElement('div');
       probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;' +
-        'left:0;top:0;width:auto;white-space:nowrap';
+        'left:0;top:0;white-space:nowrap;font-weight:' + OPTS.typeWeight.name + ';font-size:100px';
       root.appendChild(probe);
-      var pl = probe.querySelector('.ss-links'), pt = probe.querySelector('.ss-text');
+
+      function widthAt100(txt, weight) {
+        probe.style.fontWeight = weight;
+        probe.textContent = txt;
+        return probe.getBoundingClientRect().width || 1;
+      }
+
+      var longest = '';
+      people.forEach(function (p) { if (p.name.length > longest.length) longest = p.name; });
+      var nameW100 = widthAt100(longest, OPTS.typeWeight.name);
+
+      var nameSize = 100 * (column * F.nameFillsColumn) / nameW100;
+      nameSize = Math.max(F.minName, Math.min(F.maxName, nameSize));
+
+      var targetName = nameSize * nameW100 / 100;
+      /* The ratios were measured from the first entry, so size the two
+         small lines from that entry's own strings. Using the longest
+         role of anyone would shrink the line to fit a different string
+         than the one the ratio came from. */
+      var tagTxt  = people[0].tag  || '';
+      var roleTxt = people[0].role || '';
+      var tagSize = tagTxt
+        ? 100 * (targetName * F.tagOfName) / widthAt100(tagTxt, OPTS.typeWeight.tag)
+        : nameSize * 0.4;
+      var roleSize = roleTxt
+        ? 100 * (targetName * F.roleOfName) / widthAt100(roleTxt, OPTS.typeWeight.role)
+        : nameSize * 0.25;
+
+      root.removeChild(probe);
+
+      var st = root.style;
+      st.setProperty('--ss-name',     nameSize.toFixed(1) + 'px');
+      st.setProperty('--ss-tag',      tagSize.toFixed(1) + 'px');
+      st.setProperty('--ss-role',     roleSize.toFixed(1) + 'px');
+      st.setProperty('--ss-gap-role', (nameSize * F.gapRoleName).toFixed(1) + 'px');
+      st.setProperty('--ss-gap-name', (nameSize * F.gapNameTag).toFixed(1) + 'px');
+      st.setProperty('--ss-avatar',   Math.round(nameSize * F.avatarOfName) + 'px');
+      st.setProperty('--ss-icon',     Math.round(nameSize * F.iconOfName) + 'px');
+      st.setProperty('--ss-icon-gap', Math.round(nameSize * F.iconGapOfName) + 'px');
+      st.setProperty('--ss-arrow',    Math.round(nameSize * 0.62) + 'px');
+
+      /* now hold the widest arrangement so nothing shifts between people */
+      var probe2 = inner.cloneNode(true);
+      probe2.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;' +
+        'left:0;top:0;width:auto;white-space:nowrap';
+      root.appendChild(probe2);
+      var pl = probe2.querySelector('.ss-links'), pt = probe2.querySelector('.ss-text');
       var wideIcons = 0, wideText = 0, tallText = 0;
       people.forEach(function (p) {
         pl.innerHTML = linksHtml(p);
@@ -375,13 +449,11 @@
         wideText  = Math.max(wideText,  pt.scrollWidth);
         tallText  = Math.max(tallText,  pt.offsetHeight);
       });
-      root.removeChild(probe);
+      root.removeChild(probe2);
 
       if (wideIcons) links.style.minWidth = Math.ceil(wideIcons) + 'px';
-      if (wideText)  text.style.minWidth  = Math.ceil(wideText) + 'px';
+      if (wideText)  text.style.minWidth  = Math.ceil(Math.min(wideText, column)) + 'px';
       if (tallText)  text.style.minHeight = Math.ceil(tallText) + 'px';
-      /* now the widest arrangement is fixed, freeze the block at it */
-      inner.style.width = Math.ceil(inner.offsetWidth) + 'px';
     }
 
     function paintSegs() {
