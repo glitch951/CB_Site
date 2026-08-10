@@ -44,7 +44,7 @@
 
     avatar:     190,   // px
     gap:        56,    // px between the avatar and the icons
-    iconSize:   30,    // px, measured off the original page
+    iconSize:   38,    // px, a quarter larger than the original 30
     iconGap:    34,    // px between icons
     interval:   7000,  // ms each person is shown. 0 stops the cycling
     fadeMs:     280,   // cross-fade when the person changes
