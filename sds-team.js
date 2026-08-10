@@ -43,13 +43,15 @@
     imageBase: 'https://glitch951.github.io/CB_Site/images/',
 
     avatar:     190,   // px
-    gap:        70,    // px between the avatar and the icons
-    iconSize:   34,    // px, fixed, not tied to the name
-    iconGap:    30,    // px between icons
+    gap:        56,    // px between the avatar and the icons
+    iconMax:    72,    // px, as large as they can be
+    iconMin:    30,    // px, as small as they are allowed to get
+    iconGap:    34,    // px between icons
     interval:   7000,  // ms each person is shown. 0 stops the cycling
     fadeMs:     280,   // cross-fade when the person changes
     arrowInset: 74,    // px the arrows sit outside the text
     ringWidth:  1,      // px, hairline
+    ringGap:    9,      // px the ring stands off the avatar
     ringTrack:  '',     // blank means the same colour as the text
     ringFill:   '#E93C3C',
 
@@ -163,8 +165,7 @@
   width:${OPTS.avatar}px; height:${OPTS.avatar}px; border-radius:50%;
   display:grid; place-items:center;
 }
-.ss-ava img{width:calc(100% - ${OPTS.ringWidth*2}px); height:calc(100% - ${OPTS.ringWidth*2}px);
-  object-fit:cover; display:block; border-radius:50%}
+.ss-ava img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%}
 
 .ss-ava.is-empty{font-size:${Math.round(OPTS.avatar/3.4)}px; opacity:.5}
 
@@ -176,7 +177,7 @@
   opacity:.9; transition:opacity .18s ease, transform .18s ease;
 }
 .ss-links a:hover{opacity:1; transform:translateY(-2px)}
-.ss-links svg{width:${OPTS.iconSize}px; height:${OPTS.iconSize}px; fill:currentColor}
+.ss-links svg{width:var(--ss-icon); height:var(--ss-icon); fill:currentColor}
 
 /* one segment per person; the live one fills over the interval */
 /* The track is a translucent colour, not currentColor at low opacity:
@@ -190,8 +191,11 @@
 /* The timer is the ring around the avatar: it fills over the time each
    person is shown, and its finishing is what advances the widget, so the
    two can never drift apart. */
-.ss-ring{position:absolute; inset:0; width:100%; height:100%;
-  transform:rotate(-90deg); overflow:visible; pointer-events:none}
+.ss-ring{
+  position:absolute; inset:-${OPTS.ringGap}px;
+  width:calc(100% + ${OPTS.ringGap * 2}px); height:calc(100% + ${OPTS.ringGap * 2}px);
+  transform:rotate(-90deg); overflow:visible; pointer-events:none;
+}
 /* non-scaling-stroke keeps this an exact hairline whatever size
    the avatar is, instead of scaling with the viewBox */
 .ss-ring circle{fill:none; stroke-width:${OPTS.ringWidth}px; vector-effect:non-scaling-stroke}
@@ -437,7 +441,16 @@
       nameSize = 100 * (column * F.nameFillsColumn) / widest;
       nameSize = Math.max(F.minName, Math.min(F.maxName, nameSize));
 
+      /* Icons take whatever room is left beside the avatar, as large as
+         that allows, so the row reads full instead of a few small marks
+         floating in space. Remove links and the rest grow to suit. */
+      var most = 1;
+      people.forEach(function (p) { most = Math.max(most, p.links.length); });
+      var room = column - OPTS.avatar - OPTS.gap - (most - 1) * OPTS.iconGap;
+      var iconSize = Math.max(OPTS.iconMin, Math.min(OPTS.iconMax, room / most));
+
       root.removeChild(probe);
+      root.style.setProperty('--ss-icon', Math.floor(iconSize) + 'px');
       root.style.setProperty('--ss-name', nameSize.toFixed(2) + 'px');
       root.style.setProperty('--ss-role', roleSize.toFixed(1) + 'px');
       root.style.setProperty('--ss-role-gap', (-nameSize * 0.06).toFixed(1) + 'px');
@@ -555,14 +568,11 @@
 
     var hovering = false;
     function pause(on) {
-      hovering = on;
       var f = root.querySelector('.ss-ring-fill');
       if (f) f.style.animationPlayState = on ? 'paused' : 'running';
     }
-    root.addEventListener('mouseenter', function () { pause(true); });
-    root.addEventListener('mouseleave', function () { pause(false); });
-    root.addEventListener('focusin', function () { pause(true); });
-    root.addEventListener('focusout', function () { pause(false); });
+    /* It keeps running under the cursor. Only a hidden tab pauses it,
+       so it does not silently burn through people in the background. */
     document.addEventListener('visibilitychange', function () { pause(document.hidden); });
 
     root.style.setProperty('--ss-circ', CIRC.toFixed(2));
