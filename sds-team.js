@@ -27,7 +27,10 @@
       (Type: Code, Style: Inline):
 
       <div id="ss-team"></div>
-      <script defer src="https://glitch951.github.io/CB_Site/ss-team.js"></script>
+      <script defer src="https://glitch951.github.io/CB_Site/sds-team.js"></script>
+
+   The div may be called ss-team or sds-team, or carry a
+   data-team-widget attribute. Any of the three is found.
    ============================================================= */
 
 (function () {
@@ -114,8 +117,8 @@
     var s = document.createElement('style');
     s.id = 'ss-team-css';
     s.textContent = `
-#ss-team,#ss-team *{box-sizing:border-box}
-#ss-team{text-align:center; padding:0 ${OPTS.arrowInset + 6}px}
+.ss-team,.ss-team *{box-sizing:border-box}
+.ss-team{text-align:center; padding:0 ${OPTS.arrowInset + 6}px}
 .ss-inner{display:inline-block; text-align:left; position:relative}
 
 /* --- avatar + icons + bar --- */
@@ -159,11 +162,11 @@
 .ss-textwrap{position:relative}
 .ss-text{transition:opacity ${OPTS.fadeMs}ms ease, transform ${OPTS.fadeMs}ms ease}
 .ss-text.is-out{opacity:0; transform:translateY(6px)}
-#ss-team .ss-role{margin:0 0 .1em}
-#ss-team .ss-name{margin:0 0 .1em; line-height:1.04}
-#ss-team .ss-name a{color:inherit; text-decoration:none}
-#ss-team .ss-name a:hover{text-decoration:underline}
-#ss-team .ss-tag{margin:0; min-height:1.35em}
+.ss-team .ss-role{margin:0 0 .1em}
+.ss-team .ss-name{margin:0 0 .1em; line-height:1.04}
+.ss-team .ss-name a{color:inherit; text-decoration:none}
+.ss-team .ss-name a:hover{text-decoration:underline}
+.ss-team .ss-tag{margin:0; min-height:1.35em}
 
 .ss-arrow{
   position:absolute; top:50%; transform:translateY(-50%);
@@ -182,7 +185,7 @@
 .ss-sk-bar{display:block; border-radius:7px; background:currentColor; opacity:.25}
 
 @media (max-width:620px){
-  #ss-team{padding:0 34px}
+  .ss-team{padding:0 34px}
   .ss-top{gap:16px; margin-bottom:14px}
   .ss-ava{width:${Math.round(OPTS.avatar * .7)}px; height:${Math.round(OPTS.avatar * .7)}px}
   .ss-links{gap:16px}
@@ -197,13 +200,13 @@
 }`;
     if (!OPTS.inheritType) {
       s.textContent += `
-#ss-team .ss-role{font-size:${OPTS.fallback.role}}
-#ss-team .ss-name{font-size:${OPTS.fallback.name}}
-#ss-team .ss-tag{font-size:${OPTS.fallback.tag}}`;
+.ss-team .ss-role{font-size:${OPTS.fallback.role}}
+.ss-team .ss-name{font-size:${OPTS.fallback.name}}
+.ss-team .ss-tag{font-size:${OPTS.fallback.tag}}`;
     }
     if (OPTS.loadFont) {
       s.textContent += `
-#ss-team,#ss-team *{font-family:"Figtree",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}`;
+.ss-team,.ss-team *{font-family:"Figtree",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}`;
     }
     document.head.appendChild(s);
   }
@@ -412,8 +415,14 @@
   function write(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 
   function init() {
-    var root = document.getElementById('ss-team');
+    /* Accepts any of these, so renaming the file or the div cannot
+       break the widget. The styling keys off a class this adds, not
+       off the id. */
+    var root = document.getElementById('ss-team')
+            || document.getElementById('sds-team')
+            || document.querySelector('[data-team-widget]');
     if (!root) return;
+    root.classList.add('ss-team');
     font(); styles();
 
     var cached = read(OPTS.cacheKey), painted = false;
