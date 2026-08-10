@@ -42,22 +42,28 @@
     source:    'https://glitch951.github.io/CB_Site/team.txt',
     imageBase: 'https://glitch951.github.io/CB_Site/images/',
 
-    avatar:     150,   // px
+    avatar:     190,   // px
     gap:        26,    // px between the avatar and the icon column
-    iconSize:   30,    // px
-    iconGap:    26,    // px between icons
+    iconSize:   34,    // px
+    iconGap:    30,    // px between icons
     interval:   7000,  // ms each person is shown. 0 stops the cycling
     fadeMs:     280,   // cross-fade when the person changes
-    arrowInset: 62,    // px the arrows sit outside the text
+    arrowInset: 74,    // px the arrows sit outside the text
     barHeight:  3,     // px, the timer bar
 
     /* Carrd does not pass its heading styles into an embed, so the type
        and colour are set here instead. These are measured off the page as
        it was: name 71px, the small lines 20 and 24, in #C6D6B6.
        Change these four and nothing else. */
-    color:    '#C6D6B6',
-    typeSize: { role: '20px', name: '71px', tag: '24px' },
-    typeWeight:{ role: '500',  name: '800',  tag: '500' },
+    /* Reconstructed from a screenshot of the page as it was, by
+       rendering each line and fitting size and weight until the ink
+       matched the pixels: "Founded by" 114x20, the name 87 tall, the
+       tagline 907x36, in #C6D6B6. These four groups are the only
+       things to touch if anything reads off. */
+    color:     '#C6D6B6',
+    typeSize:  { role: '22px', name: '84px', tag: '37px' },
+    typeWeight:{ role: '600',  name: '800',  tag: '400' },
+    typeGap:   { role: '6px',  name: '2px' },
 
     loadFont: true,
     fontHref: 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap',
@@ -167,8 +173,8 @@
 .ss-textwrap{position:relative}
 .ss-text{transition:opacity ${OPTS.fadeMs}ms ease, transform ${OPTS.fadeMs}ms ease}
 .ss-text.is-out{opacity:0; transform:translateY(6px)}
-.ss-team .ss-role{margin:0 0 .1em}
-.ss-team .ss-name{margin:0 0 .1em; line-height:1.04}
+.ss-team .ss-role{margin:0}
+.ss-team .ss-name{margin:0; line-height:1}
 .ss-team .ss-name a{color:inherit; text-decoration:none}
 .ss-team .ss-name a:hover{text-decoration:underline}
 .ss-team .ss-tag{margin:0; min-height:1.35em}
@@ -182,7 +188,7 @@
 .ss-arrow:hover,.ss-arrow:focus-visible{opacity:1}
 .ss-arrow.is-prev{left:-${OPTS.arrowInset}px}
 .ss-arrow.is-next{right:-${OPTS.arrowInset}px}
-.ss-arrow svg{width:21px; height:21px; fill:none; stroke:currentColor;
+.ss-arrow svg{width:26px; height:26px; fill:none; stroke:currentColor;
   stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
 
 .ss-sk{opacity:.4; animation:ss-pulse 1.5s ease-in-out infinite}
@@ -207,9 +213,11 @@
        and colour are set here. Measured off the page as it was. */
     s.textContent += `
 .ss-team{color:${OPTS.color}}
-.ss-team .ss-role{font-size:${OPTS.typeSize.role}; font-weight:${OPTS.typeWeight.role}; opacity:.9}
-.ss-team .ss-name{font-size:${OPTS.typeSize.name}; font-weight:${OPTS.typeWeight.name}; letter-spacing:-.015em}
-.ss-team .ss-tag{font-size:${OPTS.typeSize.tag}; font-weight:${OPTS.typeWeight.tag}; opacity:.9}`;
+.ss-team .ss-role{font-size:${OPTS.typeSize.role}; font-weight:${OPTS.typeWeight.role};
+  margin-bottom:${OPTS.typeGap.role}}
+.ss-team .ss-name{font-size:${OPTS.typeSize.name}; font-weight:${OPTS.typeWeight.name};
+  letter-spacing:-.02em; margin-bottom:${OPTS.typeGap.name}}
+.ss-team .ss-tag{font-size:${OPTS.typeSize.tag}; font-weight:${OPTS.typeWeight.tag}}`;
 
     if (OPTS.loadFont) {
       s.textContent += `
