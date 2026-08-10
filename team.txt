@@ -1,0 +1,45 @@
+# Sudden Snail team widget
+#
+#   ## Name           the big line
+#   role:             the small line above the name
+#   image:            filename in CB_Site/images/, or a full https:// URL
+#   href:             where the name links to (optional)
+#   tagline:          the line under the name (optional)
+#   link: Label | URL one per icon, in the order they should appear
+#
+# Known labels get their own icon: LinkedIn, Twitter, X, Threads,
+# Mastodon, Bluesky, TikTok, Discord, Email, Information, Home,
+# Instagram, ArtStation, Twitch, Steam, YouTube. Anything else gets a
+# neutral dot, so nothing ever breaks.
+#
+# Order here is the order they cycle in.
+
+## Christoffer Bodegård
+role: Founded by
+image: christoffer-bodegard.png
+href: https://christofferbodegard.com/
+tagline: somewhat professional writer/designer/programmer/etc
+link: LinkedIn | https://www.linkedin.com/company/98194802
+link: X | https://twitter.com/chrisbodegard
+link: Threads | https://www.threads.net/@christofferbodegard
+link: Mastodon | https://mastodon.gamedev.place/@christoffer
+link: Bluesky | https://bsky.app/profile/chrisbodegard.bsky.social
+link: TikTok | https://www.tiktok.com/@krisk951/
+link: Discord | https://discord.gg/HsJnXfRXnC
+link: Email | mailto:christofferbodegard@suddensnail.com
+link: Information | #about
+
+## Oscar Westberg
+role: Producer & Artist
+image: oscar-westberg.png
+href: https://oscarwestberg.se/
+tagline:
+link: Website | https://oscarwestberg.se/
+link: X | https://twitter.com/oscarwestberg
+
+## Jonna Träff
+role: Producer & Artist
+image: jonna-traff.png
+href: https://www.artstation.com/jonnatraff
+tagline:
+link: ArtStation | https://www.artstation.com/jonnatraff
