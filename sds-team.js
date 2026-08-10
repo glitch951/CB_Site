@@ -43,13 +43,14 @@
     imageBase: 'https://glitch951.github.io/CB_Site/images/',
 
     avatar:     190,   // px
-    gap:        26,    // px between the avatar and the icon column
-    iconSize:   34,    // px
+    gap:        70,    // px between the avatar and the icons
+    iconSize:   34,    // px, fixed, not tied to the name
     iconGap:    30,    // px between icons
     interval:   7000,  // ms each person is shown. 0 stops the cycling
     fadeMs:     280,   // cross-fade when the person changes
     arrowInset: 74,    // px the arrows sit outside the text
-    barHeight:  3,     // px, the timer bar
+    ringWidth:  4,     // px, the timer ring around the avatar
+    ringColor:  '#DB5B2C',
 
     /* Carrd does not pass its heading styles into an embed, so the type
        and colour are set here instead. These are measured off the page as
@@ -67,15 +68,9 @@
        the column width and whatever font Carrd is serving, instead of
        depending on me guessing a pixel size. */
     fit: {
-      nameFillsColumn: 1.00,   // longest name, as a share of the column
-      tagOfName:       0.989,  // 907 / 917
-      roleOfName:      0.125,  // 115 / 917
-      gapRoleName:     0.09,   // vertical gaps, as a share of name size
-      gapNameTag:      0.02,
-      avatarOfName:    1.95,
-      iconOfName:      0.34,
-      iconGapOfName:   0.30,
-      minName: 28, maxName: 130
+      nameFillsColumn: 1.00,   // every name is fitted to the full column
+      roleOfColumn:    0.125,  // "Founded by" was 115 wide against a 917 name
+      minName: 28, maxName: 220
     },
 
     loadFont: true,
@@ -85,20 +80,20 @@
 
   /* ---------------- icons ---------------- */
   var P = {
-    linkedin:'M6.9 21H3.4V9.2h3.5zM5.1 7.6A2 2 0 1 1 7.2 5.5 2 2 0 0 1 5.1 7.6zM21 21h-3.5v-5.7c0-1.4 0-3.1-1.9-3.1s-2.2 1.5-2.2 3v5.8H9.9V9.2h3.4v1.6h.1a3.7 3.7 0 0 1 3.3-1.8c3.6 0 4.3 2.3 4.3 5.4z',
+    linkedin:'M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.124 2.062 2.062 0 0 1 0 4.124zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z',
     twitter:'M22 5.8a8 8 0 0 1-2.4.7 4.1 4.1 0 0 0 1.8-2.3 8.2 8.2 0 0 1-2.6 1 4.1 4.1 0 0 0-7 3.7A11.6 11.6 0 0 1 3.4 4.6a4.1 4.1 0 0 0 1.3 5.5 4 4 0 0 1-1.9-.5v.1a4.1 4.1 0 0 0 3.3 4 4.2 4.2 0 0 1-1.9.1 4.1 4.1 0 0 0 3.8 2.9A8.3 8.3 0 0 1 2 18.4a11.6 11.6 0 0 0 6.3 1.8c7.5 0 11.7-6.3 11.7-11.7v-.5A8.3 8.3 0 0 0 22 5.8z',
-    x:'M17.5 3h3l-6.6 7.5L21.7 21h-6l-4.7-6.1L5.6 21h-3l7-8L2.6 3h6.2l4.2 5.6zM16.4 19.2h1.7L7.7 4.7H5.9z',
+    x:'M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932zM17.61 20.644h2.039L6.486 3.24H4.298z',
     threads:'M12.2 22h-.1c-3.4 0-6-1.1-7.8-3.3C2.7 16.9 2 14.6 2 12c0-2.6.7-4.9 2.3-6.7C6.1 3.1 8.7 2 12.1 2h.1c2.6 0 4.8.7 6.5 2 1.6 1.2 2.7 3 3.3 5.2l-2 .6c-1-3.6-3.5-5.5-7.8-5.5h-.1c-2.7 0-4.8.9-6.2 2.6C4.6 8.3 4 10 4 12c0 2 .6 3.8 1.9 5.2 1.4 1.7 3.5 2.6 6.2 2.6h.1c2.5 0 4.1-.6 5.5-1.9 1.6-1.5 1.6-3.4 1.1-4.5-.3-.7-.9-1.2-1.6-1.6-.2 1.2-.6 2.2-1.1 3-.8 1.1-2 1.8-3.5 1.9-1.2.1-2.3-.2-3.1-.8-1-.7-1.6-1.8-1.6-3 0-2.4 1.9-4.1 4.8-4.3.9-.1 1.8 0 2.5.1-.1-.7-.3-1.2-.7-1.6-.5-.5-1.2-.8-2.2-.8c-.8 0-1.8.2-2.5 1.2l-1.7-1.1c.9-1.3 2.4-2 4.1-2h.1c2.9 0 4.6 1.8 4.8 4.9 1.7.7 2.9 1.8 3.5 3.2.9 2 1 5.2-1.6 7.7-1.8 1.7-4 2.5-7 2.5zm-.4-11.2c-2.6.1-3.2 1.3-3.2 2.3 0 .9.9 1.9 2.6 1.8 1.9-.1 2.6-1.1 3-3.9-.6-.2-1.4-.3-2.3-.2h-.1z',
 
-    mastodon:'M21 9.4c0-4-2.6-5.2-2.6-5.2C17 3.5 14.7 3.2 12.3 3.2h-.1c-2.4 0-4.7.3-6.1 1-.1 0-2.6 1.2-2.6 5.2 0 .9 0 2 .1 3.2.2 4 .9 8 4.7 9 1.7.5 3.2.6 4.4.5 2.2-.1 3.4-.8 3.4-.8l-.1-1.6s-1.6.5-3.3.4c-1.7-.1-3.5-.2-3.8-2.3l-.1-.7c3.4.8 6.3.4 7.1.3 2.2-.3 4.2-1.7 4.4-3 .4-2.1.4-5 .4-5zm-3.1 4.9h-2v-4.7c0-1-.4-1.5-1.3-1.5-.9 0-1.4.6-1.4 1.8v2.5h-1.9v-2.5c0-1.2-.5-1.8-1.4-1.8-.9 0-1.3.5-1.3 1.5v4.7h-2V9.5c0-1 .3-1.8.8-2.4.5-.6 1.2-.9 2.1-.9 1 0 1.8.4 2.3 1.2l.5.8.5-.8c.5-.8 1.3-1.2 2.3-1.2.9 0 1.6.3 2.1.9.5.6.8 1.4.8 2.4v4.8z',
-    bluesky:'M12 10.8C10.9 8.6 7.9 4.6 5.2 3 2.6 1.4 1.6 2 1.6 4.4c0 1.3.7 5.7 1.2 6.4.6.9 2.3 1.1 3.9.9-2.5.4-3.1 1.9-1.8 3.4 2.5 2.8 3.6 1.1 5-1.4l.4-.7c.3.5.4.7.7 1.2 1.3 2.4 2.4 4.1 4.9 1.4 1.3-1.5.7-3-1.8-3.4 1.6.2 3.3 0 3.9-.9.5-.7 1.2-5.1 1.2-6.4C22.4 2 21.4 1.4 18.8 3c-2.7 1.6-5.7 5.6-6.8 7.8z',
-    tiktok:'M16.6 5.8a4.8 4.8 0 0 1-1.1-2.8h-3v11.3a2.6 2.6 0 1 1-2.2-2.6V8.6a5.7 5.7 0 1 0 5.2 5.7V9.1a7.8 7.8 0 0 0 4.5 1.4V7.5a4.7 4.7 0 0 1-3.4-1.7z',
-    discord:'M19.3 5.3A16.9 16.9 0 0 0 15.1 4l-.2.4a15.7 15.7 0 0 1 3.7 1.2 13.3 13.3 0 0 0-11.2 0 15.9 15.9 0 0 1 3.7-1.2L10.9 4a16.9 16.9 0 0 0-4.2 1.3C4.1 9.2 3.4 13 3.8 16.7a16.9 16.9 0 0 0 5.1 2.6l1.1-1.9a11 11 0 0 1-1.7-.8l.4-.3a12.1 12.1 0 0 0 10.4 0l.4.3a11 11 0 0 1-1.7.8l1.1 1.9a16.8 16.8 0 0 0 5.1-2.6c.5-4.3-.6-8.1-2.7-11.4zM9.7 14.5c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.9.9 1.8 2-.8 2-1.8 2zm4.6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.9.9 1.8 2-.8 2-1.8 2z',
+    mastodon:'M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.61.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-2.207a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.7.077-.14.11-.017 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.67 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z',
+    bluesky:'M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 0 1-.415-.056c.14.017.279.036.415.056 2.67.297 5.568-.628 6.383-3.364.246-.828.624-5.79.624-6.478 0-.69-.139-1.861-.902-2.206-.659-.298-1.664-.62-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z',
+    tiktok:'M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z',
+    discord:'M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.79.037c-.21.375-.444.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.32.027C.533 9.046-.32 13.58.099 18.058a.082.082 0 0 0 .31.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.11 13.11 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.94.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .78.009c.12.099.246.198.373.292a.077.077 0 0 1-.6.128 12.3 12.3 0 0 1-1.873.891.076.076 0 0 0-.4.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .84.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.029zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.211 0 2.176 1.095 2.157 2.419 0 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.095 2.157 2.419 0 1.333-.946 2.419-2.157 2.419z',
     email:'M3 5h18v14H3zm2 2v.3l7 4.7 7-4.7V7zm14 10v-7.3l-7 4.7-7-4.7V17z',
-    info:'M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z',
+    info:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm-1-13h2v2h-2zm0 4h2v6h-2z',
     home:'M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3z',
     instagram:'M12 7.4A4.6 4.6 0 1 0 16.6 12 4.6 4.6 0 0 0 12 7.4zm0 7.6A3 3 0 1 1 15 12a3 3 0 0 1-3 3zm5.8-7.8a1.1 1.1 0 1 1-1.1-1.1 1.1 1.1 0 0 1 1.1 1.1zM21 8.9a5.3 5.3 0 0 0-1.5-3.8A5.3 5.3 0 0 0 15.7 3.6C14.2 3.5 9.8 3.5 8.3 3.6A5.3 5.3 0 0 0 4.5 5.1 5.3 5.3 0 0 0 3 8.9c-.1 1.5-.1 5.9 0 7.4a5.3 5.3 0 0 0 1.5 3.8 5.3 5.3 0 0 0 3.8 1.5c1.5.1 5.9.1 7.4 0a5.3 5.3 0 0 0 3.8-1.5 5.3 5.3 0 0 0 1.5-3.8c.1-1.5.1-5.9 0-7.4zm-1.9 9a3 3 0 0 1-1.7 1.7c-1.2.5-4 .4-5.4.4s-4.2.1-5.4-.4a3 3 0 0 1-1.7-1.7c-.5-1.2-.4-4-.4-5.4s-.1-4.2.4-5.4A3 3 0 0 1 6.6 5.4C7.8 4.9 10.6 5 12 5s4.2-.1 5.4.4a3 3 0 0 1 1.7 1.7c.5 1.2.4 4 .4 5.4s.1 4.2-.4 5.4z',
-    artstation:'M2.3 16.5l1.7 3a1.6 1.6 0 0 0 1.4.8h11.2l-2.2-3.8zM21.7 16.5a1.8 1.8 0 0 0-.2-1.4L14.9 3.7a1.6 1.6 0 0 0-1.4-.8h-3.2l8 13.9zM12 6.5l-5 8.6h9.9z',
+    artstation:'M0 17.723l2.027 3.505h.001a2.424 2.424 0 0 0 2.164 1.333h13.457l-2.792-4.838H0zm24 .025c0-.484-.143-.935-.388-1.314L15.728 2.728a2.424 2.424 0 0 0-2.142-1.289H9.419L21.598 22.54l1.92-3.325c.378-.637.482-.919.482-1.467zm-11.129-3.462L7.428 4.858l-5.444 9.428h10.887z',
     twitch:'M4.3 3L3 6.5v13h4.5V22h2.5l2.5-2.5h3.6L21 15V3zm15 11.2l-2.6 2.6h-4.1L10.3 19v-2.2H6.7V4.8h12.6zM15 8v4.4h1.7V8zm-4.5 0v4.4h1.8V8z',
     steam:'M12 2a10 10 0 0 0-10 9.3l5.4 2.2a2.8 2.8 0 0 1 1.6-.5h.1l2.4-3.4v-.1a3.8 3.8 0 1 1 3.8 3.8h-.1l-3.4 2.4v.1a2.8 2.8 0 0 1-5.6.6l-3.8-1.6A10 10 0 1 0 12 2zM7.2 17.2l-1.2-.5a2.1 2.1 0 0 0 3.9-.1 2.1 2.1 0 0 0-2.8-1.1l1.2.5a1.6 1.6 0 1 1-1.2 2.9zm11.3-5.9a2.5 2.5 0 1 0-2.5 2.5 2.5 2.5 0 0 0 2.5-2.5zm-4.4 0a1.9 1.9 0 1 1 1.9 1.9 1.9 1.9 0 0 1-1.9-1.9z',
     youtube:'M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4a2.5 2.5 0 0 0-1.8 1.8A26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z',
@@ -154,32 +149,29 @@
 .ss-inner{position:relative; text-align:left}
 
 /* --- avatar + icons + bar --- */
-.ss-top{display:flex; align-items:center; gap:${OPTS.gap}px; margin-bottom:18px}
+.ss-top{display:flex; align-items:center; gap:${OPTS.gap}px; margin-bottom:22px}
 .ss-side{flex:1 1 auto}
 .ss-ava{
   flex:0 0 auto; position:relative;
-  width:var(--ss-avatar); height:var(--ss-avatar); border-radius:50%;
+  width:${OPTS.avatar}px; height:${OPTS.avatar}px; border-radius:50%;
   display:grid; place-items:center;
 }
-.ss-ava img{width:100%; height:100%; object-fit:cover; display:block; border-radius:50%}
-.ss-ava::after{
-  content:""; position:absolute; inset:0; border-radius:50%;
-  border:1px solid currentColor; opacity:.35; pointer-events:none;
-}
-.ss-ava.is-empty{font-size:calc(var(--ss-avatar) / 3.4); opacity:.5}
+.ss-ava img{width:calc(100% - ${OPTS.ringWidth*2}px); height:calc(100% - ${OPTS.ringWidth*2}px);
+  object-fit:cover; display:block; border-radius:50%}
+
+.ss-ava.is-empty{font-size:${Math.round(OPTS.avatar/3.4)}px; opacity:.5}
 
 .ss-side{min-width:0}
 /* one row, always: wrapping icons was making the block grow a line */
-.ss-links{display:flex; align-items:center; gap:var(--ss-icon-gap); flex-wrap:nowrap}
+.ss-links{display:flex; align-items:center; gap:${OPTS.iconGap}px; flex-wrap:nowrap}
 .ss-links a{
   display:grid; place-items:center; color:inherit; line-height:0;
   opacity:.9; transition:opacity .18s ease, transform .18s ease;
 }
 .ss-links a:hover{opacity:1; transform:translateY(-2px)}
-.ss-links svg{width:var(--ss-icon); height:var(--ss-icon); fill:currentColor}
+.ss-links svg{width:${OPTS.iconSize}px; height:${OPTS.iconSize}px; fill:currentColor}
 
 /* one segment per person; the live one fills over the interval */
-.ss-bar{display:flex; gap:6px; margin-top:16px}
 /* The track is a translucent colour, not currentColor at low opacity:
    opacity on the track would also dim the fill inside it, which is why
    the bar looked like it was doing nothing. */
@@ -187,13 +179,20 @@
   flex:1 1 0; height:${OPTS.barHeight}px; border-radius:${OPTS.barHeight}px;
   background:${track}; overflow:hidden; position:relative;
 }
-.ss-seg i{
-  position:absolute; inset:0; transform-origin:left center; transform:scaleX(0);
-  background:currentColor; border-radius:inherit; display:block;
+
+/* The timer is the ring around the avatar: it fills over the time each
+   person is shown, and its finishing is what advances the widget, so the
+   two can never drift apart. */
+.ss-ring{position:absolute; inset:0; width:100%; height:100%;
+  transform:rotate(-90deg); overflow:visible; pointer-events:none}
+.ss-ring circle{fill:none; stroke-width:${OPTS.ringWidth}}
+.ss-ring .ss-ring-track{stroke:${track}}
+.ss-ring .ss-ring-fill{
+  stroke:${OPTS.ringColor}; stroke-linecap:round;
+  stroke-dasharray:var(--ss-circ); stroke-dashoffset:var(--ss-circ);
 }
-.ss-seg.is-done i{transform:scaleX(1)}
-.ss-seg.is-live i{animation:ss-fill linear forwards}
-@keyframes ss-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.ss-ring .ss-ring-fill.is-live{animation:ss-ring linear forwards}
+@keyframes ss-ring{from{stroke-dashoffset:var(--ss-circ)}to{stroke-dashoffset:0}}
 
 /* --- text --- */
 .ss-textwrap{position:relative}
@@ -212,9 +211,9 @@
   display:grid; place-items:center; transition:opacity .18s ease;
 }
 .ss-arrow:hover,.ss-arrow:focus-visible{opacity:1}
-.ss-arrow.is-prev{left:calc(var(--ss-arrow) * -1)}
-.ss-arrow.is-next{right:calc(var(--ss-arrow) * -1)}
-.ss-arrow svg{width:calc(var(--ss-name) * .28); height:calc(var(--ss-name) * .28); fill:none; stroke:currentColor;
+.ss-arrow.is-prev{left:-54px}
+.ss-arrow.is-next{right:-54px}
+.ss-arrow svg{width:26px; height:26px; fill:none; stroke:currentColor;
   stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
 
 .ss-sk{opacity:.4; animation:ss-pulse 1.5s ease-in-out infinite}
@@ -232,7 +231,7 @@
 }
 @media (prefers-reduced-motion:reduce){
   .ss-text,.ss-links a{transition:none}
-  .ss-seg.is-live i{animation:none; transform:scaleX(1)}
+  .ss-ring .ss-ring-fill.is-live{animation:none; stroke-dashoffset:0}
   .ss-sk{animation:none}
 }`;
     /* Carrd's heading styles do not reach inside an embed, so the type
@@ -240,11 +239,11 @@
     s.textContent += `
 .ss-team{color:${OPTS.color}}
 .ss-team .ss-role{font-size:var(--ss-role); font-weight:${OPTS.typeWeight.role};
-  margin:0 0 var(--ss-gap-role)}
+  margin:0; line-height:1.1}
 .ss-team .ss-name{font-size:var(--ss-name); font-weight:${OPTS.typeWeight.name};
-  margin:0 0 var(--ss-gap-name); line-height:1; white-space:nowrap}
+  margin:0; line-height:1; white-space:nowrap}
 .ss-team .ss-tag{font-size:var(--ss-tag); font-weight:${OPTS.typeWeight.tag};
-  margin:0; white-space:nowrap}`;
+  margin:0; line-height:1.05; white-space:nowrap}`;
 
     if (OPTS.loadFont) {
       s.textContent += `
@@ -298,11 +297,16 @@
     return n.split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0); }).join('').toUpperCase();
   }
 
+  var RING = '<svg class="ss-ring" viewBox="0 0 100 100" aria-hidden="true">' +
+    '<circle class="ss-ring-track" cx="50" cy="50" r="48"></circle>' +
+    '<circle class="ss-ring-fill" cx="50" cy="50" r="48"></circle></svg>';
+
   function avatarHtml(p) {
     var img = url(p.image);
-    return img
-      ? '<div class="ss-ava"><img src="' + img + '" alt="" decoding="async"></div>'
-      : '<div class="ss-ava is-empty">' + esc(initials(p.name)) + '</div>';
+    var inner = img
+      ? '<img src="' + img + '" alt="" decoding="async">'
+      : '<span>' + esc(initials(p.name)) + '</span>';
+    return '<div class="ss-ava' + (img ? '' : ' is-empty') + '">' + RING + inner + '</div>';
   }
   function linksHtml(p) {
     return p.links.map(function (l) {
@@ -348,9 +352,7 @@
           '<div class="ss-ava-slot">' + avatarHtml(people[0]) + '</div>' +
           '<div class="ss-side">' +
             '<div class="ss-links">' + linksHtml(people[0]) + '</div>' +
-            (many ? '<div class="ss-bar">' +
-              people.map(function () { return '<span class="ss-seg"><i></i></span>'; }).join('') +
-            '</div>' : '') +
+
           '</div>' +
         '</div>' +
         '<div class="ss-textwrap">' +
@@ -363,7 +365,7 @@
     var avaSlot = root.querySelector('.ss-ava-slot');
     var links   = root.querySelector('.ss-links');
     var text    = root.querySelector('.ss-text');
-    var segs    = [].slice.call(root.querySelectorAll('.ss-seg'));
+    var CIRC    = 2 * Math.PI * 48;
     var at = 0, busy = false, fallbackTimer = null;
 
     /* Two jobs, in order.
@@ -384,7 +386,6 @@
 
       inner.style.width = '';
       links.style.minWidth = '';
-      text.style.minWidth = '';
       text.style.minHeight = '';
 
       var column = root.clientWidth;
@@ -401,39 +402,16 @@
         return probe.getBoundingClientRect().width || 1;
       }
 
-      var longest = '';
-      people.forEach(function (p) { if (p.name.length > longest.length) longest = p.name; });
-      var nameW100 = widthAt100(longest, OPTS.typeWeight.name);
-
-      var nameSize = 100 * (column * F.nameFillsColumn) / nameW100;
-      nameSize = Math.max(F.minName, Math.min(F.maxName, nameSize));
-
-      var targetName = nameSize * nameW100 / 100;
-      /* The ratios were measured from the first entry, so size the two
-         small lines from that entry's own strings. Using the longest
-         role of anyone would shrink the line to fit a different string
-         than the one the ratio came from. */
-      var tagTxt  = people[0].tag  || '';
+      /* Reference sizes. The role line keeps one size for everyone so it
+         does not jump about; the name and tagline are fitted per person
+         in fitPerson below. */
       var roleTxt = people[0].role || '';
-      var tagSize = tagTxt
-        ? 100 * (targetName * F.tagOfName) / widthAt100(tagTxt, OPTS.typeWeight.tag)
-        : nameSize * 0.4;
       var roleSize = roleTxt
-        ? 100 * (targetName * F.roleOfName) / widthAt100(roleTxt, OPTS.typeWeight.role)
-        : nameSize * 0.25;
+        ? 100 * (column * F.roleOfColumn) / widthAt100(roleTxt, OPTS.typeWeight.role)
+        : 16;
 
       root.removeChild(probe);
-
-      var st = root.style;
-      st.setProperty('--ss-name',     nameSize.toFixed(1) + 'px');
-      st.setProperty('--ss-tag',      tagSize.toFixed(1) + 'px');
-      st.setProperty('--ss-role',     roleSize.toFixed(1) + 'px');
-      st.setProperty('--ss-gap-role', (nameSize * F.gapRoleName).toFixed(1) + 'px');
-      st.setProperty('--ss-gap-name', (nameSize * F.gapNameTag).toFixed(1) + 'px');
-      st.setProperty('--ss-avatar',   Math.round(nameSize * F.avatarOfName) + 'px');
-      st.setProperty('--ss-icon',     Math.round(nameSize * F.iconOfName) + 'px');
-      st.setProperty('--ss-icon-gap', Math.round(nameSize * F.iconGapOfName) + 'px');
-      st.setProperty('--ss-arrow',    Math.round(nameSize * 0.62) + 'px');
+      root.style.setProperty('--ss-role', roleSize.toFixed(1) + 'px');
 
       /* now hold the widest arrangement so nothing shifts between people */
       var probe2 = inner.cloneNode(true);
@@ -441,35 +419,57 @@
         'left:0;top:0;width:auto;white-space:nowrap';
       root.appendChild(probe2);
       var pl = probe2.querySelector('.ss-links'), pt = probe2.querySelector('.ss-text');
-      var wideIcons = 0, wideText = 0, tallText = 0;
+      var wideIcons = 0, tallText = 0;
       people.forEach(function (p) {
+        fitPerson(p);                       // each person at their own size
         pl.innerHTML = linksHtml(p);
         pt.innerHTML = textHtml(p);
         wideIcons = Math.max(wideIcons, pl.scrollWidth);
-        wideText  = Math.max(wideText,  pt.scrollWidth);
         tallText  = Math.max(tallText,  pt.offsetHeight);
       });
+      fitPerson(people[at]);                // back to whoever is showing
       root.removeChild(probe2);
 
       if (wideIcons) links.style.minWidth = Math.ceil(wideIcons) + 'px';
-      if (wideText)  text.style.minWidth  = Math.ceil(Math.min(wideText, column)) + 'px';
       if (tallText)  text.style.minHeight = Math.ceil(tallText) + 'px';
     }
 
-    function paintSegs() {
-      segs.forEach(function (s, i) {
-        s.classList.remove('is-live', 'is-done');
-        s.querySelector('i').style.animation = '';
-        if (i < at) s.classList.add('is-done');
-      });
-      var live = segs[at];
-      if (!live || !OPTS.interval) return;
-      var fill = live.querySelector('i');
-      if (reduce) { live.classList.add('is-done'); return; }
-      /* Restart the animation cleanly, then let it drive the change. */
-      void fill.offsetWidth;
+    function startRing() {
+      var fill = root.querySelector('.ss-ring-fill');
+      if (!fill) return;
+      fill.classList.remove('is-live');
+      fill.style.animation = '';
+      if (!OPTS.interval || !many || reduce) return;
+      void fill.offsetWidth;                     // restart cleanly
       fill.style.animationDuration = OPTS.interval + 'ms';
-      live.classList.add('is-live');
+      fill.classList.add('is-live');
+    }
+
+    /* Each name is set to fill the column, whatever its length, and the
+       tagline is then scaled so it comes out exactly as long as the name.
+       Both are measured, not guessed. */
+    function fitPerson(p) {
+      var column = root.clientWidth;
+      if (!column) return;
+      var probe = document.createElement('div');
+      probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;' +
+        'left:0;top:0;white-space:nowrap;font-size:100px';
+      root.appendChild(probe);
+
+      function w100(txt, weight) {
+        probe.style.fontWeight = weight;
+        probe.textContent = txt;
+        return probe.getBoundingClientRect().width || 1;
+      }
+      var F = OPTS.fit;
+      var nameSize = 100 * (column * F.nameFillsColumn) / w100(p.name, OPTS.typeWeight.name);
+      nameSize = Math.max(F.minName, Math.min(F.maxName, nameSize));
+      var nameW = nameSize * w100(p.name, OPTS.typeWeight.name) / 100;
+      var tagSize = p.tag ? 100 * nameW / w100(p.tag, OPTS.typeWeight.tag) : nameSize * 0.4;
+
+      root.removeChild(probe);
+      root.style.setProperty('--ss-name', nameSize.toFixed(2) + 'px');
+      root.style.setProperty('--ss-tag',  tagSize.toFixed(2) + 'px');
     }
 
     function show(i, manual) {
@@ -479,13 +479,14 @@
       text.classList.add('is-out');
       links.style.opacity = '0';
       setTimeout(function () {
+        fitPerson(people[at]);
         avaSlot.innerHTML = avatarHtml(people[at]);
         links.innerHTML = linksHtml(people[at]);
         text.innerHTML = textHtml(people[at]);
         text.classList.remove('is-out');
         links.style.opacity = '';
         busy = false;
-        paintSegs();
+        startRing();
       }, OPTS.fadeMs);
       if (manual) clearTimeout(fallbackTimer);
     }
@@ -493,7 +494,7 @@
     /* The bar finishing is what advances the widget, so the two can
        never fall out of step. */
     root.addEventListener('animationend', function (e) {
-      if (e.animationName === 'ss-fill') show(at + 1);
+      if (e.animationName === 'ss-ring') show(at + 1);
     });
     if (reduce && OPTS.interval && many) {
       (function loop() {
@@ -507,10 +508,8 @@
     if (next) next.addEventListener('click', function () { show(at + 1, true); });
 
     function pause(on) {
-      segs.forEach(function (s) {
-        var f = s.querySelector('i');
-        if (f) f.style.animationPlayState = on ? 'paused' : 'running';
-      });
+      var f = root.querySelector('.ss-ring-fill');
+      if (f) f.style.animationPlayState = on ? 'paused' : 'running';
     }
     root.addEventListener('mouseenter', function () { pause(true); });
     root.addEventListener('mouseleave', function () { pause(false); });
@@ -518,10 +517,11 @@
     root.addEventListener('focusout', function () { pause(false); });
     document.addEventListener('visibilitychange', function () { pause(document.hidden); });
 
+    root.style.setProperty('--ss-circ', CIRC.toFixed(2));
     lock();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(lock);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ lock(); startRing(); });
     window.addEventListener('resize', lock, { passive: true });
-    paintSegs();
+    startRing();
   }
 
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
