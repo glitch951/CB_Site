@@ -21,11 +21,7 @@ href: https://christofferbodegard.com/
 tagline: somewhat professional writer/designer/programmer/etc
 link: LinkedIn | https://www.linkedin.com/company/98194802
 link: X | https://twitter.com/chrisbodegard
-link: Threads | https://www.threads.net/@christofferbodegard
-link: Mastodon | https://mastodon.gamedev.place/@christoffer
 link: Bluesky | https://bsky.app/profile/chrisbodegard.bsky.social
-link: TikTok | https://www.tiktok.com/@krisk951/
-link: Discord | https://discord.gg/HsJnXfRXnC
 link: Email | mailto:christofferbodegard@suddensnail.com
 link: Information | #about
 

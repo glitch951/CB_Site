@@ -49,8 +49,15 @@
     interval:   7000,  // ms each person is shown. 0 stops the cycling
     fadeMs:     280,   // cross-fade when the person changes
     arrowInset: 74,    // px the arrows sit outside the text
-    ringWidth:  4,     // px, the timer ring around the avatar
-    ringColor:  '#DB5B2C',
+    ringWidth:  1,      // px, hairline
+    ringTrack:  '',     // blank means the same colour as the text
+    ringFill:   '#E93C3C',
+
+    /* The page colour behind the widget. Used to knock a gap in the
+       tagline where the name's descenders come down into it, so the two
+       lines can sit tight together without colliding. */
+    bgColor:    '#000B13',
+    knockout:   12,     // px of clearance carved around the name
 
     /* Carrd does not pass its heading styles into an embed, so the type
        and colour are set here instead. These are measured off the page as
@@ -68,9 +75,9 @@
        the column width and whatever font Carrd is serving, instead of
        depending on me guessing a pixel size. */
     fit: {
-      nameFillsColumn: 1.00,   // every name is fitted to the full column
+      nameFillsColumn: 1.00,   // the longest name fills the column
       roleOfColumn:    0.125,  // "Founded by" was 115 wide against a 917 name
-      minName: 28, maxName: 220
+      minName: 28, maxName: 160
     },
 
     loadFont: true,
@@ -185,10 +192,12 @@
    two can never drift apart. */
 .ss-ring{position:absolute; inset:0; width:100%; height:100%;
   transform:rotate(-90deg); overflow:visible; pointer-events:none}
-.ss-ring circle{fill:none; stroke-width:${OPTS.ringWidth}}
-.ss-ring .ss-ring-track{stroke:${track}}
+/* non-scaling-stroke keeps this an exact hairline whatever size
+   the avatar is, instead of scaling with the viewBox */
+.ss-ring circle{fill:none; stroke-width:${OPTS.ringWidth}px; vector-effect:non-scaling-stroke}
+.ss-ring .ss-ring-track{stroke:${OPTS.ringTrack || OPTS.color}}
 .ss-ring .ss-ring-fill{
-  stroke:${OPTS.ringColor}; stroke-linecap:round;
+  stroke:${OPTS.ringFill}; stroke-linecap:butt;
   stroke-dasharray:var(--ss-circ); stroke-dashoffset:var(--ss-circ);
 }
 .ss-ring .ss-ring-fill.is-live{animation:ss-ring linear forwards}
@@ -239,11 +248,21 @@
     s.textContent += `
 .ss-team{color:${OPTS.color}}
 .ss-team .ss-role{font-size:var(--ss-role); font-weight:${OPTS.typeWeight.role};
-  margin:0; line-height:1.1}
-.ss-team .ss-name{font-size:var(--ss-name); font-weight:${OPTS.typeWeight.name};
-  margin:0; line-height:1; white-space:nowrap}
-.ss-team .ss-tag{font-size:var(--ss-tag); font-weight:${OPTS.typeWeight.tag};
-  margin:0; line-height:1.05; white-space:nowrap}`;
+  margin:0 0 var(--ss-role-gap); line-height:1}
+.ss-team .ss-name{
+  font-size:var(--ss-name); font-weight:${OPTS.typeWeight.name};
+  margin:0; line-height:1; white-space:nowrap;
+  position:relative; z-index:2;
+  /* the halo is painted first and the letter on top of it, so the name
+     carves its own clearance out of the line below */
+  -webkit-text-stroke:${OPTS.knockout}px ${OPTS.bgColor};
+  paint-order:stroke fill;
+}
+.ss-team .ss-tag{
+  font-size:var(--ss-tag); font-weight:${OPTS.typeWeight.tag};
+  margin:var(--ss-tag-gap) 0 0; line-height:1; white-space:nowrap;
+  position:relative; z-index:1;
+}`;
 
     if (OPTS.loadFont) {
       s.textContent += `
@@ -366,7 +385,7 @@
     var links   = root.querySelector('.ss-links');
     var text    = root.querySelector('.ss-text');
     var CIRC    = 2 * Math.PI * 48;
-    var at = 0, busy = false, fallbackTimer = null;
+    var at = 0, run = 0, swapTimer = null, fallbackTimer = null;
 
     /* Two jobs, in order.
 
@@ -410,8 +429,19 @@
         ? 100 * (column * F.roleOfColumn) / widthAt100(roleTxt, OPTS.typeWeight.role)
         : 16;
 
+      /* the longest name decides the size, and everyone shares it */
+      var widest = 0;
+      people.forEach(function (p) {
+        widest = Math.max(widest, widthAt100(p.name, OPTS.typeWeight.name));
+      });
+      nameSize = 100 * (column * F.nameFillsColumn) / widest;
+      nameSize = Math.max(F.minName, Math.min(F.maxName, nameSize));
+
       root.removeChild(probe);
+      root.style.setProperty('--ss-name', nameSize.toFixed(2) + 'px');
       root.style.setProperty('--ss-role', roleSize.toFixed(1) + 'px');
+      root.style.setProperty('--ss-role-gap', (-nameSize * 0.06).toFixed(1) + 'px');
+      root.style.setProperty('--ss-tag-gap',  (-nameSize * 0.07).toFixed(1) + 'px');
 
       /* now hold the widest arrangement so nothing shifts between people */
       var probe2 = inner.cloneNode(true);
@@ -434,67 +464,83 @@
       if (tallText)  text.style.minHeight = Math.ceil(tallText) + 'px';
     }
 
-    function startRing() {
+    function stopRing() {
       var fill = root.querySelector('.ss-ring-fill');
       if (!fill) return;
       fill.classList.remove('is-live');
       fill.style.animation = '';
+      fill.style.animationPlayState = '';
+    }
+
+    function startRing() {
+      var fill = root.querySelector('.ss-ring-fill');
+      if (!fill) return;
+      stopRing();
       if (!OPTS.interval || !many || reduce) return;
-      void fill.offsetWidth;                     // restart cleanly
+      void fill.offsetWidth;                     // force a clean restart
       fill.style.animationDuration = OPTS.interval + 'ms';
       fill.classList.add('is-live');
+      if (hovering) fill.style.animationPlayState = 'paused';
     }
 
     /* Each name is set to fill the column, whatever its length, and the
        tagline is then scaled so it comes out exactly as long as the name.
        Both are measured, not guessed. */
+    /* One size for everyone: whatever the longest name needs in order to
+       fill the column. Shorter names keep that size and simply run
+       shorter, left aligned, instead of swelling to fill the width. */
+    var nameSize = 0;
+
     function fitPerson(p) {
       var column = root.clientWidth;
-      if (!column) return;
+      if (!column || !nameSize) return;
       var probe = document.createElement('div');
       probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;' +
         'left:0;top:0;white-space:nowrap;font-size:100px';
       root.appendChild(probe);
-
       function w100(txt, weight) {
         probe.style.fontWeight = weight;
         probe.textContent = txt;
         return probe.getBoundingClientRect().width || 1;
       }
-      var F = OPTS.fit;
-      var nameSize = 100 * (column * F.nameFillsColumn) / w100(p.name, OPTS.typeWeight.name);
-      nameSize = Math.max(F.minName, Math.min(F.maxName, nameSize));
       var nameW = nameSize * w100(p.name, OPTS.typeWeight.name) / 100;
       var tagSize = p.tag ? 100 * nameW / w100(p.tag, OPTS.typeWeight.tag) : nameSize * 0.4;
-
       root.removeChild(probe);
-      root.style.setProperty('--ss-name', nameSize.toFixed(2) + 'px');
-      root.style.setProperty('--ss-tag',  tagSize.toFixed(2) + 'px');
+      root.style.setProperty('--ss-tag', tagSize.toFixed(2) + 'px');
     }
 
-    function show(i, manual) {
-      if (busy || !many) return;
-      busy = true;
+    /* No lock: a second click simply supersedes the first. Each call
+       takes a ticket, and only the newest one is allowed to finish, so
+       hammering the arrows cannot leave a half-finished swap or a ring
+       that never restarts. */
+    function show(i) {
+      if (!many) return;
+      var ticket = ++run;
+      clearTimeout(swapTimer);
+      clearTimeout(fallbackTimer);
+      stopRing();
       at = (i + people.length) % people.length;
       text.classList.add('is-out');
       links.style.opacity = '0';
-      setTimeout(function () {
+      swapTimer = setTimeout(function () {
+        if (ticket !== run) return;
         fitPerson(people[at]);
         avaSlot.innerHTML = avatarHtml(people[at]);
         links.innerHTML = linksHtml(people[at]);
         text.innerHTML = textHtml(people[at]);
         text.classList.remove('is-out');
         links.style.opacity = '';
-        busy = false;
         startRing();
       }, OPTS.fadeMs);
-      if (manual) clearTimeout(fallbackTimer);
     }
 
     /* The bar finishing is what advances the widget, so the two can
        never fall out of step. */
     root.addEventListener('animationend', function (e) {
-      if (e.animationName === 'ss-ring') show(at + 1);
+      /* ignore a stale ring that finished after its person was replaced */
+      if (e.animationName === 'ss-ring' && e.target.classList.contains('is-live')) {
+        show(at + 1);
+      }
     });
     if (reduce && OPTS.interval && many) {
       (function loop() {
@@ -504,10 +550,12 @@
 
     var prev = root.querySelector('.ss-arrow.is-prev');
     var next = root.querySelector('.ss-arrow.is-next');
-    if (prev) prev.addEventListener('click', function () { show(at - 1, true); });
-    if (next) next.addEventListener('click', function () { show(at + 1, true); });
+    if (prev) prev.addEventListener('click', function () { show(at - 1); });
+    if (next) next.addEventListener('click', function () { show(at + 1); });
 
+    var hovering = false;
     function pause(on) {
+      hovering = on;
       var f = root.querySelector('.ss-ring-fill');
       if (f) f.style.animationPlayState = on ? 'paused' : 'running';
     }
