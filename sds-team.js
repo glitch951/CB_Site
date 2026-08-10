@@ -124,7 +124,15 @@
     document.head.appendChild(l);
   }
 
+  function rgba(hex, a) {
+    var h = String(hex).replace('#', '');
+    if (h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+    var n = parseInt(h, 16);
+    return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')';
+  }
+
   function styles() {
+    var track = rgba(OPTS.color, .25);
     var s = document.createElement('style');
     s.id = 'ss-team-css';
     s.textContent = `
@@ -157,9 +165,12 @@
 
 /* one segment per person; the live one fills over the interval */
 .ss-bar{display:flex; gap:6px; margin-top:16px}
+/* The track is a translucent colour, not currentColor at low opacity:
+   opacity on the track would also dim the fill inside it, which is why
+   the bar looked like it was doing nothing. */
 .ss-seg{
   flex:1 1 0; height:${OPTS.barHeight}px; border-radius:${OPTS.barHeight}px;
-  background:currentColor; opacity:.22; overflow:hidden; position:relative;
+  background:${track}; overflow:hidden; position:relative;
 }
 .ss-seg i{
   position:absolute; inset:0; transform-origin:left center; transform:scaleX(0);
@@ -339,23 +350,38 @@
     var segs    = [].slice.call(root.querySelectorAll('.ss-seg'));
     var at = 0, busy = false, fallbackTimer = null;
 
-    /* Hold the tallest layout so the page never twitches as it cycles. */
+    /* Measure every person up front and hold the largest of everything.
+       The block is centred on the page, so if its width changed with the
+       length of a name the avatar and the icons would slide sideways
+       every time it cycled. Locking the width keeps every part of the
+       layout still, and only the words change. */
     function lock() {
-      var probe = root.querySelector('.ss-inner').cloneNode(true);
-      probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:' +
-        root.querySelector('.ss-inner').offsetWidth + 'px;left:0;top:0';
+      var inner = root.querySelector('.ss-inner');
+      inner.style.width = '';
+      links.style.minWidth = '';
+      text.style.minWidth = '';
+      text.style.minHeight = '';
+
+      var probe = inner.cloneNode(true);
+      probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;' +
+        'left:0;top:0;width:auto;white-space:nowrap';
       root.appendChild(probe);
       var pl = probe.querySelector('.ss-links'), pt = probe.querySelector('.ss-text');
-      var wideIcons = 0, tallText = 0;
+      var wideIcons = 0, wideText = 0, tallText = 0;
       people.forEach(function (p) {
         pl.innerHTML = linksHtml(p);
         pt.innerHTML = textHtml(p);
         wideIcons = Math.max(wideIcons, pl.scrollWidth);
-        tallText = Math.max(tallText, pt.offsetHeight);
+        wideText  = Math.max(wideText,  pt.scrollWidth);
+        tallText  = Math.max(tallText,  pt.offsetHeight);
       });
       root.removeChild(probe);
-      if (wideIcons) links.style.minWidth = wideIcons + 'px';
-      if (tallText) text.style.minHeight = tallText + 'px';
+
+      if (wideIcons) links.style.minWidth = Math.ceil(wideIcons) + 'px';
+      if (wideText)  text.style.minWidth  = Math.ceil(wideText) + 'px';
+      if (tallText)  text.style.minHeight = Math.ceil(tallText) + 'px';
+      /* now the widest arrangement is fixed, freeze the block at it */
+      inner.style.width = Math.ceil(inner.offsetWidth) + 'px';
     }
 
     function paintSegs() {

@@ -16,7 +16,7 @@
 
 ## Christoffer Bodegård
 role: Founded by
-image: christoffer-bodegard.png
+image: sudden-snail.png
 href: https://christofferbodegard.com/
 tagline: somewhat professional writer/designer/programmer/etc
 link: LinkedIn | https://www.linkedin.com/company/98194802
