@@ -33,7 +33,7 @@ link: Information | #about
 role: Producer & Artist
 image: oscar-westberg.png
 href: https://oscarwestberg.se/
-tagline:
+tagline: esoteric illustrator of the century and so on
 link: Website | https://oscarwestberg.se/
 link: X | https://twitter.com/oscarwestberg
 
@@ -41,5 +41,5 @@ link: X | https://twitter.com/oscarwestberg
 role: Producer & Artist
 image: jonna-traff.png
 href: https://www.artstation.com/jonnatraff
-tagline:
+tagline: worldsculpter and coordinator plus extra
 link: ArtStation | https://www.artstation.com/jonnatraff
