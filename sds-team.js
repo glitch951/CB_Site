@@ -44,14 +44,13 @@
 
     avatar:     190,   // px
     gap:        56,    // px between the avatar and the icons
-    iconMax:    72,    // px, as large as they can be
-    iconMin:    30,    // px, as small as they are allowed to get
+    iconSize:   30,    // px, measured off the original page
     iconGap:    34,    // px between icons
     interval:   7000,  // ms each person is shown. 0 stops the cycling
     fadeMs:     280,   // cross-fade when the person changes
     arrowInset: 74,    // px the arrows sit outside the text
     ringWidth:  1,      // px, hairline
-    ringGap:    9,      // px the ring stands off the avatar
+    ringGap:    0,      // px the ring stands off the avatar
     ringTrack:  '',     // blank means the same colour as the text
     ringFill:   '#E93C3C',
 
@@ -195,6 +194,7 @@
   position:absolute; inset:-${OPTS.ringGap}px;
   width:calc(100% + ${OPTS.ringGap * 2}px); height:calc(100% + ${OPTS.ringGap * 2}px);
   transform:rotate(-90deg); overflow:visible; pointer-events:none;
+  z-index:2;   /* over the photo, so it reads as the circle's own outline */
 }
 /* non-scaling-stroke keeps this an exact hairline whatever size
    the avatar is, instead of scaling with the viewBox */
@@ -321,8 +321,8 @@
   }
 
   var RING = '<svg class="ss-ring" viewBox="0 0 100 100" aria-hidden="true">' +
-    '<circle class="ss-ring-track" cx="50" cy="50" r="48"></circle>' +
-    '<circle class="ss-ring-fill" cx="50" cy="50" r="48"></circle></svg>';
+    '<circle class="ss-ring-track" cx="50" cy="50" r="49.6"></circle>' +
+    '<circle class="ss-ring-fill" cx="50" cy="50" r="49.6"></circle></svg>';
 
   function avatarHtml(p) {
     var img = url(p.image);
@@ -388,7 +388,7 @@
     var avaSlot = root.querySelector('.ss-ava-slot');
     var links   = root.querySelector('.ss-links');
     var text    = root.querySelector('.ss-text');
-    var CIRC    = 2 * Math.PI * 48;
+    var CIRC    = 2 * Math.PI * 49.6;
     var at = 0, run = 0, swapTimer = null, fallbackTimer = null;
 
     /* Two jobs, in order.
@@ -441,16 +441,8 @@
       nameSize = 100 * (column * F.nameFillsColumn) / widest;
       nameSize = Math.max(F.minName, Math.min(F.maxName, nameSize));
 
-      /* Icons take whatever room is left beside the avatar, as large as
-         that allows, so the row reads full instead of a few small marks
-         floating in space. Remove links and the rest grow to suit. */
-      var most = 1;
-      people.forEach(function (p) { most = Math.max(most, p.links.length); });
-      var room = column - OPTS.avatar - OPTS.gap - (most - 1) * OPTS.iconGap;
-      var iconSize = Math.max(OPTS.iconMin, Math.min(OPTS.iconMax, room / most));
-
       root.removeChild(probe);
-      root.style.setProperty('--ss-icon', Math.floor(iconSize) + 'px');
+      root.style.setProperty('--ss-icon', OPTS.iconSize + 'px');
       root.style.setProperty('--ss-name', nameSize.toFixed(2) + 'px');
       root.style.setProperty('--ss-role', roleSize.toFixed(1) + 'px');
       root.style.setProperty('--ss-role-gap', (-nameSize * 0.06).toFixed(1) + 'px');
