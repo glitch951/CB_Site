@@ -14,10 +14,10 @@
    with them. The bar fills over the time each person is shown and
    drives the change, so bar and cycle can never drift apart.
 
-   TYPE: no font-family, size, weight or colour is set on the three
-   text lines. They render as the same p / h1 / h2 tags the block
-   already uses, so Carrd's styling applies and the type matches
-   the page exactly. Set inheritType to false for the fallbacks.
+   TYPE: Carrd does not pass its heading styles down into an embed,
+   so the widget sets its own. The sizes and colour in OPTS were
+   measured off the page as it was, and are the only things to
+   touch if the type ever needs nudging.
 
    INSTALL
    1. Upload ss-team.js and team.txt to CB_Site, avatars to
@@ -42,17 +42,22 @@
     source:    'https://glitch951.github.io/CB_Site/team.txt',
     imageBase: 'https://glitch951.github.io/CB_Site/images/',
 
-    avatar:     120,   // px
+    avatar:     150,   // px
     gap:        26,    // px between the avatar and the icon column
-    iconSize:   26,    // px
-    iconGap:    22,    // px between icons
+    iconSize:   30,    // px
+    iconGap:    26,    // px between icons
     interval:   7000,  // ms each person is shown. 0 stops the cycling
     fadeMs:     280,   // cross-fade when the person changes
-    arrowInset: 56,    // px the arrows sit outside the text
+    arrowInset: 62,    // px the arrows sit outside the text
     barHeight:  3,     // px, the timer bar
 
-    inheritType: true,
-    fallback: { role: '15px', name: '44px', tag: '17px' },
+    /* Carrd does not pass its heading styles into an embed, so the type
+       and colour are set here instead. These are measured off the page as
+       it was: name 71px, the small lines 20 and 24, in #C6D6B6.
+       Change these four and nothing else. */
+    color:    '#C6D6B6',
+    typeSize: { role: '20px', name: '71px', tag: '24px' },
+    typeWeight:{ role: '500',  name: '800',  tag: '500' },
 
     loadFont: true,
     fontHref: 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap',
@@ -170,14 +175,14 @@
 
 .ss-arrow{
   position:absolute; top:50%; transform:translateY(-50%);
-  width:34px; height:44px; padding:0; cursor:pointer;
+  width:40px; height:52px; padding:0; cursor:pointer;
   background:none; border:0; color:inherit; opacity:.4;
   display:grid; place-items:center; transition:opacity .18s ease;
 }
 .ss-arrow:hover,.ss-arrow:focus-visible{opacity:1}
 .ss-arrow.is-prev{left:-${OPTS.arrowInset}px}
 .ss-arrow.is-next{right:-${OPTS.arrowInset}px}
-.ss-arrow svg{width:17px; height:17px; fill:none; stroke:currentColor;
+.ss-arrow svg{width:21px; height:21px; fill:none; stroke:currentColor;
   stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
 
 .ss-sk{opacity:.4; animation:ss-pulse 1.5s ease-in-out infinite}
@@ -198,12 +203,14 @@
   .ss-seg.is-live i{animation:none; transform:scaleX(1)}
   .ss-sk{animation:none}
 }`;
-    if (!OPTS.inheritType) {
-      s.textContent += `
-.ss-team .ss-role{font-size:${OPTS.fallback.role}}
-.ss-team .ss-name{font-size:${OPTS.fallback.name}}
-.ss-team .ss-tag{font-size:${OPTS.fallback.tag}}`;
-    }
+    /* Carrd's heading styles do not reach inside an embed, so the type
+       and colour are set here. Measured off the page as it was. */
+    s.textContent += `
+.ss-team{color:${OPTS.color}}
+.ss-team .ss-role{font-size:${OPTS.typeSize.role}; font-weight:${OPTS.typeWeight.role}; opacity:.9}
+.ss-team .ss-name{font-size:${OPTS.typeSize.name}; font-weight:${OPTS.typeWeight.name}; letter-spacing:-.015em}
+.ss-team .ss-tag{font-size:${OPTS.typeSize.tag}; font-weight:${OPTS.typeWeight.tag}; opacity:.9}`;
+
     if (OPTS.loadFont) {
       s.textContent += `
 .ss-team,.ss-team *{font-family:"Figtree",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif}`;
