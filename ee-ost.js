@@ -145,7 +145,7 @@
            release rather than on its own, which is why the record
            reads Disc 2 over there. */
         listen: [
-          { label: 'Spotify',  note: 'On Vol. 1 & 2',      url: 'https://open.spotify.com/album/6iOh5l6FuVPh0DQRGEgnzD' },
+          { label: 'Spotify',  note: 'Stream',      url: 'https://open.spotify.com/album/6iOh5l6FuVPh0DQRGEgnzD' },
           { label: 'Bandcamp', note: 'Stream & download',  url: 'https://andersbachbrianbatzkristianpaulsen.bandcamp.com/album/esoteric-ebb-vol-2-original-soundtrack-2' }
         ],
 
