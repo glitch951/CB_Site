@@ -1,377 +1,479 @@
-/*!
- * EE-OST.js — Esoteric Ebb, Vol. 1 (Original Soundtrack) section
- * Self-contained. No dependencies. Drop-in embed for esotericebb.com/#ost
- *
- * USAGE
- *   <div id="ee-ost"></div>
- *   <script src="https://cdn.jsdelivr.net/gh/USER/REPO@main/EE-OST.js" defer></script>
- *
- * If #ee-ost doesn't exist, the widget renders where the <script> tag sits.
- *
- * CUSTOMISING
- *   Everything lives in CONFIG below. Add or remove entries in `listen` and
- *   `vinyl` freely — the grids reflow for any number of links (1, 6, 20...).
- *   You can also override without editing this file:
- *
- *   <script>
- *     window.EE_OST_CONFIG = {
- *       vinyl: [{ label: "New Shop", sub: "DE", url: "https://..." }]
- *     };
- *   </script>
- *   <script src=".../EE-OST.js" defer></script>
- *
- *   Call EE_OST.render() at any time to redraw after changing EE_OST.config.
- */
+/* =============================================================
+   ESOTERIC EBB - SOUNDTRACK
+
+   Built to sit next to ee-faq.js and askchris.js: same Averia
+   Serif Libre, same cream-green on the dark page, same orange,
+   same rounded outlined boxes with no fill.
+
+   One volume is shown at a time. The volume buttons at the top
+   swap the whole panel - player, credits, links and tracklist -
+   so Vol. 1 and Vol. 2 never fight for the same space. Add a
+   third volume and a third button appears on its own.
+
+   Everything is in CONFIG. The shop lists are plain arrays, so
+   adding or dropping a shop is one line and the grid reflows
+   for however many there are.
+
+   INSTALL
+   1. Upload ee-ost.js to the CB_Site repo.
+   2. Replace the contents of #ost with one Carrd Embed
+      (Type: Code, Style: Inline):
+
+      <div id="ee-ost"></div>
+      <script defer src="https://glitch951.github.io/CB_Site/ee-ost.js"></script>
+
+   TRACKS
+      Write a track as 'Title' or 'Title | 3:57'. The time is
+      optional and can be left off the whole list.
+   ============================================================= */
+
 (function () {
-  "use strict";
+  'use strict';
+  if (window.__eeOst) return;
+  window.__eeOst = true;
 
-  var HOST_SCRIPT = document.currentScript;
+  /* Grabbed while the script is still running. Inside init it would be
+     null, since that can fire later from DOMContentLoaded. */
+  var HERE = document.currentScript;
 
-  /* ====================================================================
-   * CONFIG — edit freely
-   * ================================================================== */
-  var CONFIG = {
-    mount: "#ee-ost",           // where to render; falls back to script position
-    backLink: "#home",          // set to null to hide the back link
-    backLabel: "— Back —",
+  var OPTS = {
+    heading: 'Soundtrack',
+    intro:   'Composed, produced and mixed by Anders Bach, Brian Batz and Kristian Paulsen.',
 
-    catalogue: "OIL072",        // shown in the eyebrow; set "" to hide
-    label: "The Big Oil Recording Company",
+    /* Declared outright rather than inherited, because Carrd's own
+       rules win inside an embed. Same superfamily as the FAQ. */
+    font:     "'Averia Serif Libre'",
+    fontHref: 'https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,400&display=swap',
 
-    title: "Esoteric Ebb, Vol. 1",
-    subtitle: "(Original Soundtrack)",
+    remember: true,   // reopen on the volume last looked at
+    /* The Bandcamp player is a square of artwork with a bar under it.
+       The square follows the column width, so the height is measured
+       rather than fixed. This is the bar. */
+    playerBar: 72,
+    back:     null,   // e.g. '#home' to draw a back link at the foot
 
-    credits: [
-      "24 tracks composed, produced and mixed by Anders Bach, Brian Batz and Kristian Paulsen.",
-      "Mastered by Angel Marcloid at Angel Hair Audio.",
-      "Released by The Big Oil Recording Company."
+    /* ---------------------------------------------------------
+       VOLUMES
+       tab      the button label
+       album    the number from the Bandcamp EmbeddedPlayer URL,
+                or null to leave the player out
+       listen   streaming links
+       buy      shops that carry the record
+       discs    one entry per disc. A single disc prints without
+                a disc heading; two or more print with one.
+       --------------------------------------------------------- */
+    volumes: [
+      {
+        tab:      'Vol. 1',
+        title:    'Esoteric Ebb, Vol. 1',
+        subtitle: 'Original Soundtrack',
+        cat:      'OIL072',
+        credits: [
+          '24 tracks composed, produced and mixed by Anders Bach, Brian Batz and Kristian Paulsen.',
+          'Mastered by Angel Marcloid at Angel Hair Audio.',
+          'Released by The Big Oil Recording Company.'
+        ],
+        album: '592533375',
+
+        listen: [
+          { label: 'Spotify',  note: 'Stream',            url: 'http://open.spotify.com/album/5dqcutGdziX0pR0sMOQyuR' },
+          { label: 'Bandcamp', note: 'Stream & download', url: 'https://andersbachbrianbatzkristianpaulsen.bandcamp.com/album/oil072-esoteric-ebb-vol-1-original-soundtrack' }
+        ],
+
+        buy: [
+          { label: 'Bandcamp',          note: 'From the label', url: 'https://andersbachbrianbatzkristianpaulsen.bandcamp.com/album/oil072-esoteric-ebb-vol-1-original-soundtrack' },
+          { label: 'Cartridge Thunder', note: 'Soundtracks',    url: 'https://cartridgethunder.com/products/esoteric-ebb-vol-1-original-soundtrack' },
+          { label: 'Amazon',            note: 'UK',             url: 'https://www.amazon.co.uk/Esoteric-Ebb-Vol-1-VINYL/dp/B0H4RRW73V/' },
+          { label: 'Juno',              note: 'UK',             url: 'https://www.juno.co.uk/products/anders-bach-brian-batz-esoteric-ebb-vol-1-vinyl/1164313-01/' },
+          { label: 'HEAD Records',      note: 'UK',             url: 'https://headrecords.co.uk/soundtracks/esoteric-ebb-vol.-1-anders-bach/brian-batz/kristian-paulsen/p-oil0721' },
+          { label: 'Proper Music',      note: 'UK',             url: 'https://propermusic.com/products/andersbachbrianbatzkristianpaulsen-esotericebbvol1' }
+        ],
+
+        discs: [
+          { name: '', tracks: [
+            'Endless Ebb',
+            'Waking Morgue',
+            'Norvik',
+            'Peril',
+            'Comrades',
+            'Dear Snell',
+            'At The Throne',
+            'This Halo Glows',
+            'Merchants',
+            'Night on Tolstad',
+            'Questions Need Answering',
+            'Waterlane',
+            'Dank Bodies, Mooring Visage',
+            'Light of Brr',
+            'The Cabin',
+            'Shwmae, Dyn Metel Rhyfedd!',
+            'Roots',
+            'A Specter, A Trifler',
+            'Entering the Pillar',
+            'The Missing Paladin (feat. Sleep Party People)',
+            'Chosen of Urth (feat. Seiðr)',
+            'Voids of Resolution',
+            'Days of Jor (feat. MØ & GNOM)',
+            'An Esoteric Ebb'
+          ] }
+        ]
+      },
+
+      {
+        tab:      'Vol. 2',
+        title:    'Esoteric Ebb, Vol. 2',
+        subtitle: 'Original Soundtrack',
+        cat:      '',              // catalogue number, once there is one
+        credits: [
+          'Composed, produced and mixed by Anders Bach, Brian Batz and Kristian Paulsen.'
+        ],
+        album: null,               // Bandcamp id for Vol. 2 goes here
+
+        listen: [
+          // { label: 'Spotify', note: 'Stream', url: '...' }
+        ],
+
+        buy: [
+          // same shape as Vol. 1 above
+        ],
+
+        /* The screenshot this came from is headed Disc 2, so if Vol. 2
+           is a double, paste Disc 1 in above it as its own entry and
+           both headings start printing on their own. */
+        discs: [
+          { name: 'Disc 2', tracks: [
+            "Nearly's Song | 3:57",
+            'Norvikian Decay | 3:36',
+            'Outside | 3:59',
+            "The Prison of Toulin'catl | 6:58",
+            'Calmness Is a Still | 2:48',
+            'The Tower | 3:33',
+            'Burnt | 4:12',
+            'Meriadoc Sleeps | 1:20',
+            'The Presence of Sageleaf | 5:23',
+            'Patriots | 4:32',
+            'Distill Portside | 4:00',
+            "At Snurre's | 3:41",
+            'Long Rest | 0:23',
+            'Highland Fling | 2:52',
+            'Undercoast | 6:04',
+            'Crypts | 2:23',
+            "Kraiid's Teeth | 3:16",
+            'Caverns | 5:25',
+            'Revel in Urth | 2:26',
+            'Ruins | 1:12',
+            'Leaving | 3:53',
+            'In the Void | 3:26'
+          ] }
+        ]
+      }
     ],
 
-    // Bandcamp embed. albumId is the number in the EmbeddedPlayer URL.
-    player: {
-      albumId: "592533375",
-      height: 470,
-      bgcol: "333333",
-      linkcol: "4ec5ec"
-    },
-
-    // --- LINKS ---------------------------------------------------------
-    // Add/remove at will. `sub` is the small line under the label.
-    // `tag` is optional (e.g. "Digital", "2×LP"). `url` is required.
-    listenHeading: "Listen",
-    listen: [
-      { label: "Spotify",          sub: "Stream",              url: "http://open.spotify.com/album/5dqcutGdziX0pR0sMOQyuR" },
-      { label: "Bandcamp",         sub: "Stream & download",   url: "https://andersbachbrianbatzkristianpaulsen.bandcamp.com/album/oil072-esoteric-ebb-vol-1-original-soundtrack" }
-    ],
-
-    vinylHeading: "Buy the vinyl",
-    vinylNote: "Stocked by the shops below. Availability varies — if one's sold out, try the next.",
-    vinyl: [
-      { label: "Bandcamp",          sub: "Direct from the label", url: "https://andersbachbrianbatzkristianpaulsen.bandcamp.com/album/oil072-esoteric-ebb-vol-1-original-soundtrack" },
-      { label: "Cartridge Thunder", sub: "Game soundtracks",      url: "https://cartridgethunder.com/products/esoteric-ebb-vol-1-original-soundtrack" },
-      { label: "Amazon",            sub: "UK",                    url: "https://www.amazon.co.uk/Esoteric-Ebb-Vol-1-VINYL/dp/B0H4RRW73V/" },
-      { label: "Juno",              sub: "UK",                    url: "https://www.juno.co.uk/products/anders-bach-brian-batz-esoteric-ebb-vol-1-vinyl/1164313-01/" },
-      { label: "HEAD Records",      sub: "UK",                    url: "https://headrecords.co.uk/soundtracks/esoteric-ebb-vol.-1-anders-bach/brian-batz/kristian-paulsen/p-oil0721" },
-      { label: "Proper Music",      sub: "UK",                    url: "https://propermusic.com/products/andersbachbrianbatzkristianpaulsen-esotericebbvol1" }
-    ],
-
-    tracksHeading: "Tracklist",
-    tracks: [
-      "Endless Ebb",
-      "Waking Morgue",
-      "Norvik",
-      "Peril",
-      "Comrades",
-      "Dear Snell",
-      "At The Throne",
-      "This Halo Glows",
-      "Merchants",
-      "Night on Tolstad",
-      "Questions Need Answering",
-      "Waterlane",
-      "Dank Bodies, Mooring Visage",
-      "Light of Brr",
-      "The Cabin",
-      "Shwmae, Dyn Metel Rhyfedd!",
-      "Roots",
-      "A Specter, A Trifler",
-      "Entering the Pillar",
-      "The Missing Paladin (feat. Sleep Party People)",
-      "Chosen of Urth (feat. Seiðr)",
-      "Voids of Resolution",
-      "Days of Jor (feat. MØ & GNOM)",
-      "An Esoteric Ebb"
-    ],
-
-    // --- LOOK ----------------------------------------------------------
-    theme: {
-      ink:    "#020D15",   // section background
-      panel:  "#071620",   // cards / player frame
-      bone:   "#E9E6DC",   // primary text
-      muted:  "#8FA6B3",   // secondary text
-      cyan:   "#4EC5EC",   // accent (matches the Bandcamp player)
-      brass:  "#C9A227",   // second accent — numbers, catalogue tag
-      hair:   "rgba(78,197,236,.20)"
-    },
-    // Leave null to inherit the site's own fonts.
-    fontDisplay: null,
-    fontBody: null,
-    spinRecord: true       // slow-rotating record behind the player
+    listenHeading: 'Listen',
+    buyHeading:    'Buy the vinyl',
+    tracksHeading: 'Tracklist',
+    emptyNote:     'Not out yet. The tracklist is below.'
   };
 
-  /* ==================================================================== */
+  var GREEN  = '#DAE5CF';
+  var ORANGE = '#DB5B2C';
+  var SAGE   = '#C1D3AE';
+  var INK    = '020E16';   // Bandcamp wants hex with no hash
 
-  var css = function (t) {
-    return [
-      ".eeost{--ink:", t.ink, ";--panel:", t.panel, ";--bone:", t.bone,
-      ";--muted:", t.muted, ";--cyan:", t.cyan, ";--brass:", t.brass,
-      ";--hair:", t.hair, ";",
-      "background:var(--ink);color:var(--bone);font-family:", (CONFIG.fontBody || "inherit"),
-      ";line-height:1.5;padding:clamp(28px,6vw,72px) clamp(18px,5vw,48px);",
-      "overflow-x:clip;-webkit-font-smoothing:antialiased;box-sizing:border-box}",
-      ".eeost *,.eeost *::before,.eeost *::after{box-sizing:border-box}",
-      ".eeost-in{max-width:1080px;margin:0 auto}",
+  function font() {
+    if (!OPTS.fontHref || document.getElementById('ee-ost-font')) return;
+    var l = document.createElement('link');
+    l.id = 'ee-ost-font';
+    l.rel = 'stylesheet';
+    l.href = OPTS.fontHref;
+    document.head.appendChild(l);
+  }
 
-      /* eyebrow */
-      ".eeost-eyebrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;",
-      "font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 18px}",
-      ".eeost-cat{border:1px solid var(--brass);color:var(--brass);padding:3px 8px;letter-spacing:.16em}",
-      ".eeost-rule{flex:1;height:1px;background:var(--hair);min-width:24px}",
+  function styles() {
+    if (document.getElementById('ee-ost-css')) return;
+    var s = document.createElement('style');
+    s.id = 'ee-ost-css';
+    s.textContent = `
+#ee-ost,#ee-ost *{box-sizing:border-box; font-family:${OPTS.font},Georgia,serif}
+#ee-ost{
+  max-width:820px; margin:0 auto; text-align:left; color:${GREEN};
+  padding:0 clamp(14px,4vw,24px) clamp(30px,6vw,70px);
+}
+.ee-ost-title{
+  margin:0 0 .3em; color:${ORANGE}; font-weight:400;
+  font-size:clamp(30px,4.5vw,54px); line-height:1;
+  font-variant:small-caps; letter-spacing:.02em;
+}
+.ee-ost-intro{margin:0 0 clamp(20px,3vw,30px); color:rgba(218,229,207,.6); font-style:italic; line-height:1.55}
 
-      /* head */
-      ".eeost-head{display:grid;grid-template-columns:minmax(0,400px) minmax(0,1fr);",
-      "gap:clamp(24px,5vw,56px);align-items:start}",
-      "@media(max-width:820px){.eeost-head{grid-template-columns:1fr}}",
+/* volume buttons: the FAQ's outlined box, shrunk to a row */
+.ee-ost-tabs{display:flex; flex-wrap:wrap; gap:10px; margin:0 0 clamp(24px,4vw,38px)}
+.ee-ost-tab{
+  cursor:pointer; padding:.55em 1.4em; background:transparent; color:${GREEN};
+  border:1px solid rgba(218,229,207,.42); border-radius:16px;
+  font-family:inherit; font-size:clamp(15px,1.35vw,18px); line-height:1.45;
+  letter-spacing:.08em; font-variant:small-caps; transition:none;
+}
+.ee-ost-tab:hover,.ee-ost-tab:focus-visible{color:${ORANGE}; border-color:${ORANGE}}
+.ee-ost-tab[aria-selected="true"]{color:${ORANGE}; border-color:${ORANGE}}
 
-      ".eeost-playerwrap{position:relative}",
-      ".eeost-disc{position:absolute;right:-34px;top:8%;width:62%;max-width:300px;z-index:0;",
-      "opacity:.5;pointer-events:none}",
-      ".eeost-disc.spin{animation:eeost-spin 26s linear infinite}",
-      "@keyframes eeost-spin{to{transform:rotate(360deg)}}",
-      "@media(max-width:820px){.eeost-disc{display:none}}",
-      ".eeost-frame{position:relative;z-index:1;border:1px solid var(--hair);background:var(--panel);padding:10px}",
-      ".eeost-frame iframe{display:block;width:100%;border:0}",
+.ee-ost-vol[hidden]{display:none}
+.ee-ost-vol{animation:eeOstIn .26s ease both}
+@keyframes eeOstIn{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
 
-      ".eeost-title{font-family:", (CONFIG.fontDisplay || "inherit"),
-      ";font-size:clamp(30px,5.2vw,52px);line-height:1.02;margin:0;letter-spacing:-.01em}",
-      ".eeost-sub{display:block;font-size:clamp(14px,2vw,18px);letter-spacing:.16em;",
-      "text-transform:uppercase;color:var(--cyan);margin-top:12px;line-height:1.3}",
-      ".eeost-credits{margin:22px 0 0;padding:0;list-style:none;border-top:1px solid var(--hair)}",
-      ".eeost-credits li{padding:11px 0;border-bottom:1px solid var(--hair);color:var(--muted);font-size:14.5px}",
+/* the record: player on the left, the writing on it to the right */
+.ee-ost-head{display:grid; grid-template-columns:minmax(0,290px) minmax(0,1fr); gap:clamp(18px,3vw,30px); align-items:start}
+@media (max-width:640px){.ee-ost-head{grid-template-columns:1fr}}
+.ee-ost-head.is-solo{grid-template-columns:1fr}
+.ee-ost-player{border:1px solid rgba(218,229,207,.22); border-radius:16px; overflow:hidden; line-height:0}
+.ee-ost-player iframe{display:block; width:100%; border:0}
+.ee-ost-name{
+  margin:0; color:${GREEN}; font-weight:400; line-height:1.1;
+  font-size:clamp(22px,2.8vw,32px); font-variant:small-caps; letter-spacing:.02em;
+}
+.ee-ost-sub{display:block; margin-top:.35em; color:${SAGE}; font-size:clamp(13px,1.3vw,15px);
+  letter-spacing:.16em; text-transform:uppercase; font-variant:normal}
+.ee-ost-cat{
+  display:inline-block; margin:.9em 0 0; padding:.15em .7em;
+  border:1px solid rgba(219,91,44,.55); border-radius:999px;
+  color:${ORANGE}; font-size:12px; letter-spacing:.18em;
+}
+.ee-ost-credits{margin:1em 0 0; padding:0; list-style:none; line-height:1.62; color:rgba(218,229,207,.75)}
+.ee-ost-credits li{margin:0 0 .4em}
+.ee-ost-credits li:last-child{margin:0}
+.ee-ost-none{margin:1em 0 0; color:rgba(218,229,207,.55); font-style:italic}
 
-      /* section headings */
-      ".eeost-h{display:flex;align-items:center;gap:14px;margin:clamp(34px,6vw,60px) 0 6px}",
-      ".eeost-h h3{font-family:", (CONFIG.fontDisplay || "inherit"),
-      ";font-size:13px;letter-spacing:.26em;text-transform:uppercase;margin:0;font-weight:700;white-space:nowrap}",
-      ".eeost-note{color:var(--muted);font-size:13.5px;margin:10px 0 18px;max-width:56ch}",
+/* section headings, lifted straight off the FAQ categories */
+.ee-ost-cap{
+  margin:clamp(30px,4vw,52px) 0 .9em; color:${SAGE}; font-weight:400;
+  font-size:clamp(17px,2vw,22px); letter-spacing:.16em; text-transform:uppercase;
+}
 
-      /* link grid */
-      ".eeost-links{display:grid;gap:10px;margin-top:16px;",
-      "grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}",
-      ".eeost-link{position:relative;display:flex;align-items:center;gap:12px;",
-      "padding:15px 16px;background:var(--panel);border:1px solid var(--hair);color:var(--bone);",
-      "text-decoration:none;overflow:hidden;transition:border-color .18s,transform .18s,background .18s}",
-      ".eeost-link::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;",
-      "background:var(--cyan);transform:scaleY(0);transform-origin:bottom;transition:transform .22s}",
-      ".eeost-link:hover,.eeost-link:focus-visible{border-color:var(--cyan);transform:translateY(-2px)}",
-      ".eeost-link:hover::before,.eeost-link:focus-visible::before{transform:scaleY(1);transform-origin:top}",
-      ".eeost-link:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}",
-      ".eeost-ltext{min-width:0;flex:1}",
-      ".eeost-llabel{display:block;font-weight:600;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".eeost-lsub{display:block;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:3px}",
-      ".eeost-tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--brass);",
-      "border:1px solid var(--brass);padding:2px 6px;white-space:nowrap}",
-      ".eeost-arr{flex:none;color:var(--cyan);opacity:.55;transition:opacity .18s,transform .18s}",
-      ".eeost-link:hover .eeost-arr{opacity:1;transform:translate(2px,-2px)}",
+/* shops and streaming: outlined, transparent, orange on hover.
+   Reflows on its own for any number of links. */
+.ee-ost-links{display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.ee-ost-link{
+  display:flex; align-items:center; gap:14px; text-decoration:none;
+  padding:.8em 1.1em; color:${GREEN};
+  border:1px solid rgba(218,229,207,.42); border-radius:16px;
+  font-size:clamp(15px,1.35vw,18px); line-height:1.45; transition:none;
+}
+.ee-ost-link:hover,.ee-ost-link:focus-visible{color:${ORANGE}; border-color:${ORANGE}}
+.ee-ost-ltext{flex:1; min-width:0}
+.ee-ost-lnote{display:block; margin-top:.2em; font-size:11.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:rgba(218,229,207,.5)}
+.ee-ost-link:hover .ee-ost-lnote{color:rgba(219,91,44,.75)}
+.ee-ost-arrow{flex:0 0 auto; width:12px; height:12px; opacity:.55}
+.ee-ost-link:hover .ee-ost-arrow{opacity:1}
 
-      /* tracklist */
-      ".eeost-tracks{margin:16px 0 0;padding:0;list-style:none;",
-      "columns:2;column-gap:clamp(24px,5vw,56px)}",
-      "@media(max-width:640px){.eeost-tracks{columns:1}}",
-      ".eeost-track{break-inside:avoid;display:flex;align-items:baseline;gap:12px;",
-      "padding:9px 4px;border-bottom:1px solid var(--hair)}",
-      ".eeost-num{flex:none;width:2.1em;font-variant-numeric:tabular-nums;font-size:12px;",
-      "letter-spacing:.1em;color:var(--brass)}",
-      ".eeost-tname{font-size:15px}",
-      ".eeost-dots{flex:1;border-bottom:1px dotted var(--hair);transform:translateY(-4px);min-width:8px}",
+/* tracklist: one dimmer outlined box, rows split by dashes */
+.ee-ost-disc + .ee-ost-disc{margin-top:18px}
+.ee-ost-discname{margin:0 0 .6em; color:rgba(218,229,207,.55); font-size:13px;
+  letter-spacing:.2em; text-transform:uppercase}
+.ee-ost-tracks{
+  margin:0; padding:.4em 1.2em; list-style:none;
+  border:1px solid rgba(218,229,207,.22); border-radius:16px;
+  columns:2; column-gap:clamp(20px,4vw,44px);
+}
+@media (max-width:640px){.ee-ost-tracks{columns:1}}
+.ee-ost-track{
+  break-inside:avoid; display:flex; align-items:baseline; gap:12px;
+  padding:.62em 0; border-bottom:1px dashed rgba(218,229,207,.18); line-height:1.4;
+}
+.ee-ost-track:last-child{border-bottom:0}
+.ee-ost-n{flex:0 0 auto; width:1.9em; color:${ORANGE}; font-size:13px; font-variant-numeric:tabular-nums}
+.ee-ost-tt{flex:1; min-width:0}
+.ee-ost-td{flex:0 0 auto; color:rgba(218,229,207,.45); font-size:13px; font-variant-numeric:tabular-nums}
 
-      /* footer */
-      ".eeost-foot{margin-top:clamp(34px,6vw,60px);padding-top:20px;border-top:1px solid var(--hair);",
-      "display:flex;justify-content:center}",
-      ".eeost-back{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.24em;",
-      "text-transform:uppercase;padding:8px 4px;transition:color .18s}",
-      ".eeost-back:hover{color:var(--cyan)}",
+.ee-ost-foot{margin-top:clamp(28px,4vw,44px); text-align:center}
+.ee-ost-back{color:rgba(218,229,207,.6); text-decoration:none; letter-spacing:.16em; font-variant:small-caps}
+.ee-ost-back:hover{color:${ORANGE}}
 
-      /* reveal */
-      ".eeost-rev{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}",
-      ".eeost-rev.in{opacity:1;transform:none}",
-      "@media(prefers-reduced-motion:reduce){.eeost *{animation:none!important;transition:none!important}",
-      ".eeost-rev{opacity:1;transform:none}}"
-    ].join("");
-  };
+@media (prefers-reduced-motion:reduce){.ee-ost-vol{animation:none}}`;
+    document.head.appendChild(s);
+  }
 
+  /* ---------- helpers ---------- */
   function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
-  var ARROW = '<svg class="eeost-arr" width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">' +
-    '<path d="M3 10L10 3M10 3H4.2M10 3v5.8" fill="none" stroke="currentColor" stroke-width="1.4" ' +
-    'stroke-linecap="square"/></svg>';
+  var ARROW = '<svg class="ee-ost-arrow" viewBox="0 0 12 12" aria-hidden="true" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.4"><path d="M2.5 9.5 9.5 2.5M4.2 2.5h5.3v5.3"/></svg>';
 
-  function disc(t) {
-    return '<svg class="eeost-disc' + (CONFIG.spinRecord ? ' spin' : '') + '" viewBox="0 0 200 200" ' +
-      'aria-hidden="true"><circle cx="100" cy="100" r="99" fill="#04080c"/>' +
-      '<circle cx="100" cy="100" r="99" fill="none" stroke="' + t.hair + '"/>' +
-      '<circle cx="100" cy="100" r="82" fill="none" stroke="' + t.hair + '"/>' +
-      '<circle cx="100" cy="100" r="70" fill="none" stroke="' + t.hair + '"/>' +
-      '<circle cx="100" cy="100" r="58" fill="none" stroke="' + t.hair + '"/>' +
-      '<circle cx="100" cy="100" r="34" fill="' + t.brass + '" opacity=".85"/>' +
-      '<circle cx="100" cy="100" r="4.5" fill="' + t.ink + '"/></svg>';
+  function links(list) {
+    return (list || []).filter(function (l) { return l && l.url; }).map(function (l) {
+      return '<a class="ee-ost-link" href="' + esc(l.url) + '" target="_blank" rel="noopener">' +
+        '<span class="ee-ost-ltext">' + esc(l.label) +
+        (l.note ? '<span class="ee-ost-lnote">' + esc(l.note) + '</span>' : '') +
+        '</span>' + ARROW + '</a>';
+    }).join('');
   }
 
-  function linkCards(items) {
-    var out = "";
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      if (!it || !it.url) continue;
-      out += '<a class="eeost-link eeost-rev" href="' + esc(it.url) + '" target="_blank" ' +
-        'rel="noopener noreferrer" style="transition-delay:' + Math.min(i * 45, 320) + 'ms">' +
-        '<span class="eeost-ltext"><span class="eeost-llabel">' + esc(it.label) + '</span>' +
-        (it.sub ? '<span class="eeost-lsub">' + esc(it.sub) + '</span>' : '') + '</span>' +
-        (it.tag ? '<span class="eeost-tag">' + esc(it.tag) + '</span>' : '') +
-        ARROW + '</a>';
-    }
-    return out;
+  function tracks(disc) {
+    var rows = (disc.tracks || []).map(function (raw, i) {
+      var parts = String(raw).split('|');
+      var name = parts[0].trim();
+      var time = parts.length > 1 ? parts[1].trim() : '';
+      return '<li class="ee-ost-track">' +
+        '<span class="ee-ost-n">' + (i + 1) + '</span>' +
+        '<span class="ee-ost-tt">' + esc(name) + '</span>' +
+        (time ? '<span class="ee-ost-td">' + esc(time) + '</span>' : '') +
+      '</li>';
+    }).join('');
+    return rows ? '<ol class="ee-ost-tracks">' + rows + '</ol>' : '';
   }
 
-  function section(heading) {
-    return '<div class="eeost-h eeost-rev"><h3>' + esc(heading) + '</h3>' +
-      '<span class="eeost-rule"></span></div>';
+  function player(album) {
+    if (!album) return '';
+    var src = 'https://bandcamp.com/EmbeddedPlayer/album=' + encodeURIComponent(album) +
+      '/size=large/bgcol=' + INK + '/linkcol=' + ORANGE.replace('#', '') +
+      '/tracklist=false/transparent=true/';
+    /* Held in data-src so a volume that has never been opened does not
+       pull a player down in the background. */
+    return '<div class="ee-ost-player"><iframe data-src="' + src + '" ' +
+      'loading="lazy" seamless title="Bandcamp player"></iframe></div>';
   }
 
-  function build() {
-    var t = CONFIG.theme;
-    var p = CONFIG.player || {};
-    var bc = "https://bandcamp.com/EmbeddedPlayer/album=" + encodeURIComponent(p.albumId) +
-      "/size=large/bgcol=" + (p.bgcol || "333333") + "/linkcol=" + (p.linkcol || "4ec5ec") +
-      "/tracklist=false/transparent=true/";
+  function volume(v, i) {
+    var hasLinks = (v.listen && v.listen.length) || (v.buy && v.buy.length);
+    var head =
+      '<div class="ee-ost-head' + (v.album ? '' : ' is-solo') + '">' +
+        player(v.album) +
+        '<div>' +
+          '<h3 class="ee-ost-name">' + esc(v.title) +
+            (v.subtitle ? '<span class="ee-ost-sub">' + esc(v.subtitle) + '</span>' : '') +
+          '</h3>' +
+          (v.cat ? '<span class="ee-ost-cat">' + esc(v.cat) + '</span>' : '') +
+          (v.credits && v.credits.length
+            ? '<ul class="ee-ost-credits"><li>' + v.credits.map(esc).join('</li><li>') + '</li></ul>'
+            : '') +
+          (!hasLinks && OPTS.emptyNote ? '<p class="ee-ost-none">' + esc(OPTS.emptyNote) + '</p>' : '') +
+        '</div>' +
+      '</div>';
 
-    var html = '<div class="eeost-in">';
-
-    html += '<p class="eeost-eyebrow eeost-rev">' +
-      (CONFIG.catalogue ? '<span class="eeost-cat">' + esc(CONFIG.catalogue) + '</span>' : '') +
-      '<span>' + esc(CONFIG.label) + '</span><span class="eeost-rule"></span></p>';
-
-    html += '<div class="eeost-head">' +
-      '<div class="eeost-playerwrap eeost-rev">' + disc(t) +
-      '<div class="eeost-frame"><iframe title="' + esc(CONFIG.title) + ' — Bandcamp player" ' +
-      'src="' + bc + '" height="' + (p.height || 470) + '" loading="lazy" seamless ' +
-      'allow="autoplay *; encrypted-media *"></iframe></div></div>' +
-      '<div class="eeost-rev" style="transition-delay:90ms">' +
-      '<h2 class="eeost-title">' + esc(CONFIG.title) +
-      '<span class="eeost-sub">' + esc(CONFIG.subtitle) + '</span></h2>' +
-      '<ul class="eeost-credits">';
-    for (var c = 0; c < CONFIG.credits.length; c++) {
-      html += '<li>' + esc(CONFIG.credits[c]) + '</li>';
+    var body = '';
+    if (v.listen && v.listen.length) {
+      body += '<h4 class="ee-ost-cap">' + esc(OPTS.listenHeading) + '</h4>' +
+        '<div class="ee-ost-links">' + links(v.listen) + '</div>';
     }
-    html += '</ul></div></div>';
-
-    if (CONFIG.listen && CONFIG.listen.length) {
-      html += section(CONFIG.listenHeading) +
-        '<div class="eeost-links">' + linkCards(CONFIG.listen) + '</div>';
+    if (v.buy && v.buy.length) {
+      body += '<h4 class="ee-ost-cap">' + esc(OPTS.buyHeading) + '</h4>' +
+        '<div class="ee-ost-links">' + links(v.buy) + '</div>';
     }
 
-    if (CONFIG.vinyl && CONFIG.vinyl.length) {
-      html += section(CONFIG.vinylHeading) +
-        (CONFIG.vinylNote ? '<p class="eeost-note eeost-rev">' + esc(CONFIG.vinylNote) + '</p>' : '') +
-        '<div class="eeost-links">' + linkCards(CONFIG.vinyl) + '</div>';
-    }
-
-    if (CONFIG.tracks && CONFIG.tracks.length) {
-      html += section(CONFIG.tracksHeading) + '<ol class="eeost-tracks">';
-      for (var i = 0; i < CONFIG.tracks.length; i++) {
-        var n = (i + 1) < 10 ? "0" + (i + 1) : String(i + 1);
-        html += '<li class="eeost-track eeost-rev"><span class="eeost-num">' + n + '</span>' +
-          '<span class="eeost-tname">' + esc(CONFIG.tracks[i]) + '</span>' +
-          '<span class="eeost-dots"></span></li>';
-      }
-      html += '</ol>';
-    }
-
-    if (CONFIG.backLink) {
-      html += '<div class="eeost-foot"><a class="eeost-back" href="' + esc(CONFIG.backLink) + '">' +
-        esc(CONFIG.backLabel) + '</a></div>';
-    }
-
-    return html + '</div>';
-  }
-
-  function reveal(root) {
-    var items = root.querySelectorAll(".eeost-rev");
-    if (!("IntersectionObserver" in window)) {
-      for (var i = 0; i < items.length; i++) items[i].classList.add("in");
-      return;
-    }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    var discs = (v.discs || []).filter(function (d) { return d.tracks && d.tracks.length; });
+    if (discs.length) {
+      body += '<h4 class="ee-ost-cap">' + esc(OPTS.tracksHeading) + '</h4>';
+      discs.forEach(function (d) {
+        body += '<div class="ee-ost-disc">' +
+          (discs.length > 1 && d.name ? '<p class="ee-ost-discname">' + esc(d.name) + '</p>' : '') +
+          tracks(d) + '</div>';
       });
-    }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
-    for (var j = 0; j < items.length; j++) io.observe(items[j]);
-  }
-
-  function merge(base, extra) {
-    if (!extra) return base;
-    for (var k in extra) {
-      if (!Object.prototype.hasOwnProperty.call(extra, k)) continue;
-      if (extra[k] && extra[k].constructor === Object) {
-        base[k] = merge(base[k] || {}, extra[k]);
-      } else {
-        base[k] = extra[k];
-      }
     }
-    return base;
+
+    return '<section class="ee-ost-vol" id="ee-ost-p' + i + '" role="tabpanel" ' +
+      'aria-labelledby="ee-ost-t' + i + '" hidden>' + head + body + '</section>';
   }
 
-  function styleTag() {
-    var el = document.getElementById("eeost-style");
-    if (!el) {
-      el = document.createElement("style");
-      el.id = "eeost-style";
-      document.head.appendChild(el);
+  /* ---------- render ---------- */
+  function render(root) {
+    var vols = OPTS.volumes || [];
+    var html = '<h2 class="ee-ost-title">' + esc(OPTS.heading) + '</h2>' +
+      (OPTS.intro ? '<p class="ee-ost-intro">' + esc(OPTS.intro) + '</p>' : '');
+
+    if (vols.length > 1) {
+      html += '<div class="ee-ost-tabs" role="tablist">' + vols.map(function (v, i) {
+        return '<button class="ee-ost-tab" type="button" role="tab" id="ee-ost-t' + i + '" ' +
+          'aria-controls="ee-ost-p' + i + '" aria-selected="false" tabindex="-1">' +
+          esc(v.tab || ('Vol. ' + (i + 1))) + '</button>';
+      }).join('') + '</div>';
     }
-    el.textContent = css(CONFIG.theme);
-  }
 
-  function target() {
-    var el = CONFIG.mount ? document.querySelector(CONFIG.mount) : null;
-    if (el) return el;
-    if (HOST_SCRIPT && HOST_SCRIPT.parentNode) {
-      var holder = document.createElement("div");
-      holder.id = "ee-ost";
-      HOST_SCRIPT.parentNode.insertBefore(holder, HOST_SCRIPT);
-      return holder;
+    html += vols.map(volume).join('');
+
+    if (OPTS.back) {
+      html += '<div class="ee-ost-foot"><a class="ee-ost-back" href="' + esc(OPTS.back) + '">- Back -</a></div>';
     }
-    return null;
+    root.innerHTML = html;
   }
 
-  function render() {
-    var host = target();
-    if (!host) { console.warn("EE-OST: no mount point found."); return; }
-    styleTag();
-    host.classList.add("eeost");
-    host.innerHTML = build();
-    reveal(host);
+  function wire(root) {
+    var tabs   = [].slice.call(root.querySelectorAll('.ee-ost-tab'));
+    var panels = [].slice.call(root.querySelectorAll('.ee-ost-vol'));
+    if (!panels.length) return;
+
+    function show(i, focus) {
+      panels.forEach(function (p, n) {
+        p.hidden = n !== i;
+        if (n === i) {
+          /* first time this volume is opened, let its player load */
+          var f = p.querySelector('iframe[data-src]');
+          if (f) { f.src = f.getAttribute('data-src'); f.removeAttribute('data-src'); }
+        }
+      });
+      tabs.forEach(function (t, n) {
+        t.setAttribute('aria-selected', n === i ? 'true' : 'false');
+        t.tabIndex = n === i ? 0 : -1;
+        if (n === i && focus) t.focus();
+      });
+      sizePlayers(root);
+      if (OPTS.remember) { try { localStorage.setItem('ee-ost-vol', String(i)); } catch (e) {} }
+    }
+
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { show(i); });
+      t.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        show((i + d + tabs.length) % tabs.length, true);
+      });
+    });
+
+    var start = 0;
+    if (OPTS.remember) {
+      try {
+        var saved = parseInt(localStorage.getItem('ee-ost-vol'), 10);
+        if (saved >= 0 && saved < panels.length) start = saved;
+      } catch (e) {}
+    }
+    show(start);
   }
 
-  merge(CONFIG, window.EE_OST_CONFIG);
-  window.EE_OST = { config: CONFIG, render: render };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", render);
-  } else {
-    render();
+  /* Square artwork plus the play bar, so the frame is never letterboxed
+     and never clipped, at any column width. */
+  function sizePlayers(root) {
+    [].forEach.call(root.querySelectorAll('.ee-ost-player'), function (box) {
+      var f = box.querySelector('iframe');
+      if (!f || !box.offsetWidth) return;
+      f.style.height = Math.round(box.offsetWidth + (OPTS.playerBar || 72)) + 'px';
+    });
   }
+
+  function init() {
+    var root = document.getElementById('ee-ost');
+    if (!root) {
+      root = document.createElement('div');
+      root.id = 'ee-ost';
+      if (HERE && HERE.parentNode) HERE.parentNode.insertBefore(root, HERE);
+      else document.body.appendChild(root);
+    }
+    font(); styles();
+    render(root);
+    wire(root);
+    sizePlayers(root);
+
+    var rt;
+    window.addEventListener('resize', function () {
+      clearTimeout(rt);
+      rt = setTimeout(function () { sizePlayers(root); }, 140);
+    }, { passive: true });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else { init(); }
 })();
