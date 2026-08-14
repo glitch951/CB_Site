@@ -53,6 +53,11 @@
 
     remember: true,   // reopen on the volume last looked at
 
+    /* Clicking a track cues it up in the Bandcamp player above,
+       which then needs one press of play - Bandcamp will not let
+       an embed start itself. Set false for a plain list. */
+    playOnClick: true,
+
     /* ---------------------------------------------------------
        VOLUMES - one entry per record, in release order.
        album    the number from the Bandcamp EmbeddedPlayer URL
@@ -80,7 +85,7 @@
 
         buy: [
           { label: 'Bandcamp',          note: 'From the label', url: 'https://andersbachbrianbatzkristianpaulsen.bandcamp.com/album/oil072-esoteric-ebb-vol-1-original-soundtrack' },
-          { label: 'Cartridge Thunder', note: 'Soundtracks',    url: 'https://cartridgethunder.com/products/esoteric-ebb-vol-1-original-soundtrack' },
+          { label: 'Cartridge Thunder', note: 'US',             url: 'https://cartridgethunder.com/products/esoteric-ebb-vol-1-original-soundtrack' },
           { label: 'Amazon',            note: 'UK',             url: 'https://www.amazon.co.uk/Esoteric-Ebb-Vol-1-VINYL/dp/B0H4RRW73V/' },
           { label: 'Juno',              note: 'UK',             url: 'https://www.juno.co.uk/products/anders-bach-brian-batz-esoteric-ebb-vol-1-vinyl/1164313-01/' },
           { label: 'HEAD Records',      note: 'UK',             url: 'https://headrecords.co.uk/soundtracks/esoteric-ebb-vol.-1-anders-bach/brian-batz/kristian-paulsen/p-oil0721' },
@@ -269,11 +274,29 @@
 .ee-ost-tracks{margin:0; padding:.2em 1.1em; list-style:none;
   border:1px solid rgba(218,229,207,.22); border-radius:16px}
 .ee-ost-track{display:flex; align-items:baseline; gap:12px; padding:.5em 0;
-  border-bottom:1px dashed rgba(218,229,207,.16); line-height:1.35}
-.ee-ost-track:last-child{border-bottom:0}
+  border-bottom:1px dashed rgba(218,229,207,.16); line-height:1.35;
+  width:100%; text-align:left; font:inherit; color:inherit; background:none;
+  border-left:0; border-right:0; border-top:0; transition:none}
+.ee-ost-tracks li:last-child .ee-ost-track{border-bottom:0}
 .ee-ost-n{flex:0 0 auto; width:1.8em; color:${ORANGE}; font-size:12.5px; font-variant-numeric:tabular-nums}
 .ee-ost-tt{flex:1; min-width:0; font-size:15px}
 .ee-ost-td{flex:0 0 auto; color:rgba(218,229,207,.4); font-size:12.5px; font-variant-numeric:tabular-nums}
+
+/* a row you can play: the number gives way to a play mark */
+button.ee-ost-track{cursor:pointer}
+button.ee-ost-track:hover .ee-ost-tt,button.ee-ost-track:focus-visible .ee-ost-tt{color:${ORANGE}}
+.ee-ost-mark{position:relative; flex:0 0 auto; width:1.8em; height:1em; font-size:12.5px}
+.ee-ost-mark b{position:absolute; left:0; top:0; font-weight:400; color:${ORANGE};
+  font-variant-numeric:tabular-nums}
+.ee-ost-mark i{position:absolute; left:1px; top:.08em; width:0; height:0; opacity:0;
+  border-left:7px solid ${ORANGE}; border-top:4.5px solid transparent;
+  border-bottom:4.5px solid transparent}
+button.ee-ost-track:hover .ee-ost-mark b,button.ee-ost-track:focus-visible .ee-ost-mark b{opacity:0}
+button.ee-ost-track:hover .ee-ost-mark i,button.ee-ost-track:focus-visible .ee-ost-mark i{opacity:1}
+.ee-ost-track.is-cued .ee-ost-mark b{opacity:0}
+.ee-ost-track.is-cued .ee-ost-mark i{opacity:1}
+.ee-ost-track.is-cued .ee-ost-tt{color:${ORANGE}}
+.ee-ost-track.is-cued .ee-ost-td{color:rgba(219,91,44,.7)}
 
 /* the side arrows */
 .ee-ost-go{
@@ -338,15 +361,21 @@
     }).join('');
   }
 
-  function tracks(list) {
+  function tracks(list, playable) {
     var rows = (list || []).map(function (raw, i) {
       var bits = String(raw).split('|');
       var time = bits.length > 1 ? bits[1].trim() : '';
-      return '<li class="ee-ost-track">' +
-        '<span class="ee-ost-n">' + (i + 1) + '</span>' +
-        '<span class="ee-ost-tt">' + esc(bits[0].trim()) + '</span>' +
-        (time ? '<span class="ee-ost-td">' + esc(time) + '</span>' : '') +
-      '</li>';
+      var name = esc(bits[0].trim());
+      var body =
+        (playable
+          ? '<span class="ee-ost-mark" aria-hidden="true"><b>' + (i + 1) + '</b><i></i></span>'
+          : '<span class="ee-ost-n">' + (i + 1) + '</span>') +
+        '<span class="ee-ost-tt">' + name + '</span>' +
+        (time ? '<span class="ee-ost-td">' + esc(time) + '</span>' : '');
+      return '<li>' + (playable
+        ? '<button type="button" class="ee-ost-track" data-t="' + (i + 1) + '" ' +
+          'aria-label="Play ' + name + '">' + body + '</button>'
+        : '<div class="ee-ost-track">' + body + '</div>') + '</li>';
     }).join('');
     return rows ? '<ol class="ee-ost-tracks">' + rows + '</ol>' : '';
   }
@@ -358,8 +387,8 @@
       '/tracklist=false/transparent=true/';
     /* held in data-src so a record you have not opened does not pull
        a player down in the background */
-    return '<div class="ee-ost-player"><iframe data-src="' + src + '" loading="lazy" seamless ' +
-      'title="' + esc(title) + ' on Bandcamp"></iframe></div>';
+    return '<div class="ee-ost-player"><iframe data-src="' + src + '" data-base="' + src + '" ' +
+      'loading="lazy" seamless title="' + esc(title) + ' on Bandcamp"></iframe></div>';
   }
 
   function slide(v, i) {
@@ -378,7 +407,8 @@
           '<div class="ee-ost-links">' + links(v.buy) + '</div>'
         : (v.note ? '<p class="ee-ost-note">' + esc(v.note) + '</p>' : ''));
 
-    var right = '<h4 class="ee-ost-cap">' + esc(OPTS.tracksHeading) + '</h4>' + tracks(v.tracks);
+    var right = '<h4 class="ee-ost-cap">' + esc(OPTS.tracksHeading) + '</h4>' +
+      tracks(v.tracks, !!(OPTS.playOnClick && v.album));
 
     return '<article class="ee-ost-slide" id="ee-ost-s' + i + '" aria-hidden="true">' +
       '<div class="ee-ost-col">' + left + '</div>' +
@@ -446,6 +476,30 @@
       at = i;
       if (OPTS.remember) { try { localStorage.setItem('ee-ost-vol', String(i)); } catch (e) {} }
     }
+
+    /* Bandcamp addresses a track inside an album embed with t=<number>,
+       so the frame is pointed at that track and the row lights up. The
+       player will not start itself, so it waits on one press of play. */
+    slides.forEach(function (s) {
+      var frame = s.querySelector('iframe');
+      if (!frame) return;
+      s.addEventListener('click', function (e) {
+        var row = e.target.closest && e.target.closest('button.ee-ost-track');
+        if (!row) return;
+        var base = frame.getAttribute('data-base');
+        if (!base) return;
+        frame.removeAttribute('data-src');
+        frame.src = base + 't=' + row.getAttribute('data-t') + '/';
+        [].forEach.call(s.querySelectorAll('.ee-ost-track'), function (r) {
+          r.classList.toggle('is-cued', r === row);
+        });
+        /* stacked layout puts the player off screen above the list */
+        var small = window.matchMedia
+          ? window.matchMedia('(max-width:820px)').matches
+          : window.innerWidth <= 820;
+        if (small && frame.scrollIntoView) frame.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      });
+    });
 
     var prev = root.querySelector('.ee-ost-go.is-prev');
     var next = root.querySelector('.ee-ost-go.is-next');
