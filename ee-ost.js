@@ -53,10 +53,17 @@
 
     remember: true,   // reopen on the volume last looked at
 
-    /* Clicking a track cues it up in the Bandcamp player above,
-       which then needs one press of play - Bandcamp will not let
-       an embed start itself. Set false for a plain list. */
-    playOnClick: true,
+    /* Clicking a track plays it. Bandcamp refuses to let an embed
+       start itself, so playback runs through Spotify, which ships a
+       real API for it: a slim player drops in under the record and
+       starts the track. Visitors signed in to Premium hear it whole,
+       everyone else gets Spotify's 30 second preview.
+       A track with no Spotify id falls back to cueing the Bandcamp
+       player, which then waits on one press of play.
+       Set false for a plain, unclickable list. */
+    playOnClick:  true,
+    playerLabel:  'Now playing',
+    playerHeight: 80,
 
     /* ---------------------------------------------------------
        VOLUMES - one entry per record, in release order.
@@ -92,31 +99,34 @@
           { label: 'Proper Music',      note: 'UK',             url: 'https://propermusic.com/products/andersbachbrianbatzkristianpaulsen-esotericebbvol1' }
         ],
 
+        /* 'Title | length | spotify track id' - the id is what the
+           player above uses. Drop it and the row falls back to cueing
+           Bandcamp. */
         tracks: [
-          'Endless Ebb | 1:48',
-          'Waking Morgue | 3:25',
-          'Norvik | 5:40',
-          'Peril | 3:21',
-          'Comrades | 2:54',
-          'Dear Snell | 2:53',
-          'At The Throne | 4:04',
-          'This Halo Glows | 4:36',
-          'Merchants | 4:40',
-          'Night on Tolstad | 1:55',
-          'Questions Need Answering | 2:56',
-          'Waterlane | 4:51',
-          'Dank Bodies, Mooring Visage | 2:30',
-          'Light of Brr | 3:04',
-          'The Cabin | 5:17',
-          'Shwmae, Dyn Metel Rhyfedd! | 4:07',
-          'Roots | 2:32',
-          'A Specter, A Trifler | 5:03',
-          'Entering the Pillar | 3:06',
-          'The Missing Paladin (feat. Sleep Party People) | 4:49',
-          'Chosen of Urth (feat. Seiðr) | 6:36',
-          'Voids of Resolution | 5:16',
-          'Days of Jor (feat. MØ & GNOM) | 5:53',
-          'An Esoteric Ebb | 3:39'
+          'Endless Ebb | 1:48 | 0GSpY1V3CRCBabsruB8ZIj',
+          'Waking Morgue | 3:25 | 7KJNc8wwxhDwKNqiupEMeG',
+          'Norvik | 5:40 | 6Uh7Tom49GG8fISk5IPI6k',
+          'Peril | 3:21 | 4glPTPjNqRJZfY95kWuGLU',
+          'Comrades | 2:54 | 0u5mT6GhvUasJEpX4TQqLI',
+          'Dear Snell | 2:53 | 5eNseA0UExyaAZNu7nCY27',
+          'At The Throne | 4:04 | 4Lfe9GbEwVIHQX0CYPz7se',
+          'This Halo Glows | 4:36 | 5NmX0wBxQiJmRoy5vQBwMq',
+          'Merchants | 4:40 | 1UwwnCymAtY4mDKTM6Wkin',
+          'Night on Tolstad | 1:55 | 7Ma45ftBamzWcE7BndwD1n',
+          'Questions Need Answering | 2:56 | 0kFsM1j1IqQi4vVztGxtVo',
+          'Waterlane | 4:51 | 1Jnt5PXtvC1MSsILsehgZJ',
+          'Dank Bodies, Mooring Visage | 2:30 | 1TtbrQGIjRJo3VHy8zaZmJ',
+          'Light of Brr | 3:04 | 3YsidP9SI1yYjpIkv7yuT0',
+          'The Cabin | 5:17 | 0fby2SHlNtCL5dqaF6UD5n',
+          'Shwmae, Dyn Metel Rhyfedd! | 4:07 | 4RvIdzsRVlGa2ZoDEyx1bu',
+          'Roots | 2:32 | 0kLvWNOkfsjow1Uuy84eTm',
+          'A Specter, A Trifler | 5:03 | 0Vmu9HeRwOgvHE7zHgwCeM',
+          'Entering the Pillar | 3:06 | 27ZKUs5vxIMq5rPg804ftz',
+          'The Missing Paladin (feat. Sleep Party People) | 4:49 | 2NHjPIXQJz7787mJDm6oPD',
+          'Chosen of Urth (feat. Seiðr) | 6:36 | 3Cf6eOacqslQmKOdYwSIJf',
+          'Voids of Resolution | 5:16 | 39AssLJ59edghzVL7oG7xs',
+          'Days of Jor (feat. MØ & GNOM) | 5:53 | 7CBMFsslIW9rzmpGco8HHC',
+          'An Esoteric Ebb | 3:39 | 62XP1MuEC3BFpuhuiruUmE'
         ]
       },
 
@@ -144,28 +154,28 @@
         note: 'Digital for now. Vinyl to be announced.',
 
         tracks: [
-          "Nearly's Song | 3:57",
-          'Norvikian Decay | 3:36',
-          'Outside | 3:59',
-          "The Prison of Toulin'catl | 6:58",
-          'Calmness Is a Still | 2:48',
-          'The Tower | 3:33',
-          'Burnt | 4:12',
-          'Meriadoc Sleeps | 1:20',
-          'The Presence of Sageleaf | 5:23',
-          'Patriots | 4:32',
-          'Distill Portside | 4:00',
-          "At Snurre's | 3:41",
-          'Long Rest | 0:23',
-          'Highland Fling | 2:52',
-          'Undercoast | 6:04',
-          'Crypts | 2:23',
-          "Kraiid's Teeth | 3:16",
-          'Caverns | 5:25',
-          'Revel in Urth | 2:26',
-          'Ruins | 1:12',
-          'Leaving | 3:53',
-          'In the Void | 3:26'
+          "Nearly's Song | 3:57 | 7bRaVBPpILlvashVogt2mS",
+          'Norvikian Decay | 3:36 | 1VOOUUFwM3vi80TBS0bKKx',
+          'Outside | 3:59 | 6d7P5fo3Ct8JlWVANLiqi1',
+          "The Prison of Toulin'catl | 6:58 | 7yg9StfJkUUxtpFT6Mwty5",
+          'Calmness Is a Still | 2:48 | 3WX31XqDUMX4DvaNITtKjl',
+          'The Tower | 3:33 | 5A56IzaOAaTM7tWIy3wVWH',
+          'Burnt | 4:12 | 1MMSRW4W7cuWKa0VO5nK5o',
+          'Meriadoc Sleeps | 1:20 | 4li9utAqQxS57hxYSPF1De',
+          'The Presence of Sageleaf | 5:23 | 4qelqfTYf1j4sKc89MlD0U',
+          'Patriots | 4:32 | 75B8bjMALZ3c5HYJAJ52Ez',
+          'Distill Portside | 4:00 | 1PJNXImC2dSCfNi4mJuqq9',
+          "At Snurre's | 3:41 | 5E3r40Ek92kGdRceUXnxIA",
+          'Long Rest | 0:23 | 2AWsCOrw9Fz9tsPUbnJIvZ',
+          'Highland Fling | 2:52 | 0ZsPvdkTw8fK9AnGuoO4mr',
+          'Undercoast | 6:04 | 0wB9QFKESHaXtN2qgAiulP',
+          'Crypts | 2:23 | 6xDHQZ1inOQxwZbNwMYbRo',
+          "Kraiid's Teeth | 3:16 | 7IVz345DqZ3xvDH8oCxyry",
+          'Caverns | 5:25 | 1G37GLIfODmhZ9p1uaa61L',
+          'Revel in Urth | 2:26 | 3WVLaYGmwYCVwHWV7f7Aax',
+          'Ruins | 1:12 | 0ghm9l51ktiLX1Su0WJrpO',
+          'Leaving | 3:53 | 6vCPIfSaVNfh2rYCrv6qMZ',
+          'In the Void | 3:26 | 0BfVu6frA91pOnugBvs6x5'
         ]
       }
     ],
@@ -320,6 +330,36 @@ button.ee-ost-track:hover .ee-ost-mark i,button.ee-ost-track:focus-visible .ee-o
 .ee-ost-dot:hover{border-color:${ORANGE}}
 .ee-ost-dot.is-on{background:${ORANGE}; border-color:${ORANGE}}
 
+/* the player that drops in when a track is clicked */
+.ee-ost-now{
+  flex:0 0 auto; height:0; overflow:hidden; opacity:0;
+  transition:height .34s cubic-bezier(.22,.61,.36,1), opacity .28s ease;
+}
+.ee-ost-now.is-up{height:calc(${OPTS.playerHeight}px + 30px); opacity:1}
+.ee-ost-nowin{
+  display:flex; align-items:center; gap:clamp(12px,2vw,22px);
+  margin-top:clamp(10px,1.6vh,18px);
+  padding:.7em 1em; border:1px solid rgba(219,91,44,.45); border-radius:16px;
+}
+.ee-ost-nowtext{flex:0 0 auto; min-width:0; max-width:34%}
+.ee-ost-noweyebrow{display:block; color:${SAGE}; font-size:11px; letter-spacing:.2em;
+  text-transform:uppercase; opacity:.8}
+.ee-ost-nowtitle{display:block; margin-top:.25em; color:${ORANGE};
+  font-size:clamp(15px,1.5vw,18px); font-variant:small-caps; letter-spacing:.02em;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.ee-ost-nowvol{color:rgba(218,229,207,.45); font-variant:normal; font-size:12.5px;
+  letter-spacing:.1em; text-transform:uppercase; margin-left:.6em}
+.ee-ost-nowplayer{flex:1 1 auto; min-width:0; height:${OPTS.playerHeight}px}
+.ee-ost-nowplayer iframe{display:block; width:100%; height:100%; border:0; border-radius:12px}
+.ee-ost-nowstop{
+  flex:0 0 auto; width:30px; height:30px; padding:0; cursor:pointer; line-height:1;
+  background:transparent; color:rgba(218,229,207,.55); font-size:19px;
+  border:1px solid rgba(218,229,207,.3); border-radius:50%; transition:none;
+}
+.ee-ost-nowstop:hover,.ee-ost-nowstop:focus-visible{color:${ORANGE}; border-color:${ORANGE}}
+.ee-ost-nowhint{color:rgba(218,229,207,.4); font-size:11.5px; font-style:italic;
+  padding:6px 4px 0; text-align:right}
+
 /* stacked, with the arrows brought down to the foot beside the dots */
 @media (max-width:820px){
   #ee-ost{min-height:0; padding-bottom:clamp(30px,6vw,60px)}
@@ -330,6 +370,15 @@ button.ee-ost-track:hover .ee-ost-mark i,button.ee-ost-track:focus-visible .ee-o
   .ee-ost-col{overflow:visible}
   .ee-ost-go{position:static; transform:none}
   .ee-ost-dots{gap:18px; padding-top:22px}
+  /* the player follows the page down rather than sitting in the flow */
+  .ee-ost-now.is-up{
+    position:fixed; left:0; right:0; bottom:0; z-index:8000; height:auto;
+    background:#020E16; padding:0 14px 12px;
+    box-shadow:0 -14px 30px rgba(2,14,22,.75);
+  }
+  .ee-ost-nowin{margin-top:12px}
+  .ee-ost-nowtext{display:none}
+  .ee-ost-nowhint{display:none}
 }
 
 @media (prefers-reduced-motion:reduce){.ee-ost-slide{transition:none}}`;
@@ -365,6 +414,7 @@ button.ee-ost-track:hover .ee-ost-mark i,button.ee-ost-track:focus-visible .ee-o
     var rows = (list || []).map(function (raw, i) {
       var bits = String(raw).split('|');
       var time = bits.length > 1 ? bits[1].trim() : '';
+      var sp   = bits.length > 2 ? bits[2].trim() : '';
       var name = esc(bits[0].trim());
       var body =
         (playable
@@ -374,7 +424,8 @@ button.ee-ost-track:hover .ee-ost-mark i,button.ee-ost-track:focus-visible .ee-o
         (time ? '<span class="ee-ost-td">' + esc(time) + '</span>' : '');
       return '<li>' + (playable
         ? '<button type="button" class="ee-ost-track" data-t="' + (i + 1) + '" ' +
-          'aria-label="Play ' + name + '">' + body + '</button>'
+          (sp ? 'data-sp="' + esc(sp) + '" ' : '') +
+          'data-title="' + name + '" aria-label="Play ' + name + '">' + body + '</button>'
         : '<div class="ee-ost-track">' + body + '</div>') + '</li>';
     }).join('');
     return rows ? '<ol class="ee-ost-tracks">' + rows + '</ol>' : '';
@@ -436,7 +487,78 @@ button.ee-ost-track:hover .ee-ost-mark i,button.ee-ost-track:focus-visible .ee-o
           'aria-label="' + esc(v.tab || ('Volume ' + (i + 1))) + '"></button>';
       }).join('') + '</div>';
     }
+
+    if (OPTS.playOnClick) {
+      html += '<div class="ee-ost-now" aria-live="polite">' +
+        '<div class="ee-ost-nowin">' +
+          '<div class="ee-ost-nowtext">' +
+            '<span class="ee-ost-noweyebrow">' + esc(OPTS.playerLabel) + '</span>' +
+            '<span class="ee-ost-nowtitle" data-ee-now></span>' +
+          '</div>' +
+          '<div class="ee-ost-nowplayer"><div data-ee-sp></div></div>' +
+          '<button class="ee-ost-nowstop" type="button" aria-label="Stop playback">&times;</button>' +
+        '</div></div>';
+    }
     root.innerHTML = html;
+  }
+
+  /* ---------- the player ----------
+     Spotify publishes an iframe API, so unlike Bandcamp its player can
+     actually be told to start. The script is only pulled in the first
+     time somebody plays something, so a visitor who never clicks a
+     track never loads it. */
+  var SP = { api: null, ctrl: null, ready: false, playing: false, queue: [] };
+
+  function spotifyApi(cb) {
+    if (SP.api) return cb(SP.api);
+    SP.queue.push(cb);
+    if (SP.loading) return;
+    SP.loading = true;
+    window.onSpotifyIframeApiReady = function (api) {
+      SP.api = api;
+      SP.queue.splice(0).forEach(function (f) { f(api); });
+    };
+    var el = document.createElement('script');
+    el.src = 'https://open.spotify.com/embed/iframe-api/v1';
+    el.async = true;
+    el.onerror = function () { SP.failed = true; SP.queue.length = 0; };
+    document.head.appendChild(el);
+  }
+
+  /* The API answers play() only once the frame is up, and browsers can
+     swallow the first attempt, so it is nudged a few times and then
+     left alone rather than fought with. */
+  function nudge(left) {
+    if (!SP.ctrl || SP.playing) return;
+    try { SP.ctrl.play(); } catch (e) {}
+    if (left > 0) setTimeout(function () { nudge(left - 1); }, 420);
+  }
+
+  function spotifyPlay(id, mount) {
+    var uri = 'spotify:track:' + id;
+    SP.playing = false;
+    spotifyApi(function (api) {
+      if (SP.ctrl) { 
+        try { SP.ctrl.loadUri(uri); } catch (e) {}
+        nudge(4);
+        return;
+      }
+      api.createController(mount, {
+        uri: uri, width: '100%', height: OPTS.playerHeight
+      }, function (ctrl) {
+        SP.ctrl = ctrl;
+        ctrl.addListener('ready', function () { SP.ready = true; nudge(4); });
+        ctrl.addListener('playback_update', function (e) {
+          SP.playing = !!(e && e.data && e.data.isPaused === false);
+        });
+        nudge(4);
+      });
+    });
+  }
+
+  function spotifyPause() {
+    if (SP.ctrl) { try { SP.ctrl.pause(); } catch (e) {} }
+    SP.playing = false;
   }
 
   /* ---------- behaviour ---------- */
@@ -477,28 +599,110 @@ button.ee-ost-track:hover .ee-ost-mark i,button.ee-ost-track:focus-visible .ee-o
       if (OPTS.remember) { try { localStorage.setItem('ee-ost-vol', String(i)); } catch (e) {} }
     }
 
-    /* Bandcamp addresses a track inside an album embed with t=<number>,
-       so the frame is pointed at that track and the row lights up. The
-       player will not start itself, so it waits on one press of play. */
-    slides.forEach(function (s) {
+    /* Only one record plays at a time. There is no way to reach inside
+       a Bandcamp frame and press pause, so the other one is unloaded
+       instead, which stops it dead. Its data-src is put back, so it
+       rebuilds itself the next time that volume is opened. */
+    var frames = [].slice.call(root.querySelectorAll('.ee-ost-player iframe'));
+    function silence(keep) {
+      frames.forEach(function (f) {
+        if (f === keep || !f.getAttribute('src') || f.src === 'about:blank') return;
+        var base = f.getAttribute('data-base');
+        var slide = f.closest('.ee-ost-slide');
+        f.src = 'about:blank';
+        if (base) f.setAttribute('data-src', base);
+        if (slide) [].forEach.call(slide.querySelectorAll('.is-cued'), function (r) {
+          r.classList.remove('is-cued');
+        });
+        /* A record still on screen gets rebuilt straight away, or the
+           visitor is left staring at a hole where the sleeve was. One
+           out of sight stays unloaded until its volume comes round. */
+        if (slide && slide.classList.contains('is-on') && base) {
+          setTimeout(function () {
+            if (f.src === 'about:blank') {
+              f.removeAttribute('data-src');
+              f.src = base;
+            }
+          }, 60);
+        }
+      });
+    }
+
+    /* the strip that carries the player */
+    var bar   = root.querySelector('.ee-ost-now');
+    var mount = root.querySelector('[data-ee-sp]');
+    var nowT  = root.querySelector('[data-ee-now]');
+    var stop  = root.querySelector('.ee-ost-nowstop');
+
+    function lit(row) {
+      [].forEach.call(root.querySelectorAll('.ee-ost-track.is-cued'), function (r) {
+        if (r !== row) r.classList.remove('is-cued');
+      });
+      if (row) row.classList.add('is-cued');
+    }
+
+    function openBar(title, vol) {
+      if (!bar) return;
+      nowT.innerHTML = esc(title) +
+        (vol ? '<span class="ee-ost-nowvol">' + esc(vol) + '</span>' : '');
+      bar.classList.add('is-up');
+    }
+
+    if (stop) stop.addEventListener('click', function () {
+      spotifyPause();
+      bar.classList.remove('is-up');
+      lit(null);
+    });
+
+    slides.forEach(function (s, si) {
       var frame = s.querySelector('iframe');
-      if (!frame) return;
       s.addEventListener('click', function (e) {
         var row = e.target.closest && e.target.closest('button.ee-ost-track');
         if (!row) return;
+
+        var id = row.getAttribute('data-sp');
+        var vol = (vols[si] && vols[si].tab) || '';
+
+        /* Spotify plays it outright */
+        if (id && mount && !SP.failed) {
+          silence(null);                     // no Bandcamp frame keeps running
+          openBar(row.getAttribute('data-title'), vol);
+          spotifyPlay(id, mount);
+          lit(row);
+          return;
+        }
+
+        /* no Spotify id, so fall back to pointing the Bandcamp player at
+           the track. Bandcamp addresses one inside an album embed with
+           t=<number>. It will not start itself, so it waits on play. */
+        if (!frame) return;
         var base = frame.getAttribute('data-base');
         if (!base) return;
+        spotifyPause();
         frame.removeAttribute('data-src');
         frame.src = base + 't=' + row.getAttribute('data-t') + '/';
-        [].forEach.call(s.querySelectorAll('.ee-ost-track'), function (r) {
-          r.classList.toggle('is-cued', r === row);
-        });
-        /* stacked layout puts the player off screen above the list */
+        silence(frame);
+        lit(row);
         var small = window.matchMedia
           ? window.matchMedia('(max-width:820px)').matches
           : window.innerWidth <= 820;
         if (small && frame.scrollIntoView) frame.scrollIntoView({ block: 'center', behavior: 'smooth' });
       });
+    });
+
+    /* Pressing play inside a frame happens out of our reach, but the
+       page still loses focus to that frame when it is clicked. That is
+       the signal that this is now the record being listened to, so
+       every other one is silenced. Covers hitting play on the player
+       itself rather than through the tracklist. */
+    window.addEventListener('blur', function () {
+      setTimeout(function () {
+        var el = document.activeElement;
+        if (el && el.tagName === 'IFRAME' && frames.indexOf(el) !== -1) {
+          silence(el);
+          spotifyPause();          // the record itself is being played now
+        }
+      }, 0);
     });
 
     var prev = root.querySelector('.ee-ost-go.is-prev');
