@@ -6,6 +6,7 @@ During this time I also made a list. Not the manifesto-kind, but just a list of 
 ## Sound Respawn (Isac Jonsson)
 role: Sound Design, Mixing, and Implementation
 image: sound-respawn.png
+link: Website | https://soundrespawn.com/
 link: Instagram | https://www.instagram.com/soundrespawn/
 
 Isac joined the project before I'd shown it to anyone else. He created the soundscape for Ebb from scratch, having recorded a massive library of naturalistic sounds and mixed it with the *Esoteric Vibe* of the game. He also worked tirelessly on the implementation of both SFX and soundtrack, as the audio producer on Esoteric Ebb - to make sure the auditory experience is on top of its game.
