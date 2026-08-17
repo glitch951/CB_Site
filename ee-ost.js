@@ -151,7 +151,7 @@
 
         /* No vinyl yet. Fill this in and the section appears. */
         buy:  [],
-        note: 'Digital for now. Vinyl to be announced.',
+        note: '',
 
         tracks: [
           "Nearly's Song | 3:57 | 7bRaVBPpILlvashVogt2mS",
