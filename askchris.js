@@ -74,11 +74,7 @@
     '  to { opacity: 1; transform: none; } }',
     /* A repaint (fresh data arriving over the cached copy) must not
        re-run the entrance animation, or the whole list visibly flashes. */
-    /* Suppressing the entrance animation must NOT leave the threads on
-       the keyframe's opening frame. acIn uses fill-mode "both", so
-       "animation: none" alone left every thread at opacity 0, which is
-       what made the archive render and stay invisible. */
-    '#askchris.ac-quiet .ac-thread { animation: none; opacity: 1; transform: none; }',
+    '#askchris.ac-quiet .ac-thread { animation: none; }',
     '.ac-thread { border: 1px solid var(--ac-rule); border-radius: 12px;',
     '  margin: 0 0 14px; background: var(--ac-paper); overflow: hidden;',
     '  animation: acIn .28s ease both; }',
