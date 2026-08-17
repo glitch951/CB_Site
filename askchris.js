@@ -12,7 +12,6 @@
   'use strict';
 
   /* Where the ask-chris worker lives. */
-  var BUILD = '2026-08-17d';
   var WORKER_URL = 'https://ask-chris.christofferbodegard.workers.dev';
 
   /* Background character art, exactly like christofferbodegard.com: paste
@@ -82,11 +81,7 @@
     '#askchris.ac-quiet .ac-thread { animation: none; opacity: 1; transform: none; }',
     '.ac-thread { border: 1px solid var(--ac-rule); border-radius: 12px;',
     '  margin: 0 0 14px; background: var(--ac-paper); overflow: hidden;',
-    /* No "both" fill mode: the resting state is visible, and the
-       animation only plays it in. Anything that turns the animation
-       off then leaves the thread visible rather than stranded on the
-       opening keyframe, which is what hid the whole archive. */
-    '  opacity: 1; animation: acIn .28s ease; }',
+    '  animation: acIn .28s ease both; }',
     '.ac-top { display: block; width: 100%; text-align: left; font: inherit;',
     '  color: inherit; background: none; border: 0; cursor: pointer;',
     '  padding: 16px 18px; position: relative; }',
@@ -359,35 +354,6 @@
     applyQuery();
 
     root.setAttribute('data-ac-painted', '1');
-
-    /* The archive renders correctly in isolation, so if it is invisible
-       on the page something in the surrounding markup is hiding it.
-       Walk up from the root and report the first ancestor that would:
-       zero height, display none, hidden overflow with no height, or
-       transparent. This prints the culprit instead of guessing. */
-    setTimeout(function () {
-      try {
-        var el = root, hops = 0, report = [];
-        while (el && el !== document.documentElement && hops++ < 12) {
-          var cs = getComputedStyle(el);
-          var r = el.getBoundingClientRect();
-          var bad = (r.height < 4) || cs.display === 'none' ||
-                    cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05 ||
-                    (cs.overflow === 'hidden' && r.height < 40);
-          report.push((bad ? '>> ' : '   ') +
-            (el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
-             (el.className && typeof el.className === 'string'
-                ? '.' + el.className.trim().split(/\s+/).join('.') : '')) +
-            '  h=' + Math.round(r.height) +
-            ' disp=' + cs.display + ' vis=' + cs.visibility +
-            ' op=' + cs.opacity + ' ovf=' + cs.overflow);
-          el = el.parentElement;
-        }
-        console.info('[askchris] layout chain (>> marks anything hiding it):\n' +
-          report.join('\n'));
-      } catch (e) {}
-    }, 400);
-
     requestAnimationFrame(function () {
       root.style.minHeight = '';
       root.classList.remove('ac-quiet');
@@ -401,7 +367,7 @@
     /* Logged so this file can be diagnosed from the console the way the
        top bar can: if you do not see this line, the script never ran. */
     if (window.console && console.info) {
-      console.info('[askchris] build ' + BUILD + ' | root found: ' +
+      console.info('[askchris] boot | root found: ' +
         !!document.getElementById('askchris') +
         ' | cached: ' + (function(){ try { var v = localStorage.getItem('ac-last');
           return v ? v.length + ' chars' : 'none'; } catch(e){ return 'blocked'; } })());
