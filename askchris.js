@@ -243,7 +243,6 @@
       ]));
     }
     var all = (data && data.threads) || [];
-    if (window.console && console.info) console.info('[askchris] rendering ' + all.length + ' threads');
     if (!all.length) {
       root.appendChild(h('div', { class: 'ac-error', text: 'No threads yet.' }));
       return;
@@ -360,15 +359,6 @@
 
 
   function boot() {
-    /* Logged so this file can be diagnosed from the console the way the
-       top bar can: if you do not see this line, the script never ran. */
-    if (window.console && console.info) {
-      console.info('[askchris] boot | root found: ' +
-        !!document.getElementById('askchris') +
-        ' | cached: ' + (function(){ try { var v = localStorage.getItem('ac-last');
-          return v ? v.length + ' chars' : 'none'; } catch(e){ return 'blocked'; } })());
-    }
-
     var font = document.createElement('link');
     font.rel = 'stylesheet';
     font.href = 'https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Figtree:wght@300..900&display=swap';
@@ -410,10 +400,7 @@
 
     var bucket = Math.floor(Date.now() / 600000);
     fetch(WORKER_URL.replace(/\/$/, '') + '/?t=' + bucket)
-      .then(function (r) {
-        if (window.console && console.info) console.info('[askchris] worker HTTP ' + r.status);
-        return r.json();
-      })
+      .then(function (r) { return r.json(); })
       .then(function (fresh) {
         if (!fresh || !fresh.threads) throw new Error('bad payload');
         try { localStorage.setItem('ac-last', JSON.stringify(fresh)); } catch (e) {}
@@ -445,8 +432,7 @@
         }
         if (fresh.backlog > 0) setTimeout(pump, 1500);
       })
-      .catch(function (err) {
-        if (window.console && console.warn) console.warn('[askchris] failed:', err);
+      .catch(function () {
         root.style.minHeight = '';
         if (cached && cached.threads) return; // stale beats an error
         root.innerHTML = '';
