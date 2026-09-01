@@ -101,7 +101,7 @@ Mayowa joined the team towards the end stretch, when we needed to finish up the 
 ---
 
 ## Speldosa Interactive
-image: speldosa.jpg
+image: speldosa.png
 link: Website | https://www.speldosa.com/
 link: X | https://x.com/speldosagames
 link: Instagram | https://www.instagram.com/speldosagames/
@@ -142,7 +142,7 @@ Jonna joined during the final phases of development, acting as internal QA teste
 
 ## QLOC
 role: QA Testers
-image: qloc.png
+image: QLOC.png
 
 QLOC joined in as a third party to playtest the hell out of Ebb during the final few months of development. They were essential in checking each and every alternate path, dynamic piece of content, and strange save-file issues - all of which got solved in time. Thank you, QLOC!
 
