@@ -88,7 +88,7 @@ With an incredible expertise on both 3D and lineart, Emma took on the unique Ebb
 
 ## Lovisa Malinen
 role: 3D Artist
-image: lovisa-malinen.jpg
+image: lovisa-malinen.png
 
 Lovisa is a highly proficient character animator and graphical artist, responsible for several of the iconic hand-painted background textures around Norvik - taking on the roll of line-artist for areas like Pillar Crossing, the oh so important Tea Shop, as well as Ettir's cozy Guard Tower. Lovisa also took on the challenge of coloring almost half the game, to great success. Just look at that wall-art in Darrow's Nest!
 
