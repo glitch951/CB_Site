@@ -162,7 +162,7 @@ Also, thanks for the money! It helped!
 role: Writing, Design, Programming, etc
 image: sudden-snail.png
 link: Website | https://christofferbodegard.com/
-link: Information | https://suddensnail.com/
+link: Sudden Snail | https://suddensnail.com/
 link: X | https://twitter.com/chrisbodegard
 
 And finally, ME. Before I started working with all these wonderful people, I did everything. Now, I'm lucky enough to focus on the stuff I'm good at. On Ebb, I primarily *design-write* dialogs, implement assets, making sure things look and sound good, and of course I also program the game. Generally speaking, I like to keep track of all the different pieces of the pipelines, so that I (at the very least) have a basic understanding of everything. That way, I can estimate work much better. And also, if stuff breaks, I'll know how to fix it.
