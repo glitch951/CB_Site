@@ -158,14 +158,14 @@ A great marketing plan, wonderful trailers, a GODSEND of a QA team, and a team o
 
 Also, thanks for the money! It helped!
 
-## Sudden Snail
-role: Writing, Design, Programming
+## Christoffer Bodegård
+role: Writing, Design, Programming, etc
 image: sudden-snail.png
 link: Website | https://christofferbodegard.com/
 link: Information | https://suddensnail.com/
 link: X | https://twitter.com/chrisbodegard
 
-And finally, this is just me. [**Sudden Snail**](https://suddensnail.com/) is the title of my production company/studio. It's basically just the legal entity of everything I create. On Ebb, I primarily *design-write* dialogs, implement assets, making sure things look and sound good, and of course I also program everything.
+And finally, ME. Before I started working with all these wonderful people, I did everything. Now, I'm lucky enough to focus on the stuff I'm good at. On Ebb, I primarily *design-write* dialogs, implement assets, making sure things look and sound good, and of course I also program the game. Generally speaking, I like to keep track of all the different pieces of the pipelines, so that I (at the very least) have a basic understanding of everything. That way, I can estimate work much better. And also, if stuff breaks, I'll know how to fix it.
 
 But now, whenever someone asks me if I'm a 'solo developer', I hope this page gives a clear answer: *I used to be*, but now I collaborate with a ton of amazing artists who are much better at visuals and audio than I am, as well as all the other types of support pillars a small indie production can need at times.
 
