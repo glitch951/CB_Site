@@ -1,21 +1,29 @@
-# Sudden Snail team widget
+# Sudden Snail website: the whole page is drawn from this file
 #
-#   ## Name           the big line
-#   role:             the small line above the name
+# Page details (optional, before the first person):
+#   logo:        filename in CB_Site/images/, or a full https:// URL
+#   intro:       the small line above the cards
+#   email:       the address in the footer
+#   copyright:   the line at the bottom right
+#
+# One block per person. Add a block to add someone to the site:
+#   ## Name           the name on the card
+#   role:             the small line under the name
 #   image:            filename in CB_Site/images/, or a full https:// URL
+#                     (black lines on white; the white becomes the paper colour)
 #   href:             where the name links to (optional)
-#   tagline:          the line under the name (optional)
-#   link: Label | URL one per icon, in the order they should appear
+#   tagline:          the quote at the bottom of the card (optional)
+#   link: Label | URL one per link, in the order they should appear
 #
-# Known labels get their own icon: LinkedIn, Twitter, X, Threads,
-# Mastodon, Bluesky, TikTok, Discord, Email, Information, Home,
-# Instagram, ArtStation, Twitch, Steam, YouTube. Anything else gets a
-# neutral dot, so nothing ever breaks.
-#
-# Order here is the order they cycle in.
+# Order here is the order of the cards.
+
+logo: sudden-snail-logo.png
+intro: Sudden Snail AB · makers of Esoteric Ebb
+email: christofferbodegard@suddensnail.com
+copyright: © 2026 Sudden Snail AB
 
 ## Christoffer Bodegård
-role: Founded by
+role: Founder
 image: sudden-snail.png
 href: https://christofferbodegard.com/
 tagline: somewhat professional writer/designer/programmer/etc
@@ -23,7 +31,6 @@ link: LinkedIn | https://www.linkedin.com/company/98194802
 link: X | https://twitter.com/chrisbodegard
 link: Bluesky | https://bsky.app/profile/chrisbodegard.bsky.social
 link: Email | mailto:christofferbodegard@suddensnail.com
-link: Information | #about
 
 ## Oscar Westberg
 role: Producer & Artist
