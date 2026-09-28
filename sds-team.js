@@ -16,6 +16,11 @@
    turbulence seed), so no two outlines are scratched the same way,
    like the hand-inked edge of the logo's speech bubble.
 
+   The round button in the bottom right swaps paper and ink for a
+   dark mode. The logo and portraits are recoloured by a filter rather
+   than swapped for other files, so they follow whatever the two
+   colours in OPTS are.
+
    INSTALL
    On suddensnail.com remove everything, and add one Embed
    (Type: Code, Style: Inline) containing only:
@@ -49,6 +54,11 @@
     paper: '#DAE5CF',   // Ebb Paper
     ink:   '#020E16',   // Esoteric Black
     hover: '#C13B51',   // Strength Red
+    hoverDark: '#E93C3C', // Special Choice Red; Strength Red is too dark on black
+
+    /* Dark mode swaps paper and ink. A visitor's choice is remembered;
+       until they make one, their system setting decides. */
+    themeKey: 'ss-theme',
 
     fontHref: 'https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700' +
               '&family=Fraunces:opsz,wght,SOFT,WONK@9..144,100..900,0..100,0..1&display=swap',
@@ -85,21 +95,23 @@ ${scope} .ssp-name{font-size:calc(var(--u)*2.8)}`;
        height on landscape screens and its width on portrait ones, which is
        what lets the whole page fit on one screen without scrolling. */
     s.textContent = `
-html,body{background:${OPTS.paper}}
+:root{--ss-paper:${OPTS.paper}; --ss-ink:${OPTS.ink}; --ss-hover:${OPTS.hover}}
+:root[data-ss-theme="dark"]{--ss-paper:${OPTS.ink}; --ss-ink:${OPTS.paper}; --ss-hover:${OPTS.hoverDark}}
+html,body{background:var(--ss-paper)}
 .ssp,.ssp *{box-sizing:border-box}
 .ssp{
   --vh:1vh;
   --u:min(var(--vh), .62vw);
   position:fixed; inset:0; z-index:2147483000;
   overflow:auto; -webkit-overflow-scrolling:touch;
-  background:${OPTS.paper}; color:${OPTS.ink};
+  background:var(--ss-paper); color:var(--ss-ink);
   font-family:"Averia Serif Libre",Georgia,serif;
   text-align:left;
 }
 @supports (height:1dvh){ .ssp{--vh:1dvh} }
-.ssp a{color:${OPTS.ink}}
-.ssp a:hover{color:${OPTS.hover}}
-.ssp a:focus-visible{outline:2px solid ${OPTS.hover}; outline-offset:3px}
+.ssp a{color:var(--ss-ink)}
+.ssp a:hover{color:var(--ss-hover)}
+.ssp a:focus-visible,.ssp button:focus-visible{outline:2px solid var(--ss-hover); outline-offset:3px}
 
 .ssp-wrap{
   min-height:100%;
@@ -108,7 +120,7 @@ html,body{background:${OPTS.paper}}
   padding:calc(var(--u)*7) calc(var(--u)*8);
 }
 .ssp-logo{margin:0; justify-self:center; line-height:0}
-.ssp-logo img{height:calc(var(--u)*76); width:auto; display:block}
+.ssp-logo img{height:calc(var(--u)*76); width:auto; display:block; filter:url(#ssp-tint)}
 
 .ssp-main{display:flex; flex-direction:column; gap:calc(var(--u)*3); min-width:0}
 .ssp-intro{margin:0; font-size:max(13px, calc(var(--u)*1.7)); letter-spacing:.02em}
@@ -126,25 +138,40 @@ html,body{background:${OPTS.paper}}
 .ssp-card > *{position:relative}
 .ssp-card > .ssp-card-bg{
   position:absolute; inset:0;
-  background:${OPTS.paper}; border:3px solid ${OPTS.ink};
+  background:var(--ss-paper); border:3px solid var(--ss-ink);
   border-radius:calc(var(--u)*2.4);
 }
 .ssp-por{width:100%; aspect-ratio:1; margin:calc(var(--u)*.6) 0}
-/* The portraits are black lines on a white disc. Multiply turns the
-   white into the page's paper colour, so any portrait dropped into
-   images/ matches without being re-exported. */
+/* The portraits (and the logo) are black lines on white. The tint
+   filter repaints black as the ink colour and white as the paper, in
+   either theme, so any portrait dropped into images/ matches without
+   being re-exported. */
 .ssp-por img{position:absolute; inset:4%; width:92%; height:92%; display:block;
-  object-fit:cover; border-radius:50%; mix-blend-mode:multiply}
+  object-fit:cover; border-radius:50%; filter:url(#ssp-tint)}
 .ssp-por .ssp-initials{position:absolute; inset:0; display:grid; place-items:center;
   font-family:"Fraunces",Georgia,serif; font-weight:900;
   font-variation-settings:"SOFT" 100,"WONK" 0; font-size:calc(var(--u)*7)}
-.ssp-ring{position:absolute; inset:0; border:3px solid ${OPTS.ink}; border-radius:50%}
+.ssp-ring{position:absolute; inset:0; border:3px solid var(--ss-ink); border-radius:50%}
 
 .ssp-name{margin:0; font-family:"Fraunces",Georgia,serif; font-weight:800;
   font-variation-settings:"SOFT" 100,"WONK" 0;
   font-size:calc(var(--u)*3.2); line-height:1.05}
+.ssp-name{position:relative}
 .ssp-name a{text-decoration:none}
 .ssp-name a:hover{text-decoration:underline}
+
+/* A name too long for one line does not wrap: it runs on to the card's
+   border and drapes over it, like a snail going over the edge of a
+   table. The script places each letter. */
+.ssp-name.is-droop{white-space:nowrap}
+.ssp-ch{white-space:pre}
+.ssp-base{display:inline-block; width:0; height:0; vertical-align:baseline}
+.ssp-ch.is-bent{position:absolute; left:0; top:0}
+/* ...and when the card is hovered, the hanging letters dangle */
+.ssp-card:hover .ssp-ch.is-bent{animation:ssp-dangle 1.1s ease-in-out infinite;
+  animation-delay:calc(var(--k) * -.14s)}
+@keyframes ssp-dangle{0%,100%{rotate:-5deg}50%{rotate:9deg}}
+@media (prefers-reduced-motion:reduce){ .ssp-card:hover .ssp-ch.is-bent{animation:none} }
 .ssp-role{margin:0; font-weight:700; font-size:max(13px, calc(var(--u)*1.5)); letter-spacing:.03em}
 .ssp-tag{margin:0; font-style:italic; font-weight:300; font-size:max(14px, calc(var(--u)*1.8)); line-height:1.35;
   overflow-wrap:anywhere}
@@ -157,6 +184,43 @@ html,body{background:${OPTS.paper}}
 .ssp-foot a{display:inline-flex; align-items:center; min-height:44px; font-weight:700}
 
 .ssp-sk .ssp-card-bg,.ssp-sk .ssp-ring{opacity:.25}
+
+/* --- light/dark switch --- */
+.ssp-mode{
+  position:fixed; right:max(16px, calc(var(--u)*3)); bottom:max(16px, calc(var(--u)*3));
+  width:56px; height:56px; padding:0; border:0; background:none; cursor:pointer;
+  color:var(--ss-ink); display:grid; place-items:center; z-index:2;
+  -webkit-tap-highlight-color:transparent;
+}
+.ssp-mode-bg{position:absolute; inset:0; border-radius:50%;
+  background:var(--ss-paper); border:3px solid var(--ss-ink)}
+.ssp-mode svg{position:relative; width:28px; height:28px; overflow:visible}
+.ssp-mode svg *{transform-box:fill-box; transform-origin:center}
+.ssp-mode .ssp-core{transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
+.ssp-mode .ssp-bite{transform:translate(9px,-9px); transition:transform .6s cubic-bezier(.34,1.56,.64,1)}
+.ssp-mode .ssp-rays{transform-box:view-box; transform-origin:12px 12px;
+  transition:transform .6s cubic-bezier(.34,1.56,.64,1), opacity .3s ease}
+.ssp-mode:hover .ssp-rays{transform:rotate(45deg)}
+:root[data-ss-theme="dark"] .ssp-mode .ssp-core{transform:scale(1.55)}
+:root[data-ss-theme="dark"] .ssp-mode .ssp-bite{transform:translate(0,0)}
+:root[data-ss-theme="dark"] .ssp-mode .ssp-rays{transform:rotate(-120deg) scale(.2); opacity:0}
+:root[data-ss-theme="dark"] .ssp-mode:hover svg{transform:rotate(-14deg)}
+.ssp-mode svg{transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.ssp-mode.is-boing{animation:ssp-boing .62s cubic-bezier(.3,.7,.4,1)}
+@keyframes ssp-boing{
+  0%{transform:scale(1)}
+  18%{transform:scale(.78,1.14) rotate(-10deg)}
+  42%{transform:scale(1.16,.88) rotate(7deg)}
+  66%{transform:scale(.95,1.05) rotate(-3deg)}
+  100%{transform:scale(1)}
+}
+/* The new colours spread out of the button as a circle; the script
+   drives the clip-path, these just stop the default cross-fade. */
+::view-transition-old(root),::view-transition-new(root){animation:none; mix-blend-mode:normal}
+@media (prefers-reduced-motion:reduce){
+  .ssp-mode *,.ssp-mode svg{transition:none !important}
+  .ssp-mode.is-boing{animation:none}
+}
 
 @media (orientation:portrait){
   .ssp{--u:min(calc(var(--vh)*.8), 2.3vw)}
@@ -193,6 +257,110 @@ ${compact('.ssp.is-many')}
         '" xChannelSelector="R" yChannelSelector="G"/></filter>';
     }
     return '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' + defs + '</defs></svg>';
+  }
+
+  /* ---------------- theme ---------------- */
+  function rgb(hex) {
+    var n = parseInt(String(hex).replace('#', ''), 16);
+    return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255];
+  }
+
+  /* A colour matrix that maps each pixel's lightness onto a line from
+     the ink colour (black) to the paper colour (white). The logo's own
+     black and cream sit a little inside pure black and white, so the
+     ends are stretched (LO..HI) to land them exactly on ink and paper. */
+  var LO = 0.05, HI = 0.97, LUM = [0.2126, 0.7152, 0.0722];
+  function tintValues(fgHex, bgHex) {
+    var fg = rgb(fgHex), bg = rgb(bgHex), rows = [];
+    for (var c = 0; c < 3; c++) {
+      var span = (bg[c] - fg[c]) / (HI - LO);
+      rows.push([span * LUM[0], span * LUM[1], span * LUM[2], 0, fg[c] - span * LO]
+        .map(function (v) { return v.toFixed(4); }).join(' '));
+    }
+    rows.push('0 0 0 1 0');
+    return rows.join('  ');
+  }
+
+  function isDark() { return document.documentElement.getAttribute('data-ss-theme') === 'dark'; }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-ss-theme', theme);
+    var m = document.getElementById('ssp-tint-m');
+    var dark = theme === 'dark';
+    if (m) m.setAttribute('values', dark ? tintValues(OPTS.paper, OPTS.ink) : tintValues(OPTS.ink, OPTS.paper));
+    var b = document.querySelector('.ssp-mode');
+    if (b) b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+
+  function startTheme() {
+    var saved = read(OPTS.themeKey);
+    if (saved !== 'dark' && saved !== 'light') {
+      saved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    applyTheme(saved);
+  }
+
+  /* The tint filter and the switch live outside the part that gets
+     repainted when team.txt arrives, so they are built once. */
+  function chrome(root) {
+    var rays = '';
+    for (var a = 0; a < 360; a += 45) {
+      var r = a * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+      rays += '<line x1="' + (12 + 8 * c).toFixed(2) + '" y1="' + (12 + 8 * s).toFixed(2) +
+        '" x2="' + (12 + 10.5 * c).toFixed(2) + '" y2="' + (12 + 10.5 * s).toFixed(2) + '"/>';
+    }
+    var wrap = document.createElement('div');
+    wrap.innerHTML =
+      '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' +
+        '<filter id="ssp-tint" color-interpolation-filters="sRGB">' +
+          '<feColorMatrix id="ssp-tint-m" type="matrix" values="' + tintValues(OPTS.ink, OPTS.paper) + '"/></filter>' +
+        '<filter id="ssp-wob-mode" x="-10%" y="-10%" width="120%" height="120%">' +
+          '<feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="41" result="n"/>' +
+          '<feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+      '</defs></svg>' +
+      '<div class="ssp-content"></div>' +
+      '<button class="ssp-mode" type="button" aria-label="Switch to dark mode">' +
+        '<span class="ssp-mode-bg" style="filter:url(#ssp-wob-mode)"></span>' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+          '<mask id="ssp-moon" maskUnits="userSpaceOnUse" x="-6" y="-6" width="36" height="36">' +
+            '<rect x="-6" y="-6" width="36" height="36" fill="#fff"/>' +
+            '<circle class="ssp-bite" cx="18.5" cy="5.5" r="6.5" fill="#000"/></mask>' +
+          '<circle class="ssp-core" cx="12" cy="12" r="5" fill="currentColor" mask="url(#ssp-moon)"/>' +
+          '<g class="ssp-rays" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">' + rays + '</g>' +
+        '</svg>' +
+      '</button>';
+    while (wrap.firstChild) root.appendChild(wrap.firstChild);
+
+    var btn = root.querySelector('.ssp-mode');
+    btn.addEventListener('click', function () { flip(btn); });
+    btn.addEventListener('animationend', function () { btn.classList.remove('is-boing'); });
+    return root.querySelector('.ssp-content');
+  }
+
+  /* The button squashes and springs, the sun's rays spin away as the
+     moon's bite slides in, and the new colours flood out of the button
+     in a circle (where the browser can do view transitions; elsewhere
+     the colours simply swap). */
+  function flip(btn) {
+    var next = isDark() ? 'light' : 'dark';
+    write(OPTS.themeKey, next);
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    btn.classList.remove('is-boing');
+    void btn.offsetWidth;                      // restart the bounce on quick repeat clicks
+    btn.classList.add('is-boing');
+
+    if (reduce || !document.startViewTransition) { applyTheme(next); return; }
+    var b = btn.getBoundingClientRect();
+    var x = b.left + b.width / 2, y = b.top + b.height / 2;
+    var reach = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    var vt = document.startViewTransition(function () { applyTheme(next); });
+    vt.ready.then(function () {
+      document.documentElement.animate(
+        { clipPath: ['circle(0px at ' + x + 'px ' + y + 'px)', 'circle(' + reach + 'px at ' + x + 'px ' + y + 'px)'] },
+        { duration: 700, easing: 'cubic-bezier(.65,0,.35,1)', pseudoElement: '::view-transition-new(root)' }
+      );
+    }).catch(function () {});
   }
 
   /* ---------------- content ---------------- */
@@ -261,7 +429,8 @@ ${compact('.ssp.is-many')}
       ? '<img src="' + esc(img) + '" alt="Portrait of ' + esc(p.name) + '" decoding="async">'
       : '<span class="ssp-initials" aria-hidden="true">' + esc(initials(p.name)) + '</span>';
     var href = safeHref(p.href);
-    var name = href ? '<a href="' + href + '">' + esc(p.name) + '</a>' : esc(p.name);
+    var label = '<span class="ssp-name-t">' + esc(p.name) + '</span>';
+    var name = href ? '<a href="' + href + '">' + label + '</a>' : label;
     var links = p.links.map(function (l) {
       var h = safeHref(l.href);
       if (!h) return '';
@@ -271,7 +440,7 @@ ${compact('.ssp.is-many')}
     return '<li class="ssp-card">' +
       '<div class="ssp-card-bg"' + f + '></div>' +
       '<div class="ssp-por">' + face + '<div class="ssp-ring"' + f + '></div></div>' +
-      '<h2 class="ssp-name">' + name + '</h2>' +
+      '<h2 class="ssp-name" data-name="' + esc(p.name) + '">' + name + '</h2>' +
       (p.role ? '<p class="ssp-role">' + esc(p.role) + '</p>' : '') +
       (p.tag ? '<p class="ssp-tag">“' + esc(p.tag) + '”</p>' : '') +
       (links ? '<div class="ssp-links">' + links + '</div>' : '') +
@@ -305,11 +474,85 @@ ${compact('.ssp.is-many')}
       '</div>';
   }
 
-  function paint(root, data, skeleton) {
+  function paint(root, content, data, skeleton) {
     var n = skeleton ? 3 : data.people.length;
     root.style.setProperty('--cols', Math.max(1, Math.min(n, 3)));
     root.classList.toggle('is-many', n > 3);
-    root.innerHTML = pageHtml(data.site, data.people, skeleton);
+    content.innerHTML = pageHtml(data.site, data.people, skeleton);
+    droopAll(content);
+  }
+
+  /* ---------------- drooping names ---------------- */
+  /* A name too long for one line runs on to the card's border and then
+     drapes over it, hanging down the outside of the card into the gap
+     beside it. Nothing inside the card has to move to make room, so the
+     cards keep the same height. */
+  var MIN_R = 0.25;     // em, the tightest the bend over the edge may be
+
+  function unDroop(h) {
+    var t = h.querySelector('.ssp-name-t');
+    t.textContent = h.getAttribute('data-name');
+    t.removeAttribute('aria-hidden');
+    (t.parentNode.tagName === 'A' ? t.parentNode : h).removeAttribute('aria-label');
+    h.classList.remove('is-droop');
+  }
+
+  function droopName(h) {
+    unDroop(h);
+    var t = h.querySelector('.ssp-name-t');
+    var name = h.getAttribute('data-name');
+    h.classList.add('is-droop');
+    var avail = h.clientWidth;
+    if (!avail || t.getBoundingClientRect().width <= avail) { h.classList.remove('is-droop'); return; }
+
+    var em = parseFloat(getComputedStyle(h).fontSize);
+    var chars = Array.from(name);
+    t.innerHTML = '<span class="ssp-base"></span>' + chars.map(function (c) {
+      return '<span class="ssp-ch">' + esc(c) + '</span>';
+    }).join('');
+    t.setAttribute('aria-hidden', 'true');
+    (t.parentNode.tagName === 'A' ? t.parentNode : h).setAttribute('aria-label', name);
+
+    /* measure everything while it is still one straight line */
+    var hr = h.getBoundingClientRect(), ox = hr.left + h.clientLeft, oy = hr.top + h.clientTop;
+    var card = h.closest('.ssp-card').getBoundingClientRect();
+    var edge = card.right - ox;                // the card's outer border
+    var base = t.querySelector('.ssp-base').getBoundingClientRect().bottom - oy;
+    var spans = t.querySelectorAll('.ssp-ch');
+    var box = Array.prototype.map.call(spans, function (s) {
+      var r = s.getBoundingClientRect();
+      return { left: r.left - ox, top: r.top - oy, w: r.width };
+    });
+
+    /* the bend starts at the first letter that would not finish before
+       the border; if that leaves too tight a bend, start a letter sooner */
+    var k = 0;
+    while (k < box.length && box[k].left + box[k].w <= edge) k++;
+    while (k > 0 && edge - box[k].left < MIN_R * em) k--;
+    var hang = 0;
+    for (var j = k; j < box.length; j++) hang += box[j].w;
+    var room = card.bottom - (oy + base) - 0.4 * em;
+    if (k === 0 || k >= box.length || hang > room) { unDroop(h); return; }
+
+    var x0 = box[k].left, R = edge - x0, quarter = Math.PI * R / 2;
+    function at(s) {
+      if (s <= quarter) { var a = s / R; return { x: x0 + R * Math.sin(a), y: R * (1 - Math.cos(a)), a: a }; }
+      return { x: edge, y: R + (s - quarter), a: Math.PI / 2 };
+    }
+    var drop = base - box[k].top;              // a letter's own top-to-baseline
+    var s = 0;
+    for (j = k; j < box.length; j++) {
+      var p = at(s), mid = at(s + box[j].w / 2), sp = spans[j];
+      sp.classList.add('is-bent');
+      sp.style.setProperty('--k', j - k);
+      sp.style.transformOrigin = '0 ' + drop.toFixed(1) + 'px';
+      sp.style.transform = 'translate(' + p.x.toFixed(1) + 'px,' + (base + p.y - drop).toFixed(1) + 'px) rotate(' + mid.a.toFixed(3) + 'rad)';
+      s += box[j].w;
+    }
+  }
+
+  function droopAll(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.ssp-name[data-name]'), droopName);
   }
 
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -325,14 +568,28 @@ ${compact('.ssp.is-many')}
       document.body.appendChild(root);
     }
     root.classList.add('ssp');
+    root.innerHTML = '';
     font(); styles();
+    var content = chrome(root);
+    startTheme();
 
     var cached = read(OPTS.cacheKey), painted = false;
     if (cached) {
       var old = parse(cached);
-      if (old.people.length) { paint(root, old, false); painted = true; }
+      if (old.people.length) { paint(root, content, old, false); painted = true; }
     }
-    if (!painted) paint(root, { site: {}, people: [] }, true);
+    if (!painted) paint(root, content, { site: {}, people: [] }, true);
+
+    /* The bends are measured, so they are redone when the width or the
+       font changes (Fraunces usually arrives after the first paint). */
+    var queued = false;
+    function redroop() {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(function () { queued = false; droopAll(content); });
+    }
+    window.addEventListener('resize', redroop, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(redroop);
 
     fetch(OPTS.source + '?v=' + Math.floor(Date.now() / 300000), { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
@@ -340,7 +597,7 @@ ${compact('.ssp.is-many')}
         if (painted && txt === cached) return;
         var fresh = parse(txt);
         if (!fresh.people.length) return;
-        paint(root, fresh, false);
+        paint(root, content, fresh, false);
         write(OPTS.cacheKey, txt);
       })
       /* Leave the skeleton up rather than a blank page if team.txt
