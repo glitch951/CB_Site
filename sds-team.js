@@ -120,7 +120,7 @@ html,body{background:var(--ss-paper)}
   padding:calc(var(--u)*7) calc(var(--u)*8);
 }
 .ssp-logo{margin:0; justify-self:center; line-height:0}
-.ssp-logo img{height:calc(var(--u)*76); width:auto; display:block; filter:url(#ssp-tint)}
+.ssp-logo img{height:calc(var(--u)*76); width:auto; display:block; filter:url(#ssp-tint-light)}
 
 .ssp-main{display:flex; flex-direction:column; gap:calc(var(--u)*3); min-width:0}
 .ssp-intro{margin:0; font-size:max(13px, calc(var(--u)*1.7)); letter-spacing:.02em}
@@ -142,12 +142,14 @@ html,body{background:var(--ss-paper)}
   border-radius:calc(var(--u)*2.4);
 }
 .ssp-por{width:100%; aspect-ratio:1; margin:calc(var(--u)*.6) 0}
-/* The portraits (and the logo) are black lines on white. The tint
-   filter repaints black as the ink colour and white as the paper, in
-   either theme, so any portrait dropped into images/ matches without
-   being re-exported. */
+/* The portraits (and the logo) are black lines on white. The line-art
+   filter keeps only the lines, in the ink colour, and makes the white
+   see-through, so the card shows behind them in either theme and any
+   portrait dropped into images/ matches without being re-exported. */
 .ssp-por img{position:absolute; inset:4%; width:92%; height:92%; display:block;
-  object-fit:cover; border-radius:50%; filter:url(#ssp-tint)}
+  object-fit:cover; border-radius:50%; filter:url(#ssp-tint-light)}
+:root[data-ss-theme="dark"] .ssp-logo img,
+:root[data-ss-theme="dark"] .ssp-por img{filter:url(#ssp-tint-dark)}
 .ssp-por .ssp-initials{position:absolute; inset:0; display:grid; place-items:center;
   font-family:"Fraunces",Georgia,serif; font-weight:900;
   font-variation-settings:"SOFT" 100,"WONK" 0; font-size:calc(var(--u)*7)}
@@ -160,18 +162,11 @@ html,body{background:var(--ss-paper)}
 .ssp-name a{text-decoration:none}
 .ssp-name a:hover{text-decoration:underline}
 
-/* A name too long for one line does not wrap: it runs on to the card's
-   border and drapes over it, like a snail going over the edge of a
-   table. The script places each letter. */
-.ssp-name.is-droop{white-space:nowrap}
-.ssp-ch{white-space:pre}
-.ssp-base{display:inline-block; width:0; height:0; vertical-align:baseline}
-.ssp-ch.is-bent{position:absolute; left:0; top:0}
-/* ...and when the card is hovered, the hanging letters dangle */
-.ssp-card:hover .ssp-ch.is-bent{animation:ssp-dangle 1.1s ease-in-out infinite;
-  animation-delay:calc(var(--k) * -.14s)}
-@keyframes ssp-dangle{0%,100%{rotate:-5deg}50%{rotate:9deg}}
-@media (prefers-reduced-motion:reduce){ .ssp-card:hover .ssp-ch.is-bent{animation:none} }
+/* A name too long for one line does not wrap: its last letters are
+   squashed up against the card's wall instead, each one narrower and a
+   little taller than the one before. The script sets each letter. */
+.ssp-name.is-squish{white-space:nowrap}
+.ssp-ch{display:inline-block; white-space:pre; transform-origin:0 80%}
 .ssp-role{margin:0; font-weight:700; font-size:max(13px, calc(var(--u)*1.5)); letter-spacing:.03em}
 .ssp-tag{margin:0; font-style:italic; font-weight:300; font-size:max(14px, calc(var(--u)*1.8)); line-height:1.35;
   overflow-wrap:anywhere}
@@ -214,9 +209,22 @@ html,body{background:var(--ss-paper)}
   66%{transform:scale(.95,1.05) rotate(-3deg)}
   100%{transform:scale(1)}
 }
-/* The new colours spread out of the button as a circle; the script
-   drives the clip-path, these just stop the default cross-fade. */
+/* Light pours out of the button as a growing circle; dark is the light
+   being sucked back into it. Both are CSS animations with a fill of
+   "both", so the very first frame is already clipped. (Starting them
+   from script left one frame where the new colours showed full-screen,
+   which was the flash.) The script sets --ssp-x/y/r on <html>. */
 ::view-transition-old(root),::view-transition-new(root){animation:none; mix-blend-mode:normal}
+html.ssp-to-light::view-transition-old(root){z-index:1}
+html.ssp-to-light::view-transition-new(root){z-index:2;
+  animation:ssp-pour .7s cubic-bezier(.65,0,.35,1) both}
+html.ssp-to-dark::view-transition-new(root){z-index:1}
+html.ssp-to-dark::view-transition-old(root){z-index:2;
+  animation:ssp-pour .7s cubic-bezier(.65,0,.35,1) both reverse}
+@keyframes ssp-pour{
+  from{clip-path:circle(0px at var(--ssp-x) var(--ssp-y))}
+  to{clip-path:circle(var(--ssp-r) at var(--ssp-x) var(--ssp-y))}
+}
 @media (prefers-reduced-motion:reduce){
   .ssp-mode *,.ssp-mode svg{transition:none !important}
   .ssp-mode.is-boing{animation:none}
@@ -265,29 +273,27 @@ ${compact('.ssp.is-many')}
     return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255];
   }
 
-  /* A colour matrix that maps each pixel's lightness onto a line from
-     the ink colour (black) to the paper colour (white). The logo's own
-     black and cream sit a little inside pure black and white, so the
-     ends are stretched (LO..HI) to land them exactly on ink and paper. */
-  var LO = 0.05, HI = 0.97, LUM = [0.2126, 0.7152, 0.0722];
-  function tintValues(fgHex, bgHex) {
-    var fg = rgb(fgHex), bg = rgb(bgHex), rows = [];
-    for (var c = 0; c < 3; c++) {
-      var span = (bg[c] - fg[c]) / (HI - LO);
-      rows.push([span * LUM[0], span * LUM[1], span * LUM[2], 0, fg[c] - span * LO]
-        .map(function (v) { return v.toFixed(4); }).join(' '));
-    }
-    rows.push('0 0 0 1 0');
-    return rows.join('  ');
+  /* A colour matrix that paints every pixel in one colour and sets how
+     opaque it is by how dark it was: black lines stay, white goes fully
+     see-through. Opacity is "alpha minus lightness", so pixels that were
+     already transparent (outside a portrait's disc) stay transparent.
+     K lifts the logo's slightly-grey black to fully opaque. */
+  var K = 1.06, LUM = [0.2126, 0.7152, 0.0722];
+  function lineArtValues(hex) {
+    var c = rgb(hex);
+    return [
+      '0 0 0 0 ' + c[0].toFixed(4),
+      '0 0 0 0 ' + c[1].toFixed(4),
+      '0 0 0 0 ' + c[2].toFixed(4),
+      [-LUM[0] * K, -LUM[1] * K, -LUM[2] * K, K, 0].map(function (v) { return v.toFixed(4); }).join(' ')
+    ].join('  ');
   }
 
   function isDark() { return document.documentElement.getAttribute('data-ss-theme') === 'dark'; }
 
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-ss-theme', theme);
-    var m = document.getElementById('ssp-tint-m');
     var dark = theme === 'dark';
-    if (m) m.setAttribute('values', dark ? tintValues(OPTS.paper, OPTS.ink) : tintValues(OPTS.ink, OPTS.paper));
     var b = document.querySelector('.ssp-mode');
     if (b) b.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
   }
@@ -300,8 +306,10 @@ ${compact('.ssp.is-many')}
     applyTheme(saved);
   }
 
-  /* The tint filter and the switch live outside the part that gets
-     repainted when team.txt arrives, so they are built once. */
+  /* The line-art filters and the switch live outside the part that gets
+     repainted when team.txt arrives, so they are built once. There is
+     one fixed filter per theme rather than one rewritten on each switch:
+     rewriting it made the browser re-render the large images mid-swap. */
   function chrome(root) {
     var rays = '';
     for (var a = 0; a < 360; a += 45) {
@@ -312,8 +320,10 @@ ${compact('.ssp.is-many')}
     var wrap = document.createElement('div');
     wrap.innerHTML =
       '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>' +
-        '<filter id="ssp-tint" color-interpolation-filters="sRGB">' +
-          '<feColorMatrix id="ssp-tint-m" type="matrix" values="' + tintValues(OPTS.ink, OPTS.paper) + '"/></filter>' +
+        '<filter id="ssp-tint-light" color-interpolation-filters="sRGB">' +
+          '<feColorMatrix type="matrix" values="' + lineArtValues(OPTS.ink) + '"/></filter>' +
+        '<filter id="ssp-tint-dark" color-interpolation-filters="sRGB">' +
+          '<feColorMatrix type="matrix" values="' + lineArtValues(OPTS.paper) + '"/></filter>' +
         '<filter id="ssp-wob-mode" x="-10%" y="-10%" width="120%" height="120%">' +
           '<feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="41" result="n"/>' +
           '<feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter>' +
@@ -338,10 +348,14 @@ ${compact('.ssp.is-many')}
   }
 
   /* The button squashes and springs, the sun's rays spin away as the
-     moon's bite slides in, and the new colours flood out of the button
-     in a circle (where the browser can do view transitions; elsewhere
-     the colours simply swap). */
+     moon's bite slides in, and the light either pours out of the button
+     or drains back into it (where the browser can do view transitions;
+     elsewhere the colours simply swap). */
+  var busy = false;
   function flip(btn) {
+    /* A second transition started mid-way would cut the first one off
+       and jump straight to its end, which reads as a flash. */
+    if (busy) return;
     var next = isDark() ? 'light' : 'dark';
     write(OPTS.themeKey, next);
     var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -351,16 +365,23 @@ ${compact('.ssp.is-many')}
     btn.classList.add('is-boing');
 
     if (reduce || !document.startViewTransition) { applyTheme(next); return; }
-    var b = btn.getBoundingClientRect();
+    var b = btn.getBoundingClientRect(), html = document.documentElement;
     var x = b.left + b.width / 2, y = b.top + b.height / 2;
-    var reach = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    html.style.setProperty('--ssp-x', x + 'px');
+    html.style.setProperty('--ssp-y', y + 'px');
+    html.style.setProperty('--ssp-r', Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 'px');
+    html.classList.add(next === 'light' ? 'ssp-to-light' : 'ssp-to-dark');
+    busy = true;
     var vt = document.startViewTransition(function () { applyTheme(next); });
-    vt.ready.then(function () {
-      document.documentElement.animate(
-        { clipPath: ['circle(0px at ' + x + 'px ' + y + 'px)', 'circle(' + reach + 'px at ' + x + 'px ' + y + 'px)'] },
-        { duration: 700, easing: 'cubic-bezier(.65,0,.35,1)', pseudoElement: '::view-transition-new(root)' }
-      );
-    }).catch(function () {});
+    /* A browser that stops drawing frames (a hidden or throttled window)
+       can leave a transition waiting forever, which would lock the button.
+       Skipping it still applies the new theme, just without the animation. */
+    var guard = setTimeout(function () { vt.skipTransition(); }, 2000);
+    vt.finished.catch(function () {}).then(function () {
+      clearTimeout(guard);
+      html.classList.remove('ssp-to-light', 'ssp-to-dark');
+      busy = false;
+    });
   }
 
   /* ---------------- content ---------------- */
@@ -479,80 +500,66 @@ ${compact('.ssp.is-many')}
     root.style.setProperty('--cols', Math.max(1, Math.min(n, 3)));
     root.classList.toggle('is-many', n > 3);
     content.innerHTML = pageHtml(data.site, data.people, skeleton);
-    droopAll(content);
+    squishAll(content);
   }
 
-  /* ---------------- drooping names ---------------- */
-  /* A name too long for one line runs on to the card's border and then
-     drapes over it, hanging down the outside of the card into the gap
-     beside it. Nothing inside the card has to move to make room, so the
-     cards keep the same height. */
-  var MIN_R = 0.25;     // em, the tightest the bend over the edge may be
+  /* ---------------- squashed names ---------------- */
+  var SQUEEZE_CURVES = [1.6, 1.1, 0.7];  // steepest first: squash kept near the wall if it can be
+  var MAX_SQUEEZE = 0.62;   // the last letter keeps at least 38% of its width
+  var MAX_STRETCH = 1.22;   // how much taller a squashed letter may get
 
-  function unDroop(h) {
+  function unSquish(h) {
     var t = h.querySelector('.ssp-name-t');
     t.textContent = h.getAttribute('data-name');
     t.removeAttribute('aria-hidden');
     (t.parentNode.tagName === 'A' ? t.parentNode : h).removeAttribute('aria-label');
-    h.classList.remove('is-droop');
+    h.classList.remove('is-squish');
   }
 
-  function droopName(h) {
-    unDroop(h);
+  function squishName(h) {
+    unSquish(h);
     var t = h.querySelector('.ssp-name-t');
     var name = h.getAttribute('data-name');
-    h.classList.add('is-droop');
+    h.classList.add('is-squish');
     var avail = h.clientWidth;
-    if (!avail || t.getBoundingClientRect().width <= avail) { h.classList.remove('is-droop'); return; }
+    var over = t.getBoundingClientRect().width - avail + 1;
+    if (!avail || over <= 0) { h.classList.remove('is-squish'); return; }
 
-    var em = parseFloat(getComputedStyle(h).fontSize);
+    /* each letter in its own box, so each can be measured and squashed */
     var chars = Array.from(name);
-    t.innerHTML = '<span class="ssp-base"></span>' + chars.map(function (c) {
-      return '<span class="ssp-ch">' + esc(c) + '</span>';
-    }).join('');
+    t.innerHTML = chars.map(function (c) { return '<span class="ssp-ch">' + esc(c) + '</span>'; }).join('');
     t.setAttribute('aria-hidden', 'true');
     (t.parentNode.tagName === 'A' ? t.parentNode : h).setAttribute('aria-label', name);
-
-    /* measure everything while it is still one straight line */
-    var hr = h.getBoundingClientRect(), ox = hr.left + h.clientLeft, oy = hr.top + h.clientTop;
-    var card = h.closest('.ssp-card').getBoundingClientRect();
-    var edge = card.right - ox;                // the card's outer border
-    var base = t.querySelector('.ssp-base').getBoundingClientRect().bottom - oy;
     var spans = t.querySelectorAll('.ssp-ch');
-    var box = Array.prototype.map.call(spans, function (s) {
-      var r = s.getBoundingClientRect();
-      return { left: r.left - ox, top: r.top - oy, w: r.width };
-    });
+    var w = Array.prototype.map.call(spans, function (s) { return s.getBoundingClientRect().width; });
+    over = t.getBoundingClientRect().width - avail + 1;
 
-    /* the bend starts at the first letter that would not finish before
-       the border; if that leaves too tight a bend, start a letter sooner */
-    var k = 0;
-    while (k < box.length && box[k].left + box[k].w <= edge) k++;
-    while (k > 0 && edge - box[k].left < MIN_R * em) k--;
-    var hang = 0;
-    for (var j = k; j < box.length; j++) hang += box[j].w;
-    var room = card.bottom - (oy + base) - 0.4 * em;
-    if (k === 0 || k >= box.length || hang > room) { unDroop(h); return; }
-
-    var x0 = box[k].left, R = edge - x0, quarter = Math.PI * R / 2;
-    function at(s) {
-      if (s <= quarter) { var a = s / R; return { x: x0 + R * Math.sin(a), y: R * (1 - Math.cos(a)), a: a }; }
-      return { x: edge, y: R + (s - quarter), a: Math.PI / 2 };
+    /* Squash as few letters as will do. Over the last n letters the
+       squeeze ramps up towards the wall; d is how hard the last one is
+       squeezed to win back exactly the missing width. */
+    var n, d, ramp, curve, ci, i, found = false;
+    for (ci = 0; ci < SQUEEZE_CURVES.length && !found; ci++) {
+      curve = SQUEEZE_CURVES[ci];
+      for (n = Math.min(3, chars.length); n <= chars.length; n++) {
+        ramp = 0;
+        for (i = 0; i < n; i++) ramp += w[chars.length - n + i] * Math.pow((i + 1) / n, curve);
+        d = over / ramp;
+        if (d <= MAX_SQUEEZE) { found = true; break; }
+      }
     }
-    var drop = base - box[k].top;              // a letter's own top-to-baseline
-    var s = 0;
-    for (j = k; j < box.length; j++) {
-      var p = at(s), mid = at(s + box[j].w / 2), sp = spans[j];
-      sp.classList.add('is-bent');
-      sp.style.setProperty('--k', j - k);
-      sp.style.transformOrigin = '0 ' + drop.toFixed(1) + 'px';
-      sp.style.transform = 'translate(' + p.x.toFixed(1) + 'px,' + (base + p.y - drop).toFixed(1) + 'px) rotate(' + mid.a.toFixed(3) + 'rad)';
-      s += box[j].w;
+    if (!found) { unSquish(h); return; }  // too long even squashed: let it wrap
+
+    for (i = 0; i < n; i++) {
+      var j = chars.length - n + i;
+      var sx = 1 - d * Math.pow((i + 1) / n, curve);
+      var sy = Math.min(MAX_STRETCH, 1 / Math.sqrt(sx));
+      spans[j].style.width = (w[j] * sx).toFixed(2) + 'px';
+      spans[j].style.transform = 'scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
     }
   }
 
-  function droopAll(root) {
-    Array.prototype.forEach.call(root.querySelectorAll('.ssp-name[data-name]'), droopName);
+  function squishAll(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.ssp-name[data-name]'), squishName);
   }
 
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -580,16 +587,16 @@ ${compact('.ssp.is-many')}
     }
     if (!painted) paint(root, content, { site: {}, people: [] }, true);
 
-    /* The bends are measured, so they are redone when the width or the
+    /* The squash is measured, so it is redone when the width or the
        font changes (Fraunces usually arrives after the first paint). */
     var queued = false;
-    function redroop() {
+    function resquish() {
       if (queued) return;
       queued = true;
-      requestAnimationFrame(function () { queued = false; droopAll(content); });
+      requestAnimationFrame(function () { queued = false; squishAll(content); });
     }
-    window.addEventListener('resize', redroop, { passive: true });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(redroop);
+    window.addEventListener('resize', resquish, { passive: true });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(resquish);
 
     fetch(OPTS.source + '?v=' + Math.floor(Date.now() / 300000), { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
