@@ -46,7 +46,7 @@
     },
 
     /* Esoteric Ebb palette */
-    paper: '#fbf8e5',   // Ebb Paper
+    paper: '#DAE5CF',   // Ebb Paper
     ink:   '#020E16',   // Esoteric Black
     hover: '#C13B51',   // Strength Red
 
