@@ -18,7 +18,7 @@
 # Order here is the order of the cards.
 
 logo: sudden-snail-logo.png
-intro: Sudden Snail AB · makers of Esoteric Ebb
+intro: The Studio behind the Esoteric
 email: christofferbodegard@suddensnail.com
 copyright: © 2026 Sudden Snail AB
 
