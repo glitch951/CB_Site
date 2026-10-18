@@ -59,14 +59,14 @@ title: Collaborators
 full-list: https://esotericebb.com/#collaborators
 
 ## Sound Respawn (Isac Jonsson)
-role: Sound design, mixing & implementation
+role: Sound design, mixing, & implementation
 image: sound-respawn.png
 href: https://soundrespawn.com/
 link: Website | https://soundrespawn.com/
 link: Instagram | https://www.instagram.com/soundrespawn/
 
 ## Anders Bach, Brian Batz & Kristian Paulsen
-role: Music composition, production & mix
+role: Music composition, production, & mix
 image: anders-brian-kristian.png
 href: http://andersbach.cargo.site/
 link: Website | http://andersbach.cargo.site/
@@ -75,7 +75,7 @@ link: Batz | https://www.instagram.com/batzstudio/
 link: Paulsen | https://www.instagram.com/kristian__paulsen/
 
 ## Gibbet Games
-role: Assets, structure & the Esoteric look
+role: Assets, pipelines, & the Esoteric look
 image: gibbet-games.png
 logo: yes
 href: https://gibbetgames.com/
@@ -83,7 +83,7 @@ link: Website | https://gibbetgames.com/
 link: X | https://x.com/GIBBETGAMES
 
 ## Speldosa Interactive
-role: Tech, marketing & veteran feedback
+role: Tech, art, & a stabilizing force
 image: speldosa.png
 logo: yes
 href: https://www.speldosa.com/
