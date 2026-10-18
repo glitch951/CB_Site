@@ -7,10 +7,23 @@
        (logo)   Sudden Snail AB · makers of Esoteric Ebb
                 [card] [card] [card]
                 email                        © line
+                          [ v ]
+       ---------------- second screen ----------------
+                      Collaborators
+                      ( ) Studio (Person)
+                          role · links
+                      ...
+                                    [ESOTERIC EBB Full list ->]
 
-   Adding someone is adding a "## Name" block to team.txt. The grid,
-   the phone layout and each card's wobbly outline all follow the
+   Adding someone is adding a "## Name" block to team.txt; blocks after
+   the "=== Collaborators ===" line become collaborators instead. The
+   grids, the phone layout and each wobbly outline all follow the
    number of people, so nothing here needs touching.
+
+   The two screens snap: a scroll, a swipe or the round arrow buttons
+   glide from one to the other. The buttons scroll the page themselves
+   rather than linking to #anchors, because Carrd uses the address bar's
+   hash for its own sections.
 
    Every card and portrait ring gets its own warble (its own SVG
    turbulence seed), so no two outlines are scratched the same way,
@@ -47,7 +60,10 @@
       logo:      'sudden-snail-logo.png',
       intro:     'Sudden Snail AB · makers of Esoteric Ebb',
       email:     'christofferbodegard@suddensnail.com',
-      copyright: '© 2026 Sudden Snail AB'
+      copyright: '© 2026 Sudden Snail AB',
+      collabTitle: 'Collaborators',
+      collabLink:  'https://esotericebb.com/#collaborators',
+      collabLogo:  'esoteric-ebb-logo-small.png'
     },
 
     /* Esoteric Ebb palette */
@@ -104,17 +120,22 @@ html,body{background:var(--ss-paper)}
   --u:min(var(--vh), .62vw);
   position:fixed; inset:0; z-index:2147483000;
   overflow:auto; -webkit-overflow-scrolling:touch;
+  scroll-snap-type:y mandatory; scroll-behavior:smooth;
+  scrollbar-width:none;
   background:var(--ss-paper); color:var(--ss-ink);
   font-family:"Averia Serif Libre",Georgia,serif;
   text-align:left;
 }
 @supports (height:1dvh){ .ssp{--vh:1dvh} }
+.ssp::-webkit-scrollbar{display:none}
+/* each screen is at least the viewport tall and is a snap stop */
+.ssp-screen{position:relative; display:grid; min-height:calc(var(--vh) * 100);
+  scroll-snap-align:start; scroll-snap-stop:always}
 .ssp a{color:var(--ss-ink)}
 .ssp a:hover{color:var(--ss-hover)}
 .ssp a:focus-visible,.ssp button:focus-visible{outline:2px solid var(--ss-hover); outline-offset:3px}
 
 .ssp-wrap{
-  min-height:100%;
   display:grid; grid-template-columns:auto minmax(0,1fr);
   align-items:center; gap:calc(var(--u)*7);
   padding:calc(var(--u)*7) calc(var(--u)*8);
@@ -165,7 +186,7 @@ html,body{background:var(--ss-paper)}
 /* A name too long for one line does not wrap: its last letters are
    squashed up against the card's wall instead, each one narrower and a
    little taller than the one before. The script sets each letter. */
-.ssp-name.is-squish{white-space:nowrap}
+[data-name].is-squish{white-space:nowrap}
 .ssp-ch{display:inline-block; white-space:pre; transform-origin:0 80%}
 .ssp-role{margin:0; font-weight:700; font-size:max(13px, calc(var(--u)*1.5)); letter-spacing:.03em}
 .ssp-tag{margin:0; font-style:italic; font-weight:300; font-size:max(14px, calc(var(--u)*1.8)); line-height:1.35;
@@ -179,6 +200,75 @@ html,body{background:var(--ss-paper)}
 .ssp-foot a{display:inline-flex; align-items:center; min-height:44px; font-weight:700}
 
 .ssp-sk .ssp-card-bg,.ssp-sk .ssp-ring{opacity:.25}
+
+/* --- the arrows between the two screens --- */
+.ssp.has-collab .ssp-wrap{padding-bottom:max(calc(var(--u)*7), 108px)}
+.ssp-next,.ssp-prev{position:absolute; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:0; border:0; background:none; cursor:pointer; color:var(--ss-ink);
+  font:inherit; font-weight:700; font-size:max(12px, calc(var(--u)*1.4)); letter-spacing:.04em;
+  -webkit-tap-highlight-color:transparent}
+.ssp-next{bottom:max(14px, calc(var(--u)*2.4))}
+.ssp-prev{top:max(12px, calc(var(--u)*2.4))}
+.ssp-round{position:relative; display:grid; place-items:center; width:52px; height:52px}
+.ssp-prev .ssp-round{width:44px; height:44px}
+.ssp-round-bg{position:absolute; inset:0; border-radius:50%;
+  background:var(--ss-paper); border:3px solid var(--ss-ink)}
+.ssp-round svg{position:relative; width:22px; height:22px; transition:transform .25s ease}
+.ssp-prev .ssp-round svg{width:20px; height:20px}
+.ssp-next .ssp-round{animation:ssp-bob 2.4s ease-in-out infinite}
+.ssp-next:hover .ssp-round svg{transform:translateY(3px)}
+.ssp-prev:hover .ssp-round svg{transform:translateY(-3px)}
+@keyframes ssp-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* --- collaborators: one centred credits frame, titled in its first row --- */
+.ssp-cwrap{display:flex; align-items:center; justify-content:center;
+  padding:calc(var(--u)*9) calc(var(--u)*8) calc(var(--u)*4)}
+.ssp-cin{width:100%; max-width:calc(var(--u)*86); display:flex; flex-direction:column; gap:calc(var(--u)*1.6)}
+.ssp-clist{position:relative; list-style:none; margin:0; padding:calc(var(--u)*1.6) calc(var(--u)*3.6)}
+.ssp-clist > .ssp-clist-bg{position:absolute; inset:0; background:var(--ss-paper);
+  border:3px solid var(--ss-ink); border-radius:calc(var(--u)*2.4)}
+.ssp-ctitle{position:relative; padding:calc(var(--u)*2.2) 0 calc(var(--u)*1.8)}
+.ssp-ch2{margin:0; font-family:"Fraunces",Georgia,serif; font-weight:900;
+  font-variation-settings:"SOFT" 100,"WONK" 0; font-size:calc(var(--u)*5.6); line-height:1}
+.ssp-crow{position:relative; display:grid; grid-template-columns:calc(var(--u)*12) minmax(0,1fr);
+  align-items:center; column-gap:calc(var(--u)*3); padding:calc(var(--u)*2) 0}
+/* each row's rule sits along its top edge, lifted out of the grid */
+.ssp-crule{position:absolute; left:0; right:0; top:0; height:0; border-top:2px solid var(--ss-ink)}
+.ssp-cpic{position:relative; width:100%; aspect-ratio:1}
+.ssp-cpic img{position:absolute; inset:5%; width:90%; height:90%; display:block;
+  border-radius:50%; object-fit:cover; filter:url(#ssp-tint-light)}
+.ssp-cpic.is-logo img{inset:9%; width:82%; height:82%; border-radius:0; object-fit:contain}
+:root[data-ss-theme="dark"] .ssp-cpic img{filter:url(#ssp-tint-dark)}
+.ssp-cpic .ssp-initials{position:absolute; inset:0; display:grid; place-items:center;
+  font-family:"Fraunces",Georgia,serif; font-weight:900; font-size:calc(var(--u)*4)}
+.ssp-ctext{min-width:0}
+.ssp-cname{position:relative; margin:0; font-family:"Fraunces",Georgia,serif; font-weight:800;
+  font-variation-settings:"SOFT" 100,"WONK" 0; font-size:calc(var(--u)*2.75); line-height:1.08}
+.ssp-cname a{text-decoration:none}
+.ssp-cname a:hover{text-decoration:underline}
+.ssp-cmeta{display:flex; flex-wrap:wrap; align-items:center; column-gap:calc(var(--u)*2); margin-top:calc(var(--u)*.5)}
+.ssp-crole{font-weight:700; font-size:max(13px, calc(var(--u)*1.7))}
+.ssp-clinks{display:flex; flex-wrap:wrap; column-gap:calc(var(--u)*1.3)}
+.ssp-clinks a{display:inline-flex; align-items:center; min-height:36px; font-weight:700; font-size:max(13px, calc(var(--u)*1.7))}
+/* the rows ease up one after another the first time the screen shows */
+.ssp-collab.is-armed .ssp-crow{opacity:0; transform:translateY(14px)}
+.ssp-collab.is-in .ssp-crow{opacity:1; transform:none;
+  transition:opacity .5s ease, transform .6s cubic-bezier(.2,.8,.3,1);
+  transition-delay:calc(var(--i) * 80ms + 120ms)}
+
+/* the way out to the full list: a small inverted link button */
+.ssp a.ssp-all{position:relative; align-self:flex-end; display:inline-flex; align-items:center;
+  gap:calc(var(--u)*1.2); min-height:44px; padding:calc(var(--u)*.8) calc(var(--u)*1.8);
+  text-decoration:none; color:var(--ss-paper)}
+.ssp-all > *{position:relative}
+.ssp-all-bg{position:absolute; inset:0; background:var(--ss-ink); border-radius:999px}
+.ssp-all img{height:max(14px, calc(var(--u)*1.8)); width:auto; display:block; filter:url(#ssp-letters-light)}
+:root[data-ss-theme="dark"] .ssp-all img{filter:url(#ssp-letters-dark)}
+.ssp-all-go{display:flex; align-items:center; gap:calc(var(--u)*.8); font-weight:700;
+  font-size:max(13px, calc(var(--u)*1.4)); white-space:nowrap}
+.ssp-all-go svg{width:calc(var(--u)*2.4); height:calc(var(--u)*1.6); transition:transform .2s ease}
+.ssp-all:hover .ssp-all-go svg{transform:translateX(4px)}
 
 /* --- light/dark switch --- */
 .ssp-mode{
@@ -226,8 +316,10 @@ html.ssp-to-dark::view-transition-old(root){z-index:2;
   to{clip-path:circle(var(--ssp-r) at var(--ssp-x) var(--ssp-y))}
 }
 @media (prefers-reduced-motion:reduce){
+  .ssp{scroll-behavior:auto}
   .ssp-mode *,.ssp-mode svg{transition:none !important}
-  .ssp-mode.is-boing{animation:none}
+  .ssp-mode.is-boing,.ssp-next .ssp-round{animation:none}
+  .ssp-collab.is-armed .ssp-crow{opacity:1; transform:none}
 }
 
 @media (orientation:portrait){
@@ -238,6 +330,18 @@ html.ssp-to-dark::view-transition-old(root){z-index:2;
   .ssp-main{gap:calc(var(--u)*2)}
   .ssp-cards{grid-template-columns:minmax(0,1fr); gap:calc(var(--u)*2)}
   ${compact('.ssp')}
+  .ssp.has-collab .ssp-wrap{padding-bottom:calc(var(--u)*1.6 + 76px)}
+  /* on a phone the arrow and its label sit side by side, to save height */
+  .ssp-next{flex-direction:row-reverse; gap:10px}
+  .ssp-next .ssp-round{width:44px; height:44px}
+  .ssp-cwrap{padding:calc(var(--u)*10) calc(var(--u)*3.5) calc(var(--u)*4)}
+  .ssp-cin{max-width:none}
+  .ssp-clist{padding:calc(var(--u)*.6) calc(var(--u)*2.2)}
+  .ssp-ch2{font-size:calc(var(--u)*4.6)}
+  .ssp-ctitle{padding:calc(var(--u)*1.6) 0 calc(var(--u)*1.2)}
+  .ssp-crow{grid-template-columns:calc(var(--u)*8.5) minmax(0,1fr); column-gap:calc(var(--u)*2); padding:calc(var(--u)*1.4) 0}
+  .ssp-cname{font-size:calc(var(--u)*2.4)}
+  .ssp-crole,.ssp-clinks a{font-size:max(12px, calc(var(--u)*1.4))}
 }
 /* More than three people will not fit side by side as tall cards, so
    they turn into the compact cards two across. */
@@ -289,6 +393,19 @@ ${compact('.ssp.is-many')}
     ].join('  ');
   }
 
+  /* For the Esoteric Ebb logo, which is light letters on a dark panel with
+     coloured art behind them: keep only pixels that are light in both
+     green and blue (the letters), in one colour, and drop the rest. */
+  function lettersValues(hex) {
+    var c = rgb(hex);
+    return [
+      '0 0 0 0 ' + c[0].toFixed(4),
+      '0 0 0 0 ' + c[1].toFixed(4),
+      '0 0 0 0 ' + c[2].toFixed(4),
+      '0 6 6 12 -19.4'
+    ].join('  ');
+  }
+
   function isDark() { return document.documentElement.getAttribute('data-ss-theme') === 'dark'; }
 
   function applyTheme(theme) {
@@ -324,6 +441,16 @@ ${compact('.ssp.is-many')}
           '<feColorMatrix type="matrix" values="' + lineArtValues(OPTS.ink) + '"/></filter>' +
         '<filter id="ssp-tint-dark" color-interpolation-filters="sRGB">' +
           '<feColorMatrix type="matrix" values="' + lineArtValues(OPTS.paper) + '"/></filter>' +
+        '<filter id="ssp-letters-light" color-interpolation-filters="sRGB">' +
+          '<feColorMatrix type="matrix" values="' + lettersValues(OPTS.paper) + '"/></filter>' +
+        '<filter id="ssp-letters-dark" color-interpolation-filters="sRGB">' +
+          '<feColorMatrix type="matrix" values="' + lettersValues(OPTS.ink) + '"/></filter>' +
+        '<filter id="ssp-wob-frame" x="-5%" y="-5%" width="110%" height="110%">' +
+          '<feTurbulence type="fractalNoise" baseFrequency="0.0304" numOctaves="1" seed="31" result="n"/>' +
+          '<feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+        '<filter id="ssp-wob-rule" x="-2%" y="-300%" width="104%" height="700%">' +
+          '<feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="60" result="n"/>' +
+          '<feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter>' +
         '<filter id="ssp-wob-mode" x="-10%" y="-10%" width="120%" height="120%">' +
           '<feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="41" result="n"/>' +
           '<feDisplacementMap in="SourceGraphic" in2="n" scale="4" xChannelSelector="R" yChannelSelector="G"/></filter>' +
@@ -396,30 +523,41 @@ ${compact('.ssp.is-many')}
   }
 
   /* Lines before the first "## Name" may set the page's own details:
-     logo, intro, email, copyright. Everything else is per person. */
+     logo, intro, email, copyright. A line "=== Collaborators ===" starts
+     the second list; right after it, "title:" and "full-list:" set that
+     screen's heading and where its link button goes. */
+  var COLLAB_KEYS = { title: 'collabTitle', 'full-list': 'collabLink' };
   function parse(txt) {
-    var site = {}, people = [], cur = null, buf = [];
+    var site = {}, people = [], collabs = [], list = people, cur = null, buf = [];
     function flush() {
       if (cur) {
         if (!cur.tag) cur.tag = buf.join(' ').trim();
-        people.push(cur);
+        list.push(cur);
       }
       cur = null; buf = [];
     }
     txt.replace(/\r/g, '').split('\n').forEach(function (line) {
       var t = line.trim();
+      if (/^={3,}\s*collaborators\b/i.test(t)) { flush(); list = collabs; return; }
       var m = /^##\s+(.*)$/.exec(t);
-      if (m) { flush(); cur = { name: m[1].trim(), role: '', image: '', href: '', tag: '', links: [] }; return; }
+      if (m) { flush(); cur = { name: m[1].trim(), role: '', image: '', href: '', tag: '', logo: false, links: [] }; return; }
       if (/^#(?!#)/.test(t)) return;              // comment
       if (!cur) {
-        var sk = /^(logo|intro|email|copyright):\s*(.*)$/i.exec(t);
-        if (sk) site[sk[1].toLowerCase()] = sk[2].trim();
+        var sk;
+        if (list === people) {
+          sk = /^(logo|intro|email|copyright):\s*(.*)$/i.exec(t);
+          if (sk) site[sk[1].toLowerCase()] = sk[2].trim();
+        } else {
+          sk = /^(title|full-list):\s*(.*)$/i.exec(t);
+          if (sk) site[COLLAB_KEYS[sk[1].toLowerCase()]] = sk[2].trim();
+        }
         return;
       }
-      var kv = /^(role|image|avatar|href|url|tagline|link):\s*(.*)$/i.exec(t);
+      var kv = /^(role|image|avatar|href|url|tagline|logo|link):\s*(.*)$/i.exec(t);
       if (kv) {
         var k = kv[1].toLowerCase(), v = kv[2].trim();
         if (k === 'role') cur.role = v;
+        else if (k === 'logo') cur.logo = /^(yes|true|1)$/i.test(v);
         else if (k === 'image' || k === 'avatar') cur.image = v;
         else if (k === 'href' || k === 'url') cur.href = v;
         else if (k === 'tagline') cur.tag = v;
@@ -432,7 +570,8 @@ ${compact('.ssp.is-many')}
       if (t) buf.push(t);
     });
     flush();
-    return { site: site, people: people.filter(function (p) { return p.name; }) };
+    var named = function (p) { return p.name; };
+    return { site: site, people: people.filter(named), collabs: collabs.filter(named) };
   }
 
   function url(src) {
@@ -452,12 +591,7 @@ ${compact('.ssp.is-many')}
     var href = safeHref(p.href);
     var label = '<span class="ssp-name-t">' + esc(p.name) + '</span>';
     var name = href ? '<a href="' + href + '">' + label + '</a>' : label;
-    var links = p.links.map(function (l) {
-      var h = safeHref(l.href);
-      if (!h) return '';
-      var ext = /^https?:/i.test(l.href) ? ' target="_blank" rel="noopener"' : '';
-      return '<a href="' + h + '"' + ext + '>' + esc(l.label) + '</a>';
-    }).join('');
+    var links = linksHtml(p.links);
     return '<li class="ssp-card">' +
       '<div class="ssp-card-bg"' + f + '></div>' +
       '<div class="ssp-por">' + face + '<div class="ssp-ring"' + f + '></div></div>' +
@@ -468,12 +602,76 @@ ${compact('.ssp.is-many')}
     '</li>';
   }
 
-  function pageHtml(site, people, skeleton) {
+  function linksHtml(links) {
+    return links.map(function (l) {
+      var h = safeHref(l.href);
+      if (!h) return '';
+      var ext = /^https?:/i.test(l.href) ? ' target="_blank" rel="noopener"' : '';
+      return '<a href="' + h + '"' + ext + '>' + esc(l.label) + '</a>';
+    }).join('');
+  }
+
+  var ARROW_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg>';
+  var ARROW_UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 15l7-7 7 7"/></svg>';
+  var ARROW_RIGHT = '<svg viewBox="0 0 30 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 10h24M18 3l8 7-8 7"/></svg>';
+
+  /* A collaborator is one credit line: the name as written in team.txt,
+     then role and links beneath it. */
+  function collabHtml(p, i, wob) {
+    var img = url(p.image);
+    var face = img
+      ? '<img src="' + esc(img) + '" alt="' + esc(p.name) + '" decoding="async" loading="lazy">'
+      : '<span class="ssp-initials" aria-hidden="true">' + esc(initials(p.name)) + '</span>';
+    var href = safeHref(p.href);
+    var label = '<span class="ssp-name-t">' + esc(p.name) + '</span>';
+    var name = href ? '<a href="' + href + '" target="_blank" rel="noopener">' + label + '</a>' : label;
+    var links = linksHtml(p.links);
+    return '<li class="ssp-crow" style="--i:' + i + '">' +
+      '<span class="ssp-crule" aria-hidden="true" style="filter:url(#ssp-wob-rule)"></span>' +
+      '<div class="ssp-cpic' + (p.logo ? ' is-logo' : '') + '">' + face +
+        '<div class="ssp-ring" style="filter:url(#ssp-wob-' + wob + ')"></div></div>' +
+      '<div class="ssp-ctext">' +
+        '<h3 class="ssp-cname" data-name="' + esc(p.name) + '" data-max-squeeze="0.45">' + name + '</h3>' +
+        '<div class="ssp-cmeta">' +
+          (p.role ? '<span class="ssp-crole">' + esc(p.role) + '</span>' : '') +
+          (links ? '<span class="ssp-clinks">' + links + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</li>';
+  }
+
+  function collabScreenHtml(s, collabs, first) {
+    var link = safeHref(s.collabLink);
+    return '<section class="ssp-screen ssp-collab" aria-label="' + esc(s.collabTitle) + '">' +
+      '<button class="ssp-prev" type="button" data-go="0">' +
+        '<span class="ssp-round"><span class="ssp-round-bg" style="filter:url(#ssp-wob-mode)"></span>' + ARROW_UP + '</span>' +
+        '<span>The team</span></button>' +
+      '<div class="ssp-cwrap"><div class="ssp-cin">' +
+        '<ul class="ssp-clist">' +
+          '<li class="ssp-clist-bg" aria-hidden="true" style="filter:url(#ssp-wob-frame)"></li>' +
+          '<li class="ssp-ctitle"><h2 class="ssp-ch2">' + esc(s.collabTitle) + '</h2></li>' +
+          collabs.map(function (p, i) { return collabHtml(p, i, first + i); }).join('') +
+        '</ul>' +
+        (link
+          ? '<a class="ssp-all" href="' + link + '" target="_blank" rel="noopener" aria-label="The full Esoteric Ebb collaborator list">' +
+              '<span class="ssp-all-bg" style="filter:url(#ssp-wob-mode)"></span>' +
+              '<img src="' + esc(url(s.collabLogo)) + '" alt="">' +
+              '<span class="ssp-all-go">Full list' + ARROW_RIGHT + '</span>' +
+            '</a>'
+          : '') +
+      '</div></div>' +
+    '</section>';
+  }
+
+  function pageHtml(site, people, collabs, skeleton) {
     var s = {
       logo: site.logo || OPTS.site.logo,
       intro: site.intro || OPTS.site.intro,
       email: site.email || OPTS.site.email,
-      copyright: site.copyright || OPTS.site.copyright
+      copyright: site.copyright || OPTS.site.copyright,
+      collabTitle: site.collabTitle || OPTS.site.collabTitle,
+      collabLink: site.collabLink || OPTS.site.collabLink,
+      collabLogo: OPTS.site.collabLogo
     };
     var cards = skeleton
       ? [0, 1, 2].map(function (i) {
@@ -484,7 +682,10 @@ ${compact('.ssp.is-many')}
     var mail = s.email
       ? '<a href="mailto:' + esc(s.email) + '">' + esc(s.email) + '</a>'
       : '<span></span>';
-    return filters(skeleton ? 3 : people.length) +
+    var team = skeleton ? 3 : people.length;
+    var more = !skeleton && collabs.length > 0;
+    return filters(team + (more ? collabs.length : 0)) +
+      '<section class="ssp-screen" aria-label="The team">' +
       '<div class="ssp-wrap">' +
         '<h1 class="ssp-logo"><img src="' + esc(url(s.logo)) + '" alt="Sudden Snail"></h1>' +
         '<main class="ssp-main' + (skeleton ? ' ssp-sk' : '') + '">' +
@@ -492,15 +693,50 @@ ${compact('.ssp.is-many')}
           '<ul class="ssp-cards">' + cards + '</ul>' +
           '<footer class="ssp-foot">' + mail + '<span>' + esc(s.copyright) + '</span></footer>' +
         '</main>' +
-      '</div>';
+      '</div>' +
+      (more
+        ? '<button class="ssp-next" type="button" data-go="1">' +
+            '<span>' + esc(s.collabTitle) + '</span>' +
+            '<span class="ssp-round"><span class="ssp-round-bg" style="filter:url(#ssp-wob-mode)"></span>' + ARROW_DOWN + '</span>' +
+          '</button>'
+        : '') +
+      '</section>' +
+      (more ? collabScreenHtml(s, collabs, team) : '');
   }
 
+  var watcher = null;
   function paint(root, content, data, skeleton) {
     var n = skeleton ? 3 : data.people.length;
+    var collabs = data.collabs || [];
     root.style.setProperty('--cols', Math.max(1, Math.min(n, 3)));
     root.classList.toggle('is-many', n > 3);
-    content.innerHTML = pageHtml(data.site, data.people, skeleton);
+    root.classList.toggle('has-collab', !skeleton && collabs.length > 0);
+    content.innerHTML = pageHtml(data.site, data.people, collabs, skeleton);
     squishAll(content);
+
+    /* the arrows glide to their screen; the CSS decides smooth or instant */
+    var screens = content.querySelectorAll('.ssp-screen');
+    Array.prototype.forEach.call(content.querySelectorAll('[data-go]'), function (b) {
+      b.addEventListener('click', function () {
+        var to = screens[+b.getAttribute('data-go')];
+        if (to) root.scrollTo({ top: to.offsetTop });
+      });
+    });
+
+    /* The collaborator rows wait out of sight until their screen is
+       mostly showing, then ease in. Without IntersectionObserver they
+       are simply there. */
+    if (watcher) { watcher.disconnect(); watcher = null; }
+    var collab = content.querySelector('.ssp-collab');
+    if (collab && 'IntersectionObserver' in window) {
+      collab.classList.add('is-armed');
+      watcher = new IntersectionObserver(function (seen) {
+        if (!seen[0].isIntersecting) return;
+        collab.classList.add('is-in');
+        watcher.disconnect(); watcher = null;
+      }, { root: root, threshold: 0.35 });
+      watcher.observe(collab);
+    }
   }
 
   /* ---------------- squashed names ---------------- */
@@ -537,6 +773,8 @@ ${compact('.ssp.is-many')}
     /* Squash as few letters as will do. Over the last n letters the
        squeeze ramps up towards the wall; d is how hard the last one is
        squeezed to win back exactly the missing width. */
+    /* a credit line gives up sooner and wraps, rather than crush a long name */
+    var limit = parseFloat(h.getAttribute('data-max-squeeze')) || MAX_SQUEEZE;
     var n, d, ramp, curve, ci, i, found = false;
     for (ci = 0; ci < SQUEEZE_CURVES.length && !found; ci++) {
       curve = SQUEEZE_CURVES[ci];
@@ -544,7 +782,7 @@ ${compact('.ssp.is-many')}
         ramp = 0;
         for (i = 0; i < n; i++) ramp += w[chars.length - n + i] * Math.pow((i + 1) / n, curve);
         d = over / ramp;
-        if (d <= MAX_SQUEEZE) { found = true; break; }
+        if (d <= limit) { found = true; break; }
       }
     }
     if (!found) { unSquish(h); return; }  // too long even squashed: let it wrap
@@ -559,7 +797,7 @@ ${compact('.ssp.is-many')}
   }
 
   function squishAll(root) {
-    Array.prototype.forEach.call(root.querySelectorAll('.ssp-name[data-name]'), squishName);
+    Array.prototype.forEach.call(root.querySelectorAll('[data-name]'), squishName);
   }
 
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -585,7 +823,7 @@ ${compact('.ssp.is-many')}
       var old = parse(cached);
       if (old.people.length) { paint(root, content, old, false); painted = true; }
     }
-    if (!painted) paint(root, content, { site: {}, people: [] }, true);
+    if (!painted) paint(root, content, { site: {}, people: [], collabs: [] }, true);
 
     /* The squash is measured, so it is redone when the width or the
        font changes (Fraunces usually arrives after the first paint). */

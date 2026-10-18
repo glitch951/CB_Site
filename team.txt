@@ -16,6 +16,13 @@
 #   link: Label | URL one per link, in the order they should appear
 #
 # Order here is the order of the cards.
+#
+# Everything after the "=== Collaborators ===" line further down is the
+# second screen. Its blocks work the same way (no tagline is shown), plus:
+#   logo: yes         the image is a studio logo: shown whole, not cropped
+# and right under the line itself:
+#   title:            the heading of that screen
+#   full-list:        where the little link button under the list goes
 
 logo: sudden-snail-logo.png
 intro: The Studio behind the Esoteric
@@ -46,3 +53,40 @@ image: jonna-traff.png
 href: https://www.artstation.com/jonnatraff
 tagline: worldsculpter and coordinator plus extra
 link: ArtStation | https://www.artstation.com/jonnatraff
+
+=== Collaborators ===
+title: Collaborators
+full-list: https://esotericebb.com/#collaborators
+
+## Sound Respawn (Isac Jonsson)
+role: Sound design, mixing & implementation
+image: sound-respawn.png
+href: https://soundrespawn.com/
+link: Website | https://soundrespawn.com/
+link: Instagram | https://www.instagram.com/soundrespawn/
+
+## Anders Bach, Brian Batz & Kristian Paulsen
+role: Music composition, production & mix
+image: anders-brian-kristian.png
+href: http://andersbach.cargo.site/
+link: Website | http://andersbach.cargo.site/
+link: Bach | https://www.instagram.com/andersbachshorthair/
+link: Batz | https://www.instagram.com/batzstudio/
+link: Paulsen | https://www.instagram.com/kristian__paulsen/
+
+## Gibbet Games
+role: Assets, structure & the Esoteric look
+image: gibbet-games.png
+logo: yes
+href: https://gibbetgames.com/
+link: Website | https://gibbetgames.com/
+link: X | https://x.com/GIBBETGAMES
+
+## Speldosa Interactive
+role: Tech, marketing & veteran feedback
+image: speldosa.png
+logo: yes
+href: https://www.speldosa.com/
+link: Website | https://www.speldosa.com/
+link: X | https://x.com/speldosagames
+link: Instagram | https://www.instagram.com/speldosagames/
