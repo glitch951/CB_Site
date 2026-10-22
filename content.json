@@ -86,6 +86,17 @@
   "//talks-visual": "Each talk can carry a 'visual' (vertical 9:16 image or video) shown in a rail beside the list on wide screens. Clicking a talk swaps the visual; the top talk is shown by default. Videos here get player controls and only start when clicked. Optional 'visualCaption' labels it.",
   "talks": [
     {
+      "date": "OCT 2026",
+      "venue": "Post-Mortem at SGC",
+      "title": "",
+      "url": "https://docs.google.com/presentation/d/1SRBzwr94Gynf45PfQ4s2EQ1tWUTu89qjizxE_1E2JNc/edit?usp=sharing",
+      "linkLabel": "THE (DIS)ADVANTAGE OF STANDING UPON GIANT SHOULDERS",
+      "paragraphs": [
+        "My first attempt at a Post-Mortem for Esoteric Ebb. It's fun looking back over the years, and it's also important for the future. Gotta learn something. Make improvements. And so on. The focus here is on the journey, yes, but also the reception. Ebb is a game that has its influences tattooed upon its damn forehead, which has its (dis)advantages. I'll be tweaking this talk going forward, but if you wanna check out the slides- do so below."
+      ],
+      "visual": "images/talk-sgc-2026.jpg"
+    },
+    {
       "date": "MAY 2026",
       "venue": "Nordic Game Conference",
       "title": "",
